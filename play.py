@@ -1,17 +1,10 @@
 
 import libtcodpy as libtcod
 from operator import itemgetter, attrgetter
-#from char import *
-#from location import *
 from namegen import *
 from dialogue import *
-#import time
 from world import *
 import shelve
-
-#player = None
-#game = None
-#world = None
 
 def save_game():
 	file = shelve.open('savegame', 'n')
@@ -19,9 +12,9 @@ def save_game():
 
         file['world'] = world
         file['player_party'] = player_party
-        #file['game'] = game
-        #print player_party
-        #print world
+        file['game'] = game
+        print player_party
+        print world
         file.close()
 
 def load_game():
@@ -4924,7 +4917,7 @@ def party_turn(player_party,world):
 game = Game(True, True)
 messages = []
 def run():
-	global game
+	global game, player_party, world
 	while not libtcod.console_is_window_closed():
 		while game.running == True and game.starting == True:
 			start = startup()
@@ -4947,6 +4940,7 @@ def run():
 			if begin == 1:
 				player = main_menu()
 	        		player_party, world = create_party(player)
+				print player_party
 				location = player_party.location
 				world.player_organization.locations_owned = []
 				game.starting = False
@@ -4958,6 +4952,7 @@ def run():
 	    	while game.running == True and game.starting == False and len(player_party.members) >= 1:
 			turn_finished = False
 			new_messages = []
+			#print player_party
 			#if len(messages) >= 1:
 			#	for message in messages:
 			#		new_messages.append(message)
@@ -4968,7 +4963,7 @@ def run():
 				turn_finished = party_turn(player_party,world)
 		confirm = False
 		libtcod.console_clear(0)
-		while game.running == True and game.starting == False and len(player_party.members) <= 0 and confirm == False:
+		while game.running == True and game.starting == False and confirm == False and len(player_party.members) <= 0:
 			while confirm == False:
 		                libtcod.console_print(0,1,1, 'GAME OVER.')
         	                libtcod.console_print(0,1,3, '[c]ontinue')
