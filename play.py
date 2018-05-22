@@ -266,40 +266,36 @@ def num_to_letter(num):
 	elif num == 70:
 		letter = '.'
 	elif num == 71:
-		letter = '/'
-	elif num == 72:
-		letter = ';'
-	elif num == 73:
 		letter = '"'
-	elif num == 74:
+	elif num == 72:
 		letter = ':'
-	elif num == 75:
+	elif num == 73:
 		letter = '?'
-	elif num == 78:
+	elif num == 74:
 		letter = '>'
-	elif num == 79:
+	elif num == 75:
 		letter = '<'
-	elif num == 80:
+	elif num == 76:
 		letter = ']'
-	elif num == 81:
+	elif num == 77:
 		letter = '['
-	elif num == 82:
+	elif num == 78:
 		letter = '}'
-	elif num == 83:
+	elif num == 79:
 		letter = '{'
-	elif num == 84:
+	elif num == 80:
 		letter = "~"
-	elif num == 85:
+	elif num == 81:
 		letter = '|'
-	elif num == 86:
+	elif num == 82:
 		letter = '-'
-	elif num == 87:
+	elif num == 83:
 		letter = '_'
-	elif num == 88:
+	elif num == 84:
 		letter = '='
-	elif num == 89:
+	elif num == 85:
 		letter = '+'
-	elif num == 90:
+	elif num == 86:
 		letter = '`'
 
 
@@ -423,11 +419,11 @@ def travel(party,world,start):
 				string = '[' + letter + '] ' + location.name + "*"
 				width = len(string)
 				libtcod.console_set_default_foreground(0, libtcod.green)
-				if count <= 40:
+				if count <= 43:
 					libtcod.console_print(0,1,line, '[' + letter + '] ' + location.name)
-				elif count >= 41 and count <= 61:
+				elif count >= 44 and count <= 64:
 					libtcod.console_print(0,30,line-21, '[' + letter + '] ' + location.name)
-				elif count >= 62:
+				elif count >= 65:
 					libtcod.console_print(0,60,line-42, '[' + letter + '] ' + location.name)
 				libtcod.console_flush()
 	                    	libtcod.console_set_default_foreground(0, libtcod.white)
@@ -454,11 +450,11 @@ def travel(party,world,start):
                         #        		elif count >= 62:
                         #        		        libtcod.console_print(0,60,line-42, '[' + letter + '] ' + location.name)
 			else:
-				if count <= 40:
+				if count <= 43:
 					libtcod.console_print(0,1,line, '[' + letter + '] ' + location.name)
-				elif count >= 41 and count <= 61:
+				elif count >= 44 and count <= 64:
 					libtcod.console_print(0,30,line-21, '[' + letter + '] ' + location.name)
-				elif count >= 62:
+				elif count >= 65:
                                         libtcod.console_print(0,60,line-42, '[' + letter + '] ' + location.name)
 
 			count += 1
@@ -4617,12 +4613,12 @@ def party_turn(player_party,world):
                                 message = member.fname + ' ' + member.lname + " is very stressed."
                                 messages.append(message)
                         #check if anyone stressed
-                        #if member.mind.sanity <= 20 and member.mind.sanity >= -19:
-                        #        message = member.fname + ' ' + member.lname + " is feeling weird."
-                        #        messages.append(message)
-                        #elif member.mind.sanity <= -20:
-                        #        message = member.fname + ' ' + member.lname + " is acting crazy."
-                        #        messages.append(message)
+                        if member.mind.sanity <= 20 and member.mind.sanity >= 0:
+                                message = member.fname + ' ' + member.lname + " is acing strangely."
+                                messages.append(message)
+                        elif member.mind.sanity <= -1:
+                                message = member.fname + ' ' + member.lname + " is acting crazy."
+                                messages.append(message)
 
 			#check if anyone knocked down
 			if member.combat_status.knocked_down == True:

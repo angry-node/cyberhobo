@@ -1759,8 +1759,8 @@ def create_npc(profession,affiliation,home):
 #Cliff Heights
 
 
-abandoned_building_names = ['Abandoned Factory', 'Abandoned Office', 'Abandoned Store', 'Abandoned Laundromat','Abandoned Mall',
-			'Abandoned School','Abandoned Gas Station','Abandoned House',"Abandoned Church"]
+#abandoned_building_names = ['Abandoned Factory', 'Abandoned Office', 'Abandoned Store', 'Abandoned Laundromat','Abandoned Mall',
+#			'Abandoned School','Abandoned Gas Station','Abandoned House',"Abandoned Church"]
 
 
 #medical
@@ -2591,17 +2591,22 @@ def gen_park(x,y):
 
 def gen_neighborhood(type,neighborhood_name):
 	global location_id
+	num_locations = 0
 	locations = []
 	count = 1
 	first_building = True
 	#abandoned buildings
-	for name in abandoned_building_names:
+	name = 'Abandoned Building'
+	num_abandoned_buildings = random.randint(15,20)
+	while count <= num_abandoned_buildings:
 		if first_building == True:
 			x = random.randint(1,16)
 			y = random.randint(1,16)
 			abandoned_building = gen_abandoned_building(True,locations,name,x,y)
 			locations.append(abandoned_building)
 			first_building = False
+			num_locations += 1
+			count += 1
 		elif first_building == False:
 			checked = False
 			exists = False
@@ -2614,10 +2619,11 @@ def gen_neighborhood(type,neighborhood_name):
 						#checked = True
 					if exists == False:
 						checked = True
-	
+				
 			abandoned_building = gen_abandoned_building(True,locations,name,x,y)
 			locations.append(abandoned_building)
-			print abandoned_building.name
+			num_locations += 1
+			count += 1
 
 
 	#pawn shop
@@ -2669,11 +2675,15 @@ def gen_neighborhood(type,neighborhood_name):
 		locations.append(pawn_shop)
 		print 'pawn shop'
 		pawn_count += 1
+		num_locations += 1
+
 	#thrift store
 	x, y = get_unused_location()
         thrift_store = gen_thrift_store(x,y)
         locations.append(thrift_store)
 	print 'thrift store'
+	num_locations += 1
+
         #bar
 	max_bars = random.randint(3,5)
 	count = 1
@@ -2682,6 +2692,8 @@ def gen_neighborhood(type,neighborhood_name):
 	        maggies_bar = gen_bar(x,y)
 	        locations.append(maggies_bar)
 		count += 1
+		num_locations += 1
+
 		print 'bar'
 	#doctor
 	x, y = get_unused_location()
@@ -2698,6 +2710,7 @@ def gen_neighborhood(type,neighborhood_name):
 	        locations.append(crackhouse)
 		print 'crackhouse'
 		count += 1
+		num_locations += 1
 
         #coffee shop
 	num_coffee_shop = random.randint(1,3)
@@ -2713,11 +2726,15 @@ def gen_neighborhood(type,neighborhood_name):
         mcshits = gen_mcshits(x,y)
         locations.append(mcshits)
 	print 'mcshits'
+	num_locations += 1
+
         #pizza
         x, y = get_unused_location()
         pizza_place = gen_pizza_place(x,y)
         locations.append(pizza_place)
 	print 'pizza'
+	num_locations += 1
+	
 	#convenience store
         num_convenience_store = random.randint(3,5)
         count = 1
@@ -2727,6 +2744,7 @@ def gen_neighborhood(type,neighborhood_name):
                 locations.append(store)
                 print 'convenience store'
                 count += 1
+		num_locations += 1
 
         #library
         x, y = get_unused_location()
@@ -2734,6 +2752,7 @@ def gen_neighborhood(type,neighborhood_name):
         locations.append(library)
 	organizations = []
 	print 'library'
+	num_locations += 1
 
         #apt building
         apt_count = 1
@@ -2747,6 +2766,8 @@ def gen_neighborhood(type,neighborhood_name):
                                 locations.append(apt_building)
                                 apt_finished = True
                                 apt_count += 1
+				num_locations += 1
+
                         except:
                                 apt_finished = False
         #parks
@@ -2757,6 +2778,8 @@ def gen_neighborhood(type,neighborhood_name):
 		park = gen_park(x,y)
 		locations.append(park)
 		count += 1
+		num_locations += 1
+
 		print 'park'
 	#gang hq
 	organizations = []
@@ -2767,6 +2790,8 @@ def gen_neighborhood(type,neighborhood_name):
 				x, y = get_unused_location()
 				print x, y
 				gang_hq,organization = gen_gang_hq(x,y,name,locations)
+				num_locations += 1
+
 				print gang_hq
 				print organization
 				print organization.name
@@ -2776,12 +2801,14 @@ def gen_neighborhood(type,neighborhood_name):
         #houses
         count  = 1
         max_shacks = random.randint(14,20)
-        while count <= max_shacks:
+        while num_locations <= 80:
                 x,y = get_unused_location()
                 shack = gen_shack(x,y)
                 locations.append(shack)
 		print shack
                 count += 1
+		num_locations += 1
+
 		
 		
 	#assign homes to npcs
