@@ -2764,7 +2764,8 @@ def pickpocket(party,world,party_actions):
 				chance_get_caught = random.randint(3,18)
 				bonus = (member.skills.stealth / 2) + (member.skills.security / 2)
 				total = member.skills.pickpocket + bonus
-				roll = random.randint(1,total)
+				roll = random.randint(3,18)
+				roll += total
 				if chance_get_caught >= roll:
 			                libtcod.console_print(0,1,1,option[1].fname + " " + option[1].lname + " was caught pickpocketing.")
                                         libtcod.console_print(0,1,3,"[c]ontinue") 
@@ -2778,10 +2779,18 @@ def pickpocket(party,world,party_actions):
 							enemy = location.actors
 							battle(party,enemy,location,world,True,party_actions)
 							return True
-				else:
+				elif chance_get_caught <= roll - 1:
 					amount_stolen = random.randint(5,100)
-					libtcod.console_print(0,1,1,option[1].fname + " " + option[1].lname + " stole  $" + str(amount_stolen) + ".")
+					line_count = 1
+					libtcod.console_print(0,1,line_count,option[1].fname + " " + option[1].lname + " stole  $" + str(amount_stolen) + ".")
+					line_count += 1
+					skill_chance = random.randint(1,8)
+					if skill_chance == 1:
+						option[1].skills.pickpocket += 1
+						libtcod.console_print(0,1,line_count,option[1].fname + " " + option[1].lname + "'s  Pickpocket is now " + str(option[1].skills.pickpocket) + ".")
+						line_count += 1
 					libtcod.console_print(0,1,3,"[c]ontinue")
+					libtcod.console_flush()
 					continued = False
 					while continued == False:
 						key = libtcod.console_check_for_keypress()

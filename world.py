@@ -770,6 +770,7 @@ no_facewear = Facewear("None", "None",1,5,5,'facewear',True,0)
 
 balaclava = Facewear("Balaclava", "Balaclava",1,5,5,'facewear',True,15)
 clown_mask = Facewear("Clown mask", "Clown mask",2,5,5,'facewear',True,80)
+anonymous_mask = Facewear("Anonymous mask", "Anonymous mask",2,5,5,'facewear',True,80)
 
 
 
@@ -1905,6 +1906,8 @@ def create_npc(profession,affiliation,home):
                         handwear = fingerless_gloves
 		elif profession == "Marxist":
 			outfit = army_uniform
+		elif profession == "Gamer Assassin":
+			facewear = anonymous_mask
 		elif profession == "Nudist":
 			outfit = naked
 			legwear = no_legwear
