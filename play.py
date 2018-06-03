@@ -1721,7 +1721,7 @@ def enemy_battle_turn(enemy,player,player_party):
 		enemy_turn_finished = attack(enemy,target,player_party,world,True)
 		return enemy_turn_finished
 	
-def player_battle_turn(member,player,enemy,my_location,world,True,party_ctions):
+def player_battle_turn(member,player,enemy,my_location,world,True,party_actions):
 	libtcod.console_clear(0)
 	move_finished = False
 	attack_finished = False
@@ -1861,43 +1861,47 @@ def battle(player,enemy,location,world,show_fight,party_actions):
 			#print 'fight over'
 			return fight_finished
 		# show player and enemy parties
-		line_count = 1
-		libtcod.console_print(0,1,line_count, 'YOU:')
-		line_count = 2
-		option_count = 1
-		view_options = []
-		for member in player.members:
-			letter = num_to_letter(option_count)
-			option = [option_count,member]
-			view_options.append(option)
-			libtcod.console_print(0,1,line_count, "[" + letter + "]" + member.fname + " " + member.lname)
-			libtcod.console_print(0,24,line_count,member.profession)
-	                libtcod.console_print(0,39,line_count,member.outfit.name)
-	                libtcod.console_print(0,56,line_count,member.weapon.name)
-			libtcod.console_print(0,70,line_count,str(member.health.current_health) + "/" + str(member.health.max_health))
+		def show():
+			libtcod.console_flush()
+			line_count = 1
+			libtcod.console_print(0,1,line_count, 'YOU:')
+			line_count = 2
+			option_count = 1
+			view_options = []
+			for member in player.members:
+				letter = num_to_letter(option_count)
+				option = [letter,member]
+				view_options.append(option)
+				libtcod.console_print(0,1,line_count, "[" + letter + "]" + member.fname + " " + member.lname)
+				libtcod.console_print(0,24,line_count,member.profession)
+	        	        libtcod.console_print(0,39,line_count,member.outfit.name)
+	        	        libtcod.console_print(0,56,line_count,member.weapon.name)
+				libtcod.console_print(0,70,line_count,str(member.health.current_health) + "/" + str(member.health.max_health))
+				line_count += 1
+				option_count += 1
+
+			line_count += 2
+			libtcod.console_print(0,1,line_count, 'ENEMY:')
 			line_count += 1
-			option_count += 1
+			for member in enemy.members:
+				letter = num_to_letter(option_count)
+				option = [letter,member]
+				view_options.append(option)
+				libtcod.console_print(0,1,line_count,"[" + letter + "]" + member.fname + " " + member.lname)
+				libtcod.console_print(0,24,line_count,member.profession)
+				libtcod.console_print(0,39,line_count,member.outfit.name)
+				libtcod.console_print(0,56,line_count,member.weapon.name)
+				libtcod.console_print(0,70,line_count,str(member.health.current_health) + "/" + str(member.health.max_health))
+		                line_count += 1
+				option_count += 1
 
-		line_count += 2
-		libtcod.console_print(0,1,line_count, 'ENEMY:')
-		line_count += 1
-		for member in enemy.members:
-			letter = num_to_letter(option_count)
-			option = [option_count,member]
-			view_options.append(option)
-			libtcod.console_print(0,1,line_count,"[" + letter + "]" + member.fname + " " + member.lname)
-			libtcod.console_print(0,24,line_count,member.profession)
-			libtcod.console_print(0,39,line_count,member.outfit.name)
-			libtcod.console_print(0,56,line_count,member.weapon.name)
-			libtcod.console_print(0,70,line_count,str(member.health.current_health) + "/" + str(member.health.max_health))
-	                line_count += 1
-			option_count += 1
+			line_count += 2
+			libtcod.console_print(0,1,line_count, '[F]ight!')
+			line_count += 1
 
-		line_count += 2
-		libtcod.console_print(0,1,line_count, '[f]ight!')
-		line_count += 1
-
-		libtcod.console_flush()
+			libtcod.console_flush()
+			return view_options
+		view_options = show()
 		# i n i t i a t i v e
 		round_finished = False
 		if len(player.members) == 0:
@@ -1909,9 +1913,15 @@ def battle(player,enemy,location,world,show_fight,party_actions):
 			key = ' '
 			initiative_finished = False
 			while initiative_finished == False:
-				print view_options
+				#print view_options
+				my_location = find_location(player,world)
 				key = libtcod.console_check_for_keypress()
-				if key.c == ord('f'):
+				for option in view_options:
+					if key.c == ord(option[0]):
+						show_character(option[1],world,False,my_location,player)
+						libtcod.console_clear(0)
+						view_options = show()
+				if key.c == ord('F'):
                                        	initiative(player,enemy,location,world,True,party_actions)
                                        	#print 'fight!'
                                        	round_finished,initiative_finished = True,True
@@ -2298,14 +2308,14 @@ def rest(party,world,hours,guard):
                         if chance == 1:
         	                for organization in my_area.organizations:
                 	                if organization.name == my_location.owned_by and organization.player_reputation <= 24:
-                        	                robbery(party,world,True)
+                        	                robbery(party,world,True,party_actions)
                                                 interrupted = True
                                                 return interrupted
                 elif drugs_value >= 2000 and my_location.owned_by == 'No one':
                 	chance = drugs_value / 1000
                         chance_robbery = random.randint(1,500)
                         if chance_robbery <= chance:
-                        	robbery(party,world,False)
+                        	robbery(party,world,False,party_actions)
                                	interrupted = True
                                	return interrupted
 
@@ -2462,7 +2472,7 @@ def rest(party,world,hours,guard):
 				return messages
 		save_game()
 		return messages
-def robbery(player_party,world,faction):
+def robbery(player_party,world,faction,party_actions):
 	libtcod.console_clear(0)
 	being_robbed = True
 	my_location = find_location(player_party,world)
@@ -2596,14 +2606,14 @@ def deal_drugs(party,world,length_time,party_actions):
 		if chance == 1:
 			for organization in my_area.organizations:
 				if organization.name == my_location.owned_by:
-					robbery(party,world,True)
+					robbery(party,world,True,party_actions)
 					interrupted = True
 					return interrupted
 	elif drugs_value >= 1000 and my_location.owned_by == 'No one':
 		chance = drugs_value / 1000
 		chance_robbery = random.randint(1,250)
 		if chance_robbery <= chance:
-			robbery(party,world,False)
+			robbery(party,world,False,party_actions)
 			interrupted = True
 			return interrupted
 	if roll <= total_streetwise + 1:
@@ -2724,9 +2734,59 @@ def deal(party,world):
                         return finished_dealing
 
 
+def pickpocket(party,world,party_actions):
+	libtcod.console_clear(0)
+	line_count = 1
+	location= find_location(party,world)
+	if len(location.actors.members) <= 0:
+		return True
+        libtcod.console_print(0,1,line_count,"Who will pickpocket?")
+	line_count += 2
+	count = 1
+	options = []
+	for member in party.members:
+		letter = num_to_letter(count)
+		libtcod.console_print(0,1,line_count,"["+ letter + "]" + member.fname + " " + member.lname) 
+	        libtcod.console_print(0,35,line_count,str(member.skills.pickpocket))
+                libtcod.console_print(0,45,line_count,str(member.skills.stealth))
+                libtcod.console_print(0,35,line_count,str(member.skills.security))
+		option =[letter,member]
+		options.append(option)
+		line_count += 1
+		count += 1
+	choice_made = False
+	libtcod.console_flush()
+	while choice_made == False:
+		key = libtcod.console_check_for_keypress()
+		for option in options:
+			if key.c == ord(option[0]):
+				libtcod.console_clear(0)
+				chance_get_caught = random.randint(3,18)
+				bonus = (member.skills.stealth / 2) + (member.skills.security / 2)
+				total = member.skills.pickpocket + bonus
+				roll = random.randint(1,total)
+				if chance_get_caught >= roll:
+			                libtcod.console_print(0,1,1,option[1].fname + " " + option[1].lname + " was caught pickpocketing.")
+                                        libtcod.console_print(0,1,3,"[c]ontinue") 
 
-
-
+					libtcod.console_flush()
+					continued = False
+					while continued == False:
+						key = libtcod.console_check_for_keypress()
+						if key.c == ord('c'):
+							location = find_location(party,world)
+							enemy = location.actors
+							battle(party,enemy,location,world,True,party_actions)
+							return True
+				else:
+					amount_stolen = random.randint(5,100)
+					libtcod.console_print(0,1,1,option[1].fname + " " + option[1].lname + " stole  $" + str(amount_stolen) + ".")
+					libtcod.console_print(0,1,3,"[c]ontinue")
+					continued = False
+					while continued == False:
+						key = libtcod.console_check_for_keypress()
+						if key.c == ord('c'):
+							return True
 def make_safehouse(party,world):
 	finished_safehouse = False
 	libtcod.console_clear(0)
@@ -2799,7 +2859,7 @@ def furnish_safehouse(party,world):
 						party.money -= option[1].base_value
 						finished_furnish = True
 						return True
-def show_actions(party,world):
+def show_actions(party,world,party_actions):
 	finished_action = False
         line_count = 1
         libtcod.console_print(0, 1, line_count,"ACTIONS")
@@ -2809,6 +2869,8 @@ def show_actions(party,world):
 	libtcod.console_print(0,1,line_count,"[b] rent apartment")
 	line_count += 1
 	libtcod.console_print(0,1,line_count, "[c] furnish apartment")
+        line_count += 1
+        libtcod.console_print(0,1,line_count, "[d] pickpocket")
 	line_count += 2
 	libtcod.console_print(0, 1, line_count,"[r]eturn")
 	libtcod.console_flush()
@@ -2831,7 +2893,10 @@ def show_actions(party,world):
 			furnish_safehouse(party,world)
 			finished_action = True
 			return finished_action
-
+                elif key.c == ord('d'):
+			pickpocket(party,world,party_actions)
+                        finished_action = True
+                        return finished_action
 
 
 def show_rest(party,world):
@@ -3781,7 +3846,7 @@ def show_manage(player,world):
 			show_dismiss(player,world)
 			finished_manage = True
 
-def show_party(target,world):
+def show_party(target,world,party_actions):
 	finished_party = False
 	finished_showing = False
 	options = []
@@ -3925,7 +3990,7 @@ def show_party(target,world):
                                 finished_action = False
                                 while finished_action == False:
                                         libtcod.console_clear(0)
-                                        finished_action = show_actions(player_party,world)
+                                        finished_action = show_actions(player_party,world,party_actions)
                                         decision = True
 
 			#drop item
@@ -4219,7 +4284,143 @@ def restore_health(player,world):
                 	        finished_services = True
                 	        return finished_services
 
-	
+def haircuts(player,location):
+        libtcod.console_clear
+        libtcod.console_print(0,1,1, "Who will get a haircut?")
+        line_count = 3
+        options = []
+        count = 1
+        for member in player.members:
+                letter = num_to_letter(count)
+                option = [letter, member]
+                options.append(option)
+                count += 1
+        for option in options:
+                libtcod.console_print(0,1,line_count, "[" + option[0] + "] " + option[1].fname + " " + option[1].lname)
+                line_count += 1
+        line_count += 1
+        libtcod.console_print(0,1,line_count, "[*] go back")
+
+        choice_made = False
+        libtcod.console_flush()
+        while choice_made == False:
+                key = libtcod.console_check_for_keypress()
+                for option in options:
+                        if key.c == ord(option[0]):
+                                target = option[1]
+                                line_count = 1
+                                libtcod.console_clear(0)
+                                hair_options = []
+                                hair_count = 1
+                                for hair in shaved_hair:
+                                        letter = num_to_letter(hair_count)
+                                        option = [letter,hair]
+                                        hair_options.append(option)
+                                        hair_count += 1
+                                for hair in spiky_hair:
+                                        letter = num_to_letter(hair_count)
+                                        option = [letter,hair]
+                                        hair_options.append(option)
+                                        hair_count += 1
+                                for hair in short_hair:
+                                        letter = num_to_letter(hair_count)
+                                        option = [letter,hair]
+                                        hair_options.append(option)
+                                        hair_count += 1
+                                for hair in long_hair:
+                                        letter = num_to_letter(hair_count)
+                                        option = [letter,hair]
+                                        hair_options.append(option)
+                                        hair_count += 1
+                                for hair in parted_hair:
+                                        letter = num_to_letter(hair_count)
+                                        option = [letter,hair]
+                                        hair_options.append(option)
+                                        hair_count += 1
+                                for hair in mohawk_hair:
+                                        letter = num_to_letter(hair_count)
+                                        option = [letter,hair]
+                                        hair_options.append(option)
+                                        hair_count += 1
+                                for hair in braided_hair:
+                                        letter = num_to_letter(hair_count)
+                                        option = [letter,hair]
+                                        hair_options.append(option)
+                                        hair_count += 1
+
+                                for option in hair_options:
+                                        libtcod.console_print(0,1,line_count, "[" + option[0] + "] " + option[1].name)
+                                        line_count += 1
+                                line_count += 1
+                                libtcod.console_print(0,1,line_count, "[*] go back")
+                                finished_hair = False
+                                libtcod.console_flush()
+                                while finished_hair == False:
+                                        key = libtcod.console_check_for_keypress()
+                                        for option in hair_options:
+                                                if key.c == ord(option[0]) and player.money >= option[1].base_value:
+                                                        player.money -= option[1].base_value
+							for option in hair_options:
+								if option[1] in target.traits:
+									target.traits.remove(option[1])
+                                                        target.traits.append(option[1])
+                                                        return True
+                                                elif key.c == ord('*'):
+                                                        return True
+                        elif key.c == ord('*'):
+                                return True
+
+def tattoos(player,location):
+        libtcod.console_clear
+        libtcod.console_print(0,1,1, "Who will get tattooed?")
+        line_count = 3
+	options = []
+	count = 1
+	for member in player.members:
+		letter = num_to_letter(count)
+		option = [letter, member]
+		options.append(option)
+		count += 1
+	for option in options:
+        	libtcod.console_print(0,1,line_count, "[" + option[0] + "] " + option[1].fname + " " + option[1].lname)
+		line_count += 1
+	line_count += 1
+        libtcod.console_print(0,1,line_count, "[*] go back")
+
+	choice_made = False
+	libtcod.console_flush()
+	while choice_made == False:
+		key = libtcod.console_check_for_keypress()
+		for option in options:
+			if key.c == ord(option[0]):
+				target = option[1]
+				line_count = 1
+				libtcod.console_clear(0)
+				tattoo_options = []
+				tattoo_count = 1
+				for tattoo in possible_tattoos:
+					letter = num_to_letter(tattoo_count)
+					option = [letter,tattoo]
+					tattoo_options.append(option)
+					tattoo_count += 1
+				for option in tattoo_options:
+					libtcod.console_print(0,1,line_count, "[" + option[0] + "] " + option[1].name)
+					line_count += 1
+				line_count += 1
+				libtcod.console_print(0,1,line_count, "[*] go back")
+				finished_tattoo = False
+				libtcod.console_flush()
+				while finished_tattoo == False:
+					key = libtcod.console_check_for_keypress()
+					for option in tattoo_options:
+						if key.c == ord(option[0]) and player.money >= option[1].base_value:
+							player.money -= option[1].base_value
+							target.traits.append(option[1])
+							return True
+						elif key.c == ord('*'):
+							return True
+			elif key.c == ord('*'):
+				return True
 def services(player,location):
 	libtcod.console_clear
 	libtcod.console_print(0,1,1, "SERVICES:")
@@ -4234,7 +4435,7 @@ def services(player,location):
 		service_count += 1
 		line_count += 1
 	line_count += 1
-	#libtcod.console_print(0,1,line_count, "[r]eturn")
+	libtcod.console_print(0,1,line_count, "[r]eturn")
 	libtcod.console_flush()
 	choice_made = False
         while choice_made == False:
@@ -4247,6 +4448,18 @@ def services(player,location):
 						healing_injuries = heal_injuries(player,location)
 					finished_services = True
 					return finished_services
+                                elif available_service[1].name == "tattoos":
+                                        getting_tattoos = False
+                                        while getting_tattoos == False:
+                                                getting_tattoos = tattoos(player,location)
+                                        finished_services = True
+                                        return finished_services
+                                elif available_service[1].name == "haircuts":
+                                        getting_haircuts = False
+                                        while getting_haircuts == False:
+                                                getting_haircuts = haircuts(player,location)
+                                        finished_services = True
+                                        return finished_services
                 if key.c == ord('r'):
                         #choice_made = True
                         finished_services = True
@@ -5084,7 +5297,7 @@ def party_turn(player_party,world,party_actions):
 		if key.c == ord('p'):
 			finished_party = False
 			while finished_party == False:
-				finished_party = show_party(player_party,world)
+				finished_party = show_party(player_party,world,party_actions)
 
 				action = True
                 #rest

@@ -751,6 +751,7 @@ baseball_cap = Headwear("Baseball cap", "Baseball cap",1,5,5,'headwear',True,45)
 dad_hat = Headwear("Dad hat", "Dad hat",1,5,5,'headwear',True,35)
 toque = Headwear("Toque", "Toque",1,5,5,'headwear',True,20)
 beret = Headwear("Beret", "Beret",1,5,5,'headwear',True,20)
+army_hat = Headwear("Army hat", "Army hat",1,5,5,'headwear',True,20)
 
 bicycle_helmet = Headwear("Bicycle helmet", "Bicycle helmet",4,5,5,'headwear',True,50)
 army_helmet = Headwear("Army helmet", "Army helmet",6,5,5,'headwear',True,100)
@@ -774,9 +775,8 @@ clown_mask = Facewear("Clown mask", "Clown mask",2,5,5,'facewear',True,80)
 
 #hands
 no_handwear = Hands("None", "None",1,5,5,'handwear',True,0)
-
+fingerless_gloves = Hands("Fingerless gloves", "Black glove",1,5,5,'handwear',True,10)
 black_gloves = Hands("Black gloves", "Black glove",1,5,5,'handwear',True,10)
-
 leather_gloves = Hands("Leather gloves", "Leather glove",2,5,5,'handwear',True,50)
 
 #legs
@@ -815,6 +815,7 @@ womens_footwear = [running_shoes,sandals,high_heels,light_boots,combat_boots,cow
 naked = Outfit("Naked", "Clothes",1,5,5,'outfit',True,0)
 tshirt = Outfit("T-Shirt", "Clothes",2,5,5,'outfit',True,25)
 dress_shirt = Outfit("T-Shirt", "Clothes",2,5,5,'outfit',True,25)
+plaid_shirt = Outfit("Plaid shirt", "Clothes",2,5,5,'outfit',True,30)
 
 dress = Outfit("Dress", "Clothes",2,5,5,'outfit',True,80)
 sweater = Outfit("Sweater", "Clothes",2,5,5,'outfit',True,50)
@@ -848,45 +849,46 @@ large_backpack = Backpack('Large backpack',7,5,130,'backpack',True)
 
 #traits
 class Trait:
-	def __init__(self,name,description):
+	def __init__(self,name,description,base_value):
 		self.name = name
 		self.decription = description
+		self.base_value = base_value
 
 #personality traits
-alcoholic = Trait("Alcoholic","Alcoholic")
-alert = Trait("Alert","Alert")
-aloof = Trait("Aloof","Aloof")
-angry = Trait("Angry","Angry")
-blowhard = Trait("Blowhard","Blowhard")
-bratty = Trait("Bratty","Bratty")
-calm = Trait("Calm","Calm")
-carefree = Trait("Carefree","Carefree")
-cautious = Trait("Causious","Cautious")
-cocky = Trait("Cocky","Cocky")
-creative = Trait("Creative", "Creative")
-demonic = Trait("Demonic","Demonic")
-devious = Trait("Devious","Devious")
-depressed = Trait("Depressed", "Depressed")
-dramatic = Trait("Dramatic","Dramatic")
-emotional = Trait("Emotional","Emotional")
-empathic = Trait("Empathic", "Empathic")
-evil = Trait("Evil","Evil")
-fearful = Trait("Fearful","Fearful")
-flaky = Trait("Flaky","Flaky")
-furry = Trait("Furry","Furry")
-generous = Trait("Generous","Generous")
-gloomy = Trait("Gloomy", "Gloomy")
-goofy = Trait("Goofy","Goofy")
-helpful = Trait("Helpful","Helpful")
-horny = Trait("Always Horny", "Horny")
-irritable = Trait('Irritable','Irritable')
-late = Trait("Always late","Always late")
-lazy = Trait("Lazy", "Lazy")
-nauseous = Trait('Nauseous','Nauseous')
-sadist = Trait("Sadist","Sadist")
-smoker = Trait("Smoker", "Smoker")
-stoner = Trait("Stoner", "Stoner")
-tremors = Trait('Tremors', 'Tremors')
+alcoholic = Trait("Alcoholic","Alcoholic",0)
+alert = Trait("Alert","Alert",0)
+aloof = Trait("Aloof","Aloof",0)
+angry = Trait("Angry","Angry",0)
+blowhard = Trait("Blowhard","Blowhard",0)
+bratty = Trait("Bratty","Bratty",0)
+calm = Trait("Calm","Calm",0)
+carefree = Trait("Carefree","Carefree",0)
+cautious = Trait("Causious","Cautious",0)
+cocky = Trait("Cocky","Cocky",0)
+creative = Trait("Creative", "Creative",0)
+demonic = Trait("Demonic","Demonic",0)
+devious = Trait("Devious","Devious",0)
+depressed = Trait("Depressed", "Depressed",0)
+dramatic = Trait("Dramatic","Dramatic",0)
+emotional = Trait("Emotional","Emotional",0)
+empathic = Trait("Empathic", "Empathic",0)
+evil = Trait("Evil","Evil",0)
+fearful = Trait("Fearful","Fearful",0)
+flaky = Trait("Flaky","Flaky",0)
+furry = Trait("Furry","Furry",0)
+generous = Trait("Generous","Generous",0)
+gloomy = Trait("Gloomy", "Gloomy",0)
+goofy = Trait("Goofy","Goofy",0)
+helpful = Trait("Helpful","Helpful",0)
+horny = Trait("Always Horny", "Horny",0)
+irritable = Trait('Irritable','Irritable',0)
+late = Trait("Always late","Always late",0)
+lazy = Trait("Lazy", "Lazy",0)
+nauseous = Trait('Nauseous','Nauseous',0)
+sadist = Trait("Sadist","Sadist",0)
+smoker = Trait("Smoker", "Smoker",0)
+stoner = Trait("Stoner", "Stoner",0)
+tremors = Trait('Tremors', 'Tremors',0)
 
 addiction_traits = [bratty,flaky,fearful,depressed,gloomy,late,lazy,angry,tremors,irritable,nauseous]
 
@@ -895,154 +897,151 @@ personality_traits = [alert,aloof,blowhard,cocky,creative,devious,dramatic,emoti
 
 
 #likes
-loves_cats = Trait("Loves cats", "Lazy")
-loves_dogs = Trait("Loves dogs", "Loves dogs")
-loves_metal = Trait("Loves metal","Loves metal")
-loves_rap = Trait("Loves rap","Loves rap")
-loves_country = Trait("Loves country","Loves country")
-loves_killing = Trait("Loves killing","Loves killing")
-loves_stealing = Trait("Loves stealing","Loves stealing")
-loves_art = Trait("Loves art","Loves art")
-loves_poetry = Trait("Loves poetry","Loves Poetry")
-loves_literature = Trait("Loves literature","Loves literature")
-loves_money = Trait("Loves money","Loves money")
-loves_drugs = Trait("Loves drugs","Loves drugs")
+loves_cats = Trait("Loves cats", "Lazy",0)
+loves_dogs = Trait("Loves dogs", "Loves dogs",0)
+loves_metal = Trait("Loves metal","Loves metal",0)
+loves_rap = Trait("Loves rap","Loves rap",0)
+loves_country = Trait("Loves country","Loves country",0)
+loves_killing = Trait("Loves killing","Loves killing",0)
+loves_stealing = Trait("Loves stealing","Loves stealing",0)
+loves_art = Trait("Loves art","Loves art",0)
+loves_poetry = Trait("Loves poetry","Loves poetry",0)
+loves_literature = Trait("Loves literature","Loves literature",0)
+loves_money = Trait("Loves money","Loves money",0)
+loves_drugs = Trait("Loves drugs","Loves drugs",0)
 
 likes = [loves_cats,loves_dogs,loves_metal,loves_rap,loves_country,loves_killing,loves_stealing,loves_art,loves_poetry,loves_literature,
 	loves_money,loves_drugs]
 
 #physical_traits
 
-pale_skin = Trait("Pale","Pale")
-fair_skin = Trait("Fair Skin","Fair skin")
-dark_skin = Trait("Dark skin","Dark skin")
-
-skin_types = [pale_skin,fair_skin,dark_skin]
 
 #height
-tall = Trait("Tall","Tall")
-short = Trait("Short","Short")
-average = Trait("Average Height","Average Height")
+tall = Trait("Tall","Tall",0)
+short = Trait("Short","Short",0)
+average = Trait("Average Height","Average Height",0)
 
 heights = [tall,short,average]
 
 #body
-skinny = Trait("Skinny","Skinny")
-thin = Trait("Thin","Thin")
-fat = Trait("Fat","Fat")
-muscular = Trait("Muscular","Muscular")
-stocky = Trait("Stocky","Stocky")
+skinny = Trait("Skinny","Skinny",0)
+thin = Trait("Thin","Thin",0)
+fat = Trait("Fat","Fat",0)
+muscular = Trait("Muscular","Muscular",0)
+stocky = Trait("Stocky","Stocky",0)
 
 body_types = [skinny,fat,muscular,stocky,thin]
 
 #shaved heads
-shaved_blonde_hair = Trait("Blonde Hair(Shaved)","Blonde Hair(Shaved)")
-shaved_brown_hair = Trait("Brown Hair(Shaved)","Brown Hair(Shaved")
-shaved_red_hair = Trait("Red Hair(Shaved", "Red Hair(Shaved")
-shaved_black_hair = Trait("Black Hair(Shaved","Black Hair(Shaved")
+shaved_blonde_hair = Trait("Blonde Hair(Shaved)","Blonde Hair(Shaved)",30)
+shaved_brown_hair = Trait("Brown Hair(Shaved)","Brown Hair(Shaved",30)
+shaved_red_hair = Trait("Red Hair(Shaved", "Red Hair(Shaved",30)
+shaved_black_hair = Trait("Black Hair(Shaved","Black Hair(Shaved",30)
 
 shaved_hair = [shaved_brown_hair,shaved_blonde_hair,shaved_red_hair,shaved_black_hair]
 
 #spiky hair
-spiky_blonde_hair = Trait("Blonde Hair(Spiky)","Blonde Hair(Spiky)")
-spiky_brown_hair = Trait("Brown Hair(Spiky)","Brown Hair(Spiky")
-spiky_red_hair = Trait("Red Hair(Spiky", "Red Hair(Spiky")
-spiky_black_hair = Trait("Black Hair(Spiky","Black Hair(Spiky")
-spiky_blue_hair = Trait("Blue Hair(Spiky)", "Blue Hair(Spiky")
-spiky_green_hair = Trait("Green Hair(Spiky)", "Green Hair(Spiky)")
+spiky_blonde_hair = Trait("Blonde Hair(Spiky)","Blonde Hair(Spiky)",30)
+spiky_brown_hair = Trait("Brown Hair(Spiky)","Brown Hair(Spiky",30)
+spiky_red_hair = Trait("Red Hair(Spiky", "Red Hair(Spiky",30)
+spiky_black_hair = Trait("Black Hair(Spiky","Black Hair(Spiky",30)
+spiky_blue_hair = Trait("Blue Hair(Spiky)", "Blue Hair(Spiky",30)
+spiky_green_hair = Trait("Green Hair(Spiky)", "Green Hair(Spiky)",30)
 
 spiky_hair = [spiky_blonde_hair,spiky_brown_hair,spiky_red_hair,spiky_blue_hair,spiky_green_hair]
 
 #short hair
-short_blonde_hair = Trait("Blonde Hair(Short)","Blonde Hair(Short)")
-short_brown_hair = Trait("Brown Hair(Short)","Brown Hair(Short)")
-short_red_hair = Trait("Red Hair(Short)", "Red Hair(Short)")
-short_black_hair = Trait("Black Hair(Short)","Black Hair(Short)")
-short_blue_hair = Trait("Blue Hair(Short)", "Blue Hair(Short)")
-short_green_hair = Trait("Green Hair(Short)", "Green Hair(Short)")
+short_blonde_hair = Trait("Blonde Hair(Short)","Blonde Hair(Short)",30)
+short_brown_hair = Trait("Brown Hair(Short)","Brown Hair(Short)",30)
+short_red_hair = Trait("Red Hair(Short)", "Red Hair(Short)",30)
+short_black_hair = Trait("Black Hair(Short)","Black Hair(Short)",30)
+short_blue_hair = Trait("Blue Hair(Short)", "Blue Hair(Short)",30)
+short_green_hair = Trait("Green Hair(Short)", "Green Hair(Short)",30)
 
 short_hair = [short_blonde_hair,short_brown_hair,short_red_hair]
 
 
 #long hair
-long_blonde_hair = Trait("Blonde Hair(Long)","Blonde Hair(Long)")
-long_brown_hair = Trait("Brown Hair(Long)","Brown Hair(Long)")
-long_red_hair = Trait("Red Hair(Long)", "Red Hair(Long)")
-long_black_hair = Trait("Black Hair(Long)","Black Hair(Long)")
-long_blue_hair = Trait("Blue Hair(Long)", "Blue Hair(Long)")
-long_green_hair = Trait("Green Hair(Long)", "Green Hair(Long)")
+long_blonde_hair = Trait("Blonde Hair(Long)","Blonde Hair(Long)",30)
+long_brown_hair = Trait("Brown Hair(Long)","Brown Hair(Long)",30)
+long_red_hair = Trait("Red Hair(Long)", "Red Hair(Long)",30)
+long_black_hair = Trait("Black Hair(Long)","Black Hair(Long)",30)
+long_blue_hair = Trait("Blue Hair(Long)", "Blue Hair(Long)",30)
+long_green_hair = Trait("Green Hair(Long)", "Green Hair(Long)",30)
 
 long_hair = [long_blonde_hair,long_brown_hair,long_red_hair]
 
 #parted hair
-parted_blonde_hair = Trait("Blonde Hair(Parted)","Blonde Hair(Parted)")
-parted_brown_hair = Trait("Brown Hair(Parted)","Brown Hair(Parted)")
-parted_red_hair = Trait("Red Hair(Parted)", "Red Hair(Parted)")
-parted_black_hair = Trait("Black Hair(Parted)","Black Hair(Parted)")
+parted_blonde_hair = Trait("Blonde Hair(Parted)","Blonde Hair(Parted)",30)
+parted_brown_hair = Trait("Brown Hair(Parted)","Brown Hair(Parted)",30)
+parted_red_hair = Trait("Red Hair(Parted)", "Red Hair(Parted)",30)
+parted_black_hair = Trait("Black Hair(Parted)","Black Hair(Parted)",30)
 
 parted_hair = [parted_blonde_hair,parted_brown_hair,parted_red_hair,parted_black_hair]
 
 #mohawks
-mohawk_blonde_hair = Trait("Blonde Hair(Mohawk)","Blonde Hair(Mohawk)")
-mohawk_brown_hair = Trait("Brown Hair(Mohawk)","Brown Hair(Mohawk)")
-mohawk_red_hair = Trait("Red Hair(Mohawk)", "Red Hair(Mohawk)")
-mohawk_black_hair = Trait("Black Hair(Mohawk)","Black Hair(Mohawk)")
+mohawk_blonde_hair = Trait("Blonde Hair(Mohawk)","Blonde Hair(Mohawk)",30)
+mohawk_brown_hair = Trait("Brown Hair(Mohawk)","Brown Hair(Mohawk)",30)
+mohawk_red_hair = Trait("Red Hair(Mohawk)", "Red Hair(Mohawk)",30)
+mohawk_black_hair = Trait("Black Hair(Mohawk)","Black Hair(Mohawk)",30)
 
 mohawk_hair = [mohawk_blonde_hair,mohawk_brown_hair,mohawk_red_hair,mohawk_black_hair]
 
 #braids
-braided_blonde_hair = Trait("Blonde Hair(Braids)","Blonde Hair(Braids)")
-braided_brown_hair = Trait("Brown Hair(Braids)","Brown Hair(Braids)")
-braided_red_hair = Trait("Red Hair(Braids)", "Red Hair(Braids)")
-braided_black_hair = Trait("Black Hair(Braids)","Black Hair(Braids)")
+braided_blonde_hair = Trait("Blonde Hair(Braids)","Blonde Hair(Braids)",60)
+braided_brown_hair = Trait("Brown Hair(Braids)","Brown Hair(Braids)",60)
+braided_red_hair = Trait("Red Hair(Braids)", "Red Hair(Braids)",60)
+braided_black_hair = Trait("Black Hair(Braids)","Black Hair(Braids)",60)
 
 braided_hair = [braided_blonde_hair,braided_brown_hair,braided_red_hair,braided_black_hair]
 
 
 #eyes
-blue_eyes = Trait("Blue Eyes", "Blue Eyes")
-brown_eyes = Trait("Brown Eyes","Brown Eyes")
-green_eyes = Trait("Green Eyes","Green Eyes")
-light_blue_eyes = Trait("Blue Eyes(Light)", "Blue Eyes(Light)")
-light_brown_eyes = Trait("Brown Eyes(Light)","Brown Eyes(Light)")
-light_green_eyes = Trait("Green Eyes(Light)","Green Eyes(Light)")
-dark_blue_eyes = Trait("Blue Eyes(Dark)", "Blue Eyes(Dark)")
-dark_brown_eyes = Trait("Brown Eyes(Dark)","Brown Eyes(Dark)")
-dark_green_eyes = Trait("Green Eyes(Dark)","Green Eyes(Dark")
+blue_eyes = Trait("Blue Eyes", "Blue Eyes",0)
+brown_eyes = Trait("Brown Eyes","Brown Eyes",0)
+green_eyes = Trait("Green Eyes","Green Eyes",0)
+light_blue_eyes = Trait("Blue Eyes(Light)", "Blue Eyes(Light)",0)
+light_brown_eyes = Trait("Brown Eyes(Light)","Brown Eyes(Light)",0)
+light_green_eyes = Trait("Green Eyes(Light)","Green Eyes(Light)",0)
+dark_blue_eyes = Trait("Blue Eyes(Dark)", "Blue Eyes(Dark)",0)
+dark_brown_eyes = Trait("Brown Eyes(Dark)","Brown Eyes(Dark)",0)
+dark_green_eyes = Trait("Green Eyes(Dark)","Green Eyes(Dark",0)
 eyes = [blue_eyes,brown_eyes,green_eyes,light_blue_eyes,light_brown_eyes,light_green_eyes,dark_green_eyes,dark_blue_eyes,dark_brown_eyes]
 
 #flair
-earrings = Trait('Earrings', 'Earrings')
+earrings = Trait('Earrings', 'Earrings',75)
 
-nose_ring = Trait('Nose ring', 'Nose ring')
-tattoo_face = Trait("Face tattoos", "Face tattoos")
-tattoo_arms = Trait("Sleeve tattoos", "Sleeve tattoos")
-tattoo_neck = Trait("Tattooed neck", "Tattooed neck")
-tattoo_knuckles = Trait("Tattooed knuckles", "Tattooed knuckles")
-tattoo_dragon = Trait("Tattoo(Dragon)", "Tattoo(Dragon)")
-tattoo_skull = Trait("Tattoo(Dragon)", "Tattoo(Skull)")
-tattoo_unicorn = Trait("Tattoo(Unicorn)", "Tattoo(Unicorn)")
-tattoo_heart = Trait("Tattoo(Heart)", "Tattoo(Heart)")
-tattoo_mom = Trait("Tattoo(Mom)", "Tattoo(Mom)")
-tattoo_teardrop = Trait("Tattoo(Teardrop)", "Tattoo(Teardop)")
-tattoo_tribal = Trait("Tattoo(Tribal)", "Tattoo(Tribal)")
-tattoo_butterfly = Trait("Tattoo(Butterfly)", "Tattoo(Butterfly)")
+nose_ring = Trait('Nose ring', 'Nose ring',130)
+tattoo_face = Trait("Face tattoos", "Face tattoos",200)
+tattoo_arms = Trait("Sleeve tattoos", "Sleeve tattoos",3000)
+tattoo_neck = Trait("Tattooed neck", "Tattooed neck",350)
+tattoo_knuckles = Trait("Tattooed knuckles", "Tattooed knuckles",300)
+tattoo_dragon = Trait("Tattoo(Dragon)", "Tattoo(Dragon)",400)
+tattoo_skull = Trait("Tattoo(Skull)", "Tattoo(Skull)",375)
+tattoo_unicorn = Trait("Tattoo(Unicorn)", "Tattoo(Unicorn)",600)
+tattoo_heart = Trait("Tattoo(Heart)", "Tattoo(Heart)",250)
+tattoo_mom = Trait("Tattoo(Mom)", "Tattoo(Mom)",200)
+tattoo_teardrop = Trait("Tattoo(Teardrop)", "Tattoo(Teardop)",40)
+tattoo_tribal = Trait("Tattoo(Tribal)", "Tattoo(Tribal)",400)
+tattoo_butterfly = Trait("Tattoo(Butterfly)", "Tattoo(Butterfly)",275)
 
+possible_tattoos = [earrings,nose_ring,tattoo_face,tattoo_arms,tattoo_neck,tattoo_knuckles,tattoo_dragon,tattoo_skull,tattoo_unicorn,tattoo_heart,
+tattoo_mom,tattoo_teardrop,tattoo_tribal,tattoo_butterfly]
 
-gold_teeth = Trait("Gold teeth", "Gold teeth")
+gold_teeth = Trait("Gold teeth", "Gold teeth",5000)
 
-scars = Trait('Scars', 'Scars')
+scars = Trait('Scars', 'Scars',0)
 
 flair = [earrings,nose_ring,tattoo_face,tattoo_arms,scars,tattoo_neck,tattoo_knuckles,gold_teeth,tattoo_dragon,tattoo_skull,tattoo_unicorn,tattoo_heart,
 	tattoo_mom, tattoo_teardrop,tattoo_tribal,tattoo_butterfly]
 
 #bionic_limbs
-bionic_right_eye = Trait('Bionic Eye(Right)', 'Bionic Eye')
-bionic_left_eye = Trait('Bionic Eye(Left)', 'Bionic Eye')
-bionic_right_arm = Trait('Bionic Arm(Right)', 'Bionic Arm(Right)')
-bionic_left_arm = Trait('Bionic Arm(Left)', 'Bionic Arm(Left)')
-bionic_right_leg = Trait('Bionic Leg(Right)', 'Bionic Leg(Right)')
-bionic_left_leg = Trait('Bionic Leg(Left)', 'Bionic Leg(Left)')
+bionic_right_eye = Trait('Bionic Eye(Right)', 'Bionic Eye',5000)
+bionic_left_eye = Trait('Bionic Eye(Left)', 'Bionic Eye',5000)
+bionic_right_arm = Trait('Bionic Arm(Right)', 'Bionic Arm(Right)',15000)
+bionic_left_arm = Trait('Bionic Arm(Left)', 'Bionic Arm(Left)',15000)
+bionic_right_leg = Trait('Bionic Leg(Right)', 'Bionic Leg(Right)',15000)
+bionic_left_leg = Trait('Bionic Leg(Left)', 'Bionic Leg(Left)',15000)
 
 bionic_limbs = [bionic_right_eye,bionic_left_eye,bionic_right_arm,bionic_left_arm,bionic_right_leg,bionic_left_leg]
 
@@ -1355,9 +1354,9 @@ def gen_player_weapons(class_type):
 
 def gen_player_outfit(class_type,gender):
 	if gender == "Male":
-		outfits = [tshirt,sweater,hoodie,leather_jacket,dress_shirt]
+		outfits = [tshirt,sweater,hoodie,leather_jacket,dress_shirt,plaid_shirt]
 	elif gender == "Female":
-		outfits = [dress,tshirt,hoodie]
+		outfits = [dress,tshirt,hoodie,leather_jacket,sweater]
 	outfit = random.choice(outfits)
 
 	chance_headwear = random.randint(1,3)
@@ -1371,7 +1370,11 @@ def gen_player_outfit(class_type,gender):
 		eyewear = sunglasses
 	else:
 		eyewear = no_eyewear
-	handwear = no_handwear
+	chance_handwear = random.randint(1,9)
+	if chance_handwear == 1:
+		handwear = fingerless_gloves
+	else:
+		handwear = no_handwear
 	if gender == "Male":
 		legwear = random.choice(mens_legwear)
 		footwear = random.choice(mens_footwear)
@@ -1887,12 +1890,19 @@ def create_npc(profession,affiliation,home):
                 outfit,headwear,facewear,eyewear,handwear,legwear,footwear = gen_player_outfit(profession,gender)
 
 		if profession == "Crankenstein" or profession == "Crankenstein Leader" or profession == "Crankenstein Enforcer":
-			headwear = beret
+			headwear = army_hat
 			outfit = body_armor
 			facewear = balaclava
 			footwear = combat_boots
 			legwear = camo_pants
 			handwear = black_gloves
+                elif profession == "Pissboi" or profession == "Pissboi Leader" or profession == "Pissboi Enforcer":
+                        headwear = cowboy_hat
+                        outfit = plaid_shirt
+                        facewear = clown_mask
+                        footwear = running_shoes
+                        legwear = jeans
+                        handwear = fingerless_gloves
 		elif profession == "Marxist":
 			outfit = army_uniform
 		elif profession == "Nudist":
@@ -2187,7 +2197,7 @@ def gen_thrift_store(x,y):
         actors = NPC([],0,[],0)
 
 	building = Location("Thrift Store",'Templeville','Cliff Heights','Thrift Store',x,y,actors,[counter,chair],False,[],True,[knife,baseball_bat,crowbar,shovel,tshirt,
-	sweater,hoodie,cheap_suit,dress_shirt,trenchcoat,leather_jacket,army_uniform,dress,shorts,jeans,track_pants,camo_pants,short_skirt,long_skirt,leggings,khakis,light_boots,running_shoes,dress_shoes,cowboy_boots,high_heels,sandals,baseball_cap,headband,dad_hat,toque,cowboy_hat,balaclava,black_gloves,sunglasses,sleeping_bag,rope],False,False,[],13,23,False,[],False,[],False,False,'No one',[],[],None,False)
+	sweater,hoodie,cheap_suit,dress_shirt,plaid_shirt,trenchcoat,leather_jacket,army_uniform,dress,shorts,jeans,track_pants,camo_pants,short_skirt,long_skirt,leggings,khakis,light_boots,running_shoes,dress_shoes,cowboy_boots,high_heels,sandals,baseball_cap,headband,dad_hat,toque,cowboy_hat,army_hat,balaclava,fingerless_gloves,black_gloves,sunglasses,sleeping_bag,rope],False,False,[],13,23,False,[],False,[],False,False,'No one',[],[],None,False)
         return building
 #bar
 def gen_bar(x,y):
@@ -2236,7 +2246,7 @@ def gen_barber_shop(x,y):
         actors = NPC([],0,[],0)
 
         building = Location("Barber shop",'Templeville','Cliff Heights','Doctor',x,y,actors,[counter],False,[],True,[],False,True,
-        [],13,23,False,[],False,[],False,False,'No one',[],[],None,False)
+        [haircuts],13,23,False,[],False,[],False,False,'No one',[],[],None,False)
         return building
 def gen_doctor(x,y):
         actors = NPC([],0,[],0)
