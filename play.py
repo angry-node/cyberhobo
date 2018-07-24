@@ -309,7 +309,7 @@ def num_to_letter(num):
 
 def show_areas(party,world,start):
 	libtcod.console_clear(0)
-	my_area = find_area(party,world)
+	my_area = start
 	my_location = find_location(party,world)
 	line_count = 1
 	libtcod.console_print(0,1,line_count,world.name)
@@ -405,9 +405,12 @@ def faction_attack(party,world,faction,attacker,my_location):
 
 # t r a v e l
 def travel(party,world,start,my_area):
+	starting_area = my_area
+	start_location = find_location(party,world)
 	def show_locations():
 		#libtcod.console_clear(0)
 	        libtcod.console_print(0,1,1, my_location.area)
+                libtcod.console_print(0,43,1, '[ESC]')
 
 		locations = []
 		for location in my_area.locations:
@@ -417,12 +420,12 @@ def travel(party,world,start,my_area):
 		letter = " "
 		for location in locations:
 			line = count + 5
-			print count
+			#print count
 			letter = num_to_letter(count)
 	                option = [letter,location]
 			options.append(option)
-			print location.name
-			print my_location.name
+			#print location.name
+			#print my_location.name
 			if location.name == my_location.name and my_location.items == location.items and my_location.actors == location.actors:
 				string = '[' + letter + '] ' + location.name + "*"
 				width = len(string)
@@ -501,47 +504,90 @@ def travel(party,world,start,my_area):
                 start_area_y = party.area_y
                 libtcod.console_clear(0)
                 options,my_area = show_locations()
+		new_area = my_area
                 show_map(options)
-		return options,start_area,start_area_x,start_area_y
-
-	my_location = find_location(party,world)
-	options,start_area,start_area_x,start_area_y = main_menu(my_area,party,world,my_location)
-        finished_action = False
-	new_area = False
-        while finished_action == False:
-		#libtcod.console_clear(0)
-		#show_map()
-		#options, my_area = show_locations()
-                libtcod.console_flush()
-                key = libtcod.console_check_for_keypress()
-		for option in options:
-			#print option[0]
-                	if key.c == ord(option[0]):
-                        	#print 'option a'
-				party.location = option[1]
-				my_area = find_area(party,world)
-				action = True
-				finished_action = True
-			elif key.c== ord('/'):
-				libtcod.console_clear(0)
-				my_location,my_area = show_areas(party,world,start)
-				finished = False
-				while finished == False:
-                                	options,start_area,start_area_x,start_area_y = main_menu(my_area,party,world,my_location)
-					libtcod.console_flush()
-					finished2 = False
-					while finished2 == False:
-                			#	#libtcod.console_flush()
-                				key = libtcod.console_check_for_keypress()
+		return options,start_area,start_area_x,start_area_y,new_area
+	def travel_menu(my_location,my_area,party,world):
+		my_location = find_location(party,world)
+		options,start_area,start_area_x,start_area_y,new_area = main_menu(my_area,party,world,my_location)
+        	finished_action = False
+		new_area =find_area(party,world)
+		new_area = my_area
+        	while finished_action == False:
+			#libtcod.console_clear(0)
+			#show_map()
+			#options, my_area = show_locations()
+        	        libtcod.console_flush()
+               		key = libtcod.console_check_for_keypress()
+			for option in options:
+				#print option[0]
+                		if key.c == ord(option[0]):
+                	        	#print 'option a'
+					party.location = option[1]
+					my_area = find_area(party,world)
 					
-                				for option in options:
-                        				if key.c == ord(option[0]):
-                                				party.location = option[1]
-                                				my_area = find_area(party,world)
-                                				action = True
-                                				finished_action = True
-								finished,finished2 = True,True
+					my_location = party.location
+					new_location = option[1]
+					#action = True
+					finished_action = True
+					print my_location.name
+					print my_area.name
+                       		        return my_location,my_area,False,start_area,start_area_x,start_area_y,my_area,new_location,True
 
+                        	elif key.vk == libtcod.KEY_ESCAPE:
+                        	        my_area = find_area(party,world)
+					new_location = party.location
+	                	        return my_location,start_area,True,start_area,start_area_x,start_area_y,start_area,new_location,True
+
+				elif key.c== ord('/'):
+					libtcod.console_clear(0)
+					my_location,my_area = show_areas(party,world,start_area)
+					new_location = my_location
+					#party.location = my_location2
+					#party.area = my_area2.name
+					#my_area = find_area(party,world)
+					finished_action = False
+                                        return my_location,my_area,False,start_area,start_area_x,start_area_y,my_area,new_location,False
+
+					#while finished == False:
+                                	#	options2,start_area2,start_area_x,start_area_y,new_area = main_menu(my_area,party,world,my_location)
+					#	start_area = start_area2
+					#	libtcod.console_flush()
+					#	finished2 = False
+					#	while finished2 == False:
+                				#	#libtcod.console_flush()
+                			#		key2 = libtcod.console_check_for_keypress()
+						
+                			#		for option2 in options2:
+                        		#			if key2.c == ord(option2[0]):
+				         #                               #print 'option a'
+                                        #				party.location = option2[1]
+                                        #				my_area = find_area(party,world)
+
+                                        #				my_location = party.location
+                                        #				new_location = option2[1]
+                                        				#action = True
+                                        #				finished_action = True
+                                        #				print my_location.name
+                                        #				print my_area.name
+                                        #				return my_location,my_area,False,start_area,start_area_x,start_area_y,my_area,new_location
+
+					#			elif key2.vk == libtcod.KEY_ESCAPE:
+					#				my_area = starting_area
+					#				new_location = party.location
+					#				my_location = new_location
+					#				#party.area = my_area
+					#		                return my_location,starting_area,True,start_area,start_area_x,start_area_y,start_area,new_location
+	my_location = party.location
+	finished_selection = False
+	while finished_selection == False:
+		my_location,my_area,exit,start_area,start_area_x,start_area_y,new_area,new_location,finished_selection = travel_menu(my_location,my_area,party,world)
+	if exit == True:
+		return my_location,True,my_area
+	else:
+		action = True
+	start = start_location
+	party.location = new_location
 	#get distance to destination
 	if start.x >= party.location.x + 1:
 		x_distance = start.x - party.location.x
@@ -569,7 +615,7 @@ def travel(party,world,start,my_area):
 	if area_distance >= 1:
 		distance = distance + (area_distance * 16)
 	print distance
-	print action
+	#print action
 	if action == True:
 		amount_travelled = 0
 		areas_travelled = 0
@@ -638,7 +684,7 @@ def travel(party,world,start,my_area):
 						#break
 		
 			#check for angry factions
-			my_area = find_area(party,world)
+			#my_area = find_area(party,world)
 			angry_factions = []
 			for organization in my_area.organizations:
 				if organization.player_reputation <= -20:
@@ -656,6 +702,7 @@ def travel(party,world,start,my_area):
 							attacker = random.choice(my_area.randos)
 						else:
 							attacker = random.choice(faction.footsoldiers)
+							attacker = attacker[0]
 						attackers.append(attacker)
 						attacker_count += 1
 					attacker_party = NPC(attackers,500,[],50)
@@ -724,7 +771,7 @@ def travel(party,world,start,my_area):
                         	        except:
 						count += 1
                         	#my_location.actors = NPC(regulars,0,[],0)
-			my_area = find_area(party,world)
+			#my_area = find_area(party,world)
 			#amount_travelled += 1
 		#print my_location
 			libtcod.console_clear(0)
@@ -738,9 +785,14 @@ def travel(party,world,start,my_area):
 			print distance
 			amount_travelled += 1
 		turn_finished = True
-
+		#print my_area.name
+		print my_location.name
+		print start_location.name
 		save_game()
 		libtcod.console_clear(0)
+	        print start_area.name
+        	print my_area.name
+
 		return my_location, turn_finished, my_area
 
 # T U R N
@@ -841,9 +893,9 @@ def gen_character(profession,gender):
 	strength, dexterity, intelligence, willpower, charisma = gen_player_stats(profession)
         skills = gen_skills(profession)
         weapon = gen_player_weapons(profession)
-	if weapon.name == 'Punch':
+	if weapon.name == 'Punch' or weapon.name == "Brass knuckles":
 		skills.brawl = random.randint(1,3)
-        elif weapon.name == "Knife" or weapon.name == 'Sword':
+        elif weapon.name == "Knife" or weapon.name == 'Sword' or weapon.name == 'Machete':
 		skills.blade = random.randint(1,3) 
 	elif weapon.name == "Crowbar" or weapon.name == "Baseball bat" or weapon.name == "Shovel":
         	skills.blunt = random.randint(1,3)
@@ -981,7 +1033,8 @@ def create_party(player):
 			drugs = []
 			traits = gen_player_traits(gender)
 			affiliation = 'Player Organization'
-			combat_status = Combat_Status(False,False,False,False,False)
+	                combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False)
+
 	                #mind
 	                happiness = random.randint(40,100)
 	                stress = random.randint(0,25)
@@ -1282,7 +1335,8 @@ def main_menu():
 		stats = Stats(strength, dexterity, intelligence, willpower, charisma, strength, dexterity, intelligence,willpower,charisma)
 		max_health = stats.strength * 10
 		health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100)
-		combat_status = Combat_Status(False,False,False,False,False)
+                combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False)
+
                 #mind
                 happiness = random.randint(40,100)
                 stress = random.randint(0,30)
@@ -1318,7 +1372,8 @@ def main_menu():
 		possible_outerwear = [trenchcoat,leather_jacket,cheap_suit,sports_jacket]
 		outerwear = random.choice(possible_outerwear)
 		armor = no_armor
-
+                #traits = set(traits)
+                #traits = list(traits)
                 player = Char(gender, age, profession,affiliation,health, stats,[], skills,skills_xp,weapon,outfit,None,traits,drugs,fname,lname,money,'player',combat_status,home,mind,hunger,thirst,sleep,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor)
 		#player_party, world = create_party(player)
 		return player
@@ -1339,6 +1394,7 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 	attack_finished = False
 	libtcod.console_clear(0)
 	line_count = 1
+	just_set_on_fire = False
 	target_chosen = False
 	possible_targets = []
 	target_name = target.fname + " " + target.lname
@@ -1376,6 +1432,8 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
                 attacker_skill = attacker.skills.shotgun
         elif attacker.weapon.weapon_type == "rifle":
                 attacker_skill = attacker.skills.rifle
+        elif attacker.weapon.weapon_type == "throw":
+                attacker_skill = attacker.skills.throw
         improve_skill_roll = random.randint(1,30)
         if improve_skill_roll <= attacker.stats.intelligence:
 		if attacker.weapon.weapon_type == "brawl":
@@ -1386,7 +1444,8 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 		        attacker.skills.shotgun += 1
 		elif attacker.weapon.weapon_type == "rifle":
 		        attacker.skills.rifle += 1
-
+		elif attacker.weapon.weapon_type == 'throw':
+			attacker.skills.throw += 1
 
 	#attack roll
 	attack_roll = random.randint(1,10) + attacker_skill
@@ -1422,6 +1481,14 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 		#give an injury
 		if attacker.weapon.name == "Punch" and damage_taken >= 1:
 			injury = random.choice(bruises)
+
+		elif attacker.weapon.name == 'Brass knuckles':
+			injury_types = ['bruise','fracture']
+			injury_type = random.choice(injury_types)
+			if injury_type == 'bruise':
+				injury = random.choice(bruises)
+			elif injury_type == 'fracture':
+				injury = random.choice(fractures)
 		elif attacker.weapon.name == "Knife" and damage_taken >= 1:
 			attack_types = ['major cut','minor cut','stab']
 			attack_type = random.choice(attack_types)
@@ -1431,7 +1498,7 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 				injury = random.choice(minor_cuts)
 			elif attack_type == 'stab':
 				injury = random.choice(stab_wounds)
-                elif attacker.weapon.name == "Sword" and damage_taken >= 1:
+                elif attacker.weapon.name == "Sword" or attacker.weapon.name == 'Machete' and damage_taken >= 1:
                         attack_types = ['major cut','minor cut','stab','sever']
                         attack_type = random.choice(attack_types)
                         if attack_type == 'major cut':
@@ -1518,9 +1585,17 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
                                                 exists = True
                                 limb = Limb(target_name,injury.name,injury.location,'limb',True,100)
                                 my_location.items.append(limb)
-
-
-
+		elif attacker.weapon.name == 'Molotov' and damage_taken >= 1:
+			injury = random.choice(burns)
+			chance_set_on_fire = random.randint(1,2)
+			if chance_set_on_fire == 1 and target.combat_status.on_fire == False:
+				just_set_on_fire = True
+				target.combat_status.on_fire = True
+                elif attacker.weapon.name == 'Shuriken' and damage_taken >= 1:
+			if damage_taken <= 30:
+                        	injury = random.choice(minor_cuts)
+			elif damage_taken >= 31:
+				injury = random.choice(major_cuts)
 
 		min_bonus_damage = injury.damage_bonus / 2
 		max_bonus_damage = injury.damage_bonus 
@@ -1610,6 +1685,9 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 		if target.combat_status.knocked_down == True and target.health.current_health >= 1 and just_knocked_down == True:
 			libtcod.console_print(0,1,line_count,target.fname + " " + target.lname + " was knocked down.")
 			line_count += 1
+		if target.combat_status.on_fire == True:
+                        libtcod.console_print(0,1,line_count,target.fname + " " + target.lname + " is on fire.")
+                        line_count += 1
 		#is target dead?
 		
 		for injury in target.injuries:
@@ -1663,7 +1741,7 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 		roll = random.randint(1,2)
                 chance_increase = random.randint(1,8)
                 if chance_increase == 1 and controller == 'player':
-                        libtcod.console_print(0,1,line_count,target.fname + " " + target.lname + "'s " + attacker.weapon.weapon_type + " increased.")
+                        libtcod.console_print(0,1,line_count,attacker.fname + " " + attacker.lname + "'s " + attacker.weapon.weapon_type + " increased.")
                         line_count += 1
 
 		
@@ -1676,7 +1754,7 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 		chance_increase = random.randint(1,to_increase)
 		if chance_increase == 1 and controller == 'enemy':
 			target.skills.dodge += 1
-                	libtcod.console_print(0,1,line_count,target.fname + " " + target.lname + "'s dodge skill is now "+ str(target.skills.dodge) + ".")
+                	libtcod.console_print(0,1,line_count,attacker.fname + " " + attacker.lname + "'s dodge skill is now "+ str(target.skills.dodge) + ".")
 			line_count += 1
 
 
@@ -1760,7 +1838,7 @@ def player_battle_attack(attacker,player,enemy,controller,my_location,world,show
         elif attacker.combat_status.knocked_down == True and attacker.health.current_health >= 1 and attacker.health.current_stamina <= 0 and passed_pain == False:
                 if controller == "player":
                         libtcod.console_set_default_foreground(0, libtcod.green)
-                        libtcod.console_print(0,1,1, attacker.fname + " " + attacker.lname + " does not have enough stamina and is in too much pain  to get up.")
+                        libtcod.console_print(0,1,1, attacker.fname + " " + attacker.lname + " does not have enough stamina and is in too much pain to get up.")
                         libtcod.console_set_default_foreground(0, libtcod.white)
 
                 elif controller == "enemy":
@@ -1797,6 +1875,13 @@ def player_battle_attack(attacker,player,enemy,controller,my_location,world,show
                                 move_finished = True
                                 return attack_finished,move_finished
 
+        elif attacker.combat_status.knocked_down == False and attacker.health.current_health >= 1 and attacker.health.current_stamina >= 1 and attacker.combat_status.on_fire == True:
+		chance_put_out_flames = random.randint(1,2)
+		if chance_put_out_flames == 1:
+                        libtcod.console_print(0,1,1, attacker.fname + " " + attacker.lname + " is no longer on fire")
+			attacker.on_fire = False
+		else:
+                        libtcod.console_print(0,1,1, attacker.fname + " " + attacker.lname + " is still on fire!")
 
 
 
@@ -1889,8 +1974,8 @@ def player_battle_turn(member,player,enemy,my_location,world,True,party_actions)
                         my_location.corpses.append(member)
                         my_location.items.append(member.weapon)
 			member.weapon = punch
-                        my_location.items.append(member.outfit)
-			member.outfit = naked
+                        #my_location.items.append(member.outfit)
+			#member.outfit = naked
 			if member.controlled_by == 'enemy':
                         	player.money += member.start_money
 				enemy.members.remove(member)
@@ -1910,6 +1995,46 @@ def player_battle_turn(member,player,enemy,my_location,world,True,party_actions)
                         	        attack_finished = True
                         	        move_finished = True
 					return attack_finished
+                #check if anyone burned to death
+		if member.combat_status.on_fire == True:
+			damage = random.randint(5,15)
+			member.health.current_health -= damage
+			injury = random.choice(burns)
+			member.injuries.append(injury)
+                if member.health.current_health <= 0:
+                        libtcod.console_clear(0)
+                        libtcod.console_set_default_foreground(0, libtcod.orange) 
+                        libtcod.console_print(0,1,1,member.fname + " " + member.lname + " burned to death.")
+                        libtcod.console_set_default_foreground(0, libtcod.white) 
+
+                        libtcod.console_print(0,1,3,"[c]ontinue")
+                        libtcod.console_flush()
+                        my_location.corpses.append(member)
+                        my_location.items.append(member.weapon)
+                        member.weapon = punch
+                        #my_location.items.append(member.outfit)
+                        #member.outfit = naked
+                        if member.controlled_by == 'enemy':
+                                player.money += member.start_money
+				if enemy in enemy.members:
+                                	enemy.members.remove(member)
+                                party_actions.kills += 1
+                        elif member.controlled_by == "player":
+                                #remove from team
+                                try:
+                                        player.members.remove(member)
+                                except:
+                                        print 'error?'
+
+                        confirmed = False
+                        while confirmed == False:
+                                key = libtcod.console_check_for_keypress()
+                                if key.c == ord('c'):
+                                        libtcod.console_clear(0)
+                                        attack_finished = True
+                                        move_finished = True
+                                        return attack_finished
+
 
 
 		if member.controlled_by == "player":
@@ -1923,13 +2048,22 @@ def player_battle_turn(member,player,enemy,my_location,world,True,party_actions)
         		libtcod.console_print(0,24,line_count,member.profession)
         		libtcod.console_print(0,39,line_count,member.outfit.name)
         		libtcod.console_print(0,56,line_count,member.weapon.name)
-			libtcod.console_print(0,66,line_count,str(member.skills.brawl))
+			#libtcod.console_print(0,66,line_count,str(member.skills.brawl))
+			if member.combat_status.on_fire == True:
+				line_count += 2
+                        	libtcod.console_set_default_foreground(0, libtcod.orange) 
+                                libtcod.console_print(0,1,line_count,'ON FIRE')
+                                libtcod.console_set_default_foreground(0, libtcod.white) 
 
+
+				
         		line_count += 2
-			if member.combat_status.knocked_down == False:
+			if member.combat_status.knocked_down == False and member.combat_status.on_fire == False:
 				libtcod.console_print(0,1,line_count,'[a]ttack')
 			elif member.combat_status.knocked_down == True:
 				libtcod.console_print(0,1,line_count,'[g]et up!')
+			elif member.combat_status.knocked_down == False and member.combat_status.on_fire == True:
+				libtcod.console_print(0,1,line_count,'[p]ut out the flames!')
 			libtcod.console_flush()
 	
 			key = libtcod.console_check_for_keypress()
@@ -1938,6 +2072,10 @@ def player_battle_turn(member,player,enemy,my_location,world,True,party_actions)
 				attack_finished = False
 				move_finished = True
                         elif key.c == ord('g') and member.combat_status.knocked_down == True:
+                                libtcod.console_clear(0)
+                                attack_finished = False
+                                move_finished = True
+			elif key.c == ord('p') and member.combat_status.knocked_down == False and member.combat_status.on_fire == True:
                                 libtcod.console_clear(0)
                                 attack_finished = False
                                 move_finished = True
@@ -2361,7 +2499,21 @@ def handle_npcs(party,world):
         for actor in my_location.actors.members:
 		my_area.randos.append(actor)
 		my_location.actors.members.remove(actor)
-
+	#check for footsoliders who live here
+	for footsoldier in world.player_organization.footsoldiers:
+		chance = 1
+		if chance == 1:
+			#print footsoldier[0].fname + " " + footsoldier[0].lname
+ 
+			#print my_location
+			print my_location.name
+			if type(footsoldier[0].home) is str:
+				if footsoldier[0].home == my_location.name:
+					regulars.append(footsoldier[0])
+			else:
+				if footsoldier[0].home.name == my_location.name:
+					print footsoldier[0].fname + " " + footsoldier[0].lname
+					regulars.append(footsoldier[0])
         my_area = find_area(party,world)
 
 	#who owns this location
@@ -2377,7 +2529,7 @@ def handle_npcs(party,world):
 						while owners_added <= num_here:
 							if len(organization.footsoldiers) >= 1:
 								footsoldier = random.choice(organization.footsoldiers)
-								regulars.append(footsoldier)
+								regulars.append(footsoldier[0])
 							owners_added += 1
 
 
@@ -2456,14 +2608,20 @@ def rest(party,world,hours,guard):
 		owned = False
 		#do we own this location
 		for location in world.player_organization.locations_owned:
-			if location == my_location:
-				owned = True
-		drugs_value = party.money
-		for item in party.inventory:
-			drugs_value += item.base_value
+			if location == my_location and location.name != "Your Squat":
+				drugs_value = party.money
+				for item in party.inventory:
+					drugs_value += item.base_value
+                drugs_value = party.money
+	        for item in party.inventory:
+        		drugs_value += item.base_value
+
                 #chance to be robbed
                 if my_location.owned_by != 'No one':
+
 	                chance = random.randint(1,40)
+			if my_location.name == 'My Squat':
+				chance = random.randint(1,55)
                         if chance == 1:
         	                for organization in my_area.organizations:
                 	                if organization.name == my_location.owned_by and organization.player_reputation <= 24:
@@ -2480,7 +2638,7 @@ def rest(party,world,hours,guard):
 
 		#did anyone steal from us
 		steal_chance = random.randint(1,50)
-		if steal_chance == 1 and owned == False and guard == 'No one':
+		if steal_chance == 1 and owned == False and guard == 'No one' and my_location.name != 'Your Squat':
 			items_to_steal = []
 			for item in party.inventory:
 				items_to_steal.append(item)
@@ -2651,6 +2809,7 @@ def robbery(player_party,world,faction,party_actions):
 				faction_here = organization.name
 				while robber_count <= num_robbers:
 					robber = random.choice(organization.footsoldiers)
+					robber = robber[0]
 					robbers.append(robber)
 					robber_count += 1
 		robbers_party = NPC(robbers,100 * num_robbers,[],3 * num_robbers)
@@ -3035,14 +3194,19 @@ def make_safehouse(party,world):
 	libtcod.console_clear(0)
 	my_location = find_location(party,world)
 	my_area = find_area(party,world)
+	price= my_area.price
 	vacant_apt = False
 	#print location.name
 	if party.location.name == "Vacant Apartment":
 		vacant_apt = True
-		libtcod.console_print(0,1,1,"It will close $2000/month and a $2000 deposit to rent this apartment.")
+		libtcod.console_print(0,1,1,"It will cost $" + str(price) + " and a $" + str(price) + " deposit to rent this apartment.")
 		libtcod.console_print(0,1,3,"[r]ent, [b]ack")
+        elif party.location.name == "Abandoned Apartment":
+                vacant_apt = True
+                libtcod.console_print(0,1,1,"Do you want to squat here?.")
+                libtcod.console_print(0,1,3,"[y]es, [n]o")
 	else:
-		libtcod.console_print(0,1,1, "This isn't a apartment you can rent.")
+		libtcod.console_print(0,1,1, "This isn't a apartment you can rent or squat.")
 		libtcod.console_print(0,1,3, "[b]ack")
 	libtcod.console_flush()
 	while finished_safehouse == False:
@@ -3050,17 +3214,30 @@ def make_safehouse(party,world):
 		if key.c == ord('b'):
 			finished_safehouse = True
 			return finished_safehouse
-		if key.c == ord('r') and party.location.name == "Vacant Apartment" and party.money >= 4000:
-			party.money -= 4000
+		if key.c == ord('r') and party.location.name == "Vacant Apartment" and party.money >= (price * 2):
+			party.money -= (price * 2)
 			party.location.is_safehouse = True
 			party.location.items.append(bed)
 			party.location.owned_by = 'Player'
 			party.location.name = 'Your Apartment'
 			world.player_organization.locations_owned.append(party.location)
 			world.player_organization.rent_paid = "True"
+			world.player_organization.rent_amount += price
 			world.player_organization.month = world.time.month
 			finished_safehouse = True
 			return finished_safehouse
+		elif key.c == ord('y') and party.location.name == "Abandoned Apartment":
+                        party.location.is_safehouse = True
+                        party.location.owned_by = 'Player'
+                        party.location.name = 'Your Squat'
+                        world.player_organization.locations_owned.append(party.location)
+                        #world.player_organization.rent_paid = "True"
+                        world.player_organization.month = world.time.month
+                        world.player_organization.rent_paid = "True"
+
+                        finished_safehouse = True
+
+                        return finished_safehouse
 def furnish_safehouse(party,world):
 	my_apartment = False
 	libtcod.console_clear(0)
@@ -3263,13 +3440,70 @@ def show_wait(party,world):
                         wait(party,world,8)
                         finished_resting = True
                         return finished_resting
+def show_homes(footsoldier,world):
+        libtcod.console_clear(0)
+	options = []
+	if len(world.player_organization.locations_owned) <= 0:
+		libtcod.console_print(0, 1, 1,"You own no locations.")
+	elif len(world.player_organization.locations_owned) >= 1:
+        	libtcod.console_print(0, 1, 1,"HOMES:")
+		options = []
+		count = 1
+		for location in world.player_organization.locations_owned:
+			letter = num_to_letter(count)
+			option = [letter,location]
+			options.append(option)
+	                libtcod.console_print(0, 1,count+1,"[" + letter + "] " + location.name)
+			count += 1
+        libtcod.console_print(0, 1, 8,"[ESC]")
 
+        libtcod.console_flush()
+
+        finished_viewing = False
+        while finished_viewing == False:
+                key = libtcod.console_check_for_keypress()
+                if key.vk == libtcod.KEY_ESCAPE:
+                        #print 'b'
+                        finished_viewing = True
+                        return finished_viewing
+		for option in options:
+			if key.c == ord(option[0]):
+				location.is_apt = True
+				footsoldier[2] = location
+				footsoldier[0].home = location
+				
+				finished_viewing = True
+				return finished_viewing
+
+def show_orders(footsoldier,world):
+	target = footsoldier[0]
+	orders = footsoldier[1]
+	home = footsoldier[2]
+	libtcod.console_clear(0)
+        libtcod.console_print(0, 1, 1,"ORDERS:")
+        libtcod.console_print(0, 1, 3,"[a] assign home")
+        libtcod.console_print(0, 1, 4,"[b] beg for money")
+        libtcod.console_print(0, 1, 5,"[c] pickpocket")
+        libtcod.console_print(0, 1, 6,"[d] deal drugs")
+        libtcod.console_print(0, 1, 8,"[ESC]")
+
+	libtcod.console_flush()
+
+        finished_viewing = False
+        while finished_viewing == False:
+                key = libtcod.console_check_for_keypress()
+                if key.vk == libtcod.KEY_ESCAPE:
+                        #print 'b'
+                        finished_viewing = True
+                        return finished_viewing
+		if key.c == ord('a'):
+			finished_viewing = show_homes(footsoldier,world)
 def show_character(target,world,corpse,my_location,player_party,creation):
 	libtcod.console_clear(0)
         libtcod.console_print(0, 1, 1,target.fname + " " + target.lname)
         libtcod.console_print(0, 1, 2, target.profession)
         libtcod.console_print(0, 1, 3, target.gender)
-        libtcod.console_print(0, 1, 4, "Age: " + str(target.age))
+        libtcod.console_print(0, 1, 5, "Age: " + str(target.age))
 	if target.headwear.name != 'None':
 	        libtcod.console_print(0, 25, 1, target.headwear.name)
         elif target.headwear.name == 'None':
@@ -3326,7 +3560,7 @@ def show_character(target,world,corpse,my_location,player_party,creation):
 
 	if player_party.leader == target:
 	        libtcod.console_set_default_foreground(0, libtcod.green)
-        	libtcod.console_print(0, 1, 5, 'Leader')
+        	libtcod.console_print(0, 10, 5, 'Leader')
                 libtcod.console_set_default_foreground(0, libtcod.white)
 
 	#drug_count = 1
@@ -3512,20 +3746,33 @@ def show_character(target,world,corpse,my_location,player_party,creation):
         libtcod.console_print(0,55,40, str(target.skills.throw))
         libtcod.console_print(0,55,41, str(target.skills.torture))
 
+	if type(my_location) is str:
+        	libtcod.console_print(0,40,13, "Location:" + my_location.name)
+	#elif type(my_location) is list:
+	#	print my_location
+         #       libtcod.console_print(0,40,13, "Location:" + my_location[0])
 
-	libtcod.console_print(0,1,48, "[b]ack")
+
+	libtcod.console_print(0,1,47, "[ESC]")
 	if corpse == True:
-		libtcod.console_print(0,20,48, "[s]trip")
+		libtcod.console_print(0,1,48, "[s]trip")
+	footsoldier = None
+	for footsoldier in world.player_organization.footsoldiers:
+		if footsoldier[0] == target:
+                	libtcod.console_print(0,01,47, "[o]rders")
+			footsoldier = footsoldier
 
 	libtcod.console_flush()
 
 	finished_viewing = False
 	while finished_viewing == False:
 		key = libtcod.console_check_for_keypress()
-		if key.c == ord('b'):
+		if key.vk == libtcod.KEY_ESCAPE:
 			#print 'b'
 			finished_viewing = True
 			return finished_viewing
+		if key.c == ord('o') and footsoldier != None:
+			finished_viewing = show_orders(footsoldier,world)
 		elif key.c == ord('s') and corpse == True:
 			if target.outfit.name != 'None':
 				my_location.items.append(target.outfit)
@@ -4225,7 +4472,8 @@ def show_dismiss(player,world):
 			for option in options:
 				if key.c == ord(option[0]):
 					#my_location.actors.members.append(option[0])
-					world.player_organization.footsoldiers.append(option[1])
+					footsoldier = [option[1], 'No orders','No home']
+					world.player_organization.footsoldiers.append(footsoldier)
 					find_home = False
 					while find_home == False:
 						if len(world.player_organization.locations_owned) >= 1:
@@ -4235,7 +4483,7 @@ def show_dismiss(player,world):
 							find_home = True
 						else:
 							my_area = find_area(player,world)
-							my_area.append(option[1])
+							my_area.randos.append(option[1])
 							find_home = True
 					player.members.remove(option[1])
 					choice_made = True
@@ -5072,7 +5320,10 @@ def conversation(char,target,player,world,location):
 	line_count += 1
 	libtcod.console_print(0,1,line_count, "[b] rob them.")
         line_count += 1
-        libtcod.console_print(0,1,line_count, "[c] recruit them.")
+	if target in world.player_organization.footsoldiers[0]:
+        	libtcod.console_print(0,1,line_count, "[c] rejoin party.")
+	else:
+        	libtcod.console_print(0,1,line_count, "[c] recruit them.")
 
 	line_count += 2
 	libtcod.console_print(0,1,line_count, "[r]eturn")
@@ -5086,9 +5337,13 @@ def conversation(char,target,player,world,location):
                 elif key.c == ord('c') and len(player.members) <= 8:
 			
 		        libtcod.console_clear(0)
-		        libtcod.console_print(0,1,line_count, char.fname + " " + char.lname + " attempts to recruit " + target.fname + " " + target.lname + ".")
-		        line_count += 1
-      			libtcod.console_print(0,1,line_count, char.fname + " " + char.lname + " succeeded!")
+			if target in world.player_organization.footsoldiers[0]:
+	                        libtcod.console_print(0,1,line_count, target.fname +" " + target.lname + " rejoins your party.")
+				#world.player_organization.footsoldiers[0].remove(target)
+			else:
+			        libtcod.console_print(0,1,line_count, char.fname + " " + char.lname + " attempts to recruit " + target.fname + " " + target.lname + ".")
+			        line_count += 1
+      				libtcod.console_print(0,1,line_count, char.fname + " " + char.lname + " succeeded!")
        			line_count += 2
         		libtcod.console_print(0,1,line_count, "[r]eturn")
         		libtcod.console_flush()
@@ -5104,6 +5359,9 @@ def conversation(char,target,player,world,location):
 	        		        #world.organization.footsoldiers.append(target)
 	        		        player.members.append(target)
 	        		        location.actors.members.remove(target)
+					for footsoldier in world.player_organization.footsoldiers:
+						if footsoldier[0] == target:
+							world.player_organization.footsoldiers.remove(footsoldier)
 					for area in world.areas:
 						for organization in area.organizations:
 							if organization.name == target.affiliation:
@@ -5205,9 +5463,10 @@ def speak(player,world,location):
 
 
 #loot
-def loot(party,world):
+def loot(party,world,party_actions):
 	finished_loot = False
 	my_location = find_location(party,world)
+	my_area = find_area(party,world)
 	items_to_loot = []
 	for item in my_location.items:
 		if item.item_type == 'junk' and item.can_loot == True:
@@ -5248,16 +5507,47 @@ def loot(party,world):
 		#choice_made = True
 		for option in options:
 	               	if key.c == ord("r"):
-	                       	finished_loot,choice_made == True
+	                       	finished_loot,choice_made = True,True
 	                       	libtcod.console_clear(0)
 	                       	return finished_loot,finished_loot
 			elif key.c == ord(option[0]):
 				print option[1].name
 				#item = item[1]
-				party.inventory.append(option[1])
-				my_location.items.remove(option[1])
-				libtcod.console_clear(0)
-				return finished_loot,finished_loot
+				owners_here = False
+				attackers = []
+				for member in my_location.actors.members:
+					if member.home == my_location:
+						attackers.append(member)
+						owners_here = True
+					elif member.affiliation == my_location.owned_by:
+						attackers.append(member)
+						owners_here = True
+				
+				if owners_here == False:
+					party.inventory.append(option[1])
+					my_location.items.remove(option[1])
+					libtcod.console_clear(0)
+					return finished_loot,finished_loot
+				elif owners_here == True:
+					decided = False
+                                        libtcod.console_clear(0)
+                                        libtcod.console_print(0,1, 1, "That's my " + option[1].name + ", asshole!")
+                                        libtcod.console_print(0,1, 3, "[f]ight, [l]eave)")
+                                        libtcod.console_flush()
+					my_location.actors.members = attackers
+					decision = False
+					while decision == False:
+						key = libtcod.console_check_for_keypress()
+						if key.c == ord('f'):
+							battle(party,my_location.actors,my_location,world,True,party_actions)
+							libtcod.console_clear(0)
+							finished_loot,choice_made = True,True
+							return finished_loot,finished_loot
+						elif key.c == ord('l'):
+							travel(party,world,my_location,my_area)
+                                                        libtcod.console_clear(0)
+                                                        finished_loot,choice_made = True,True
+                                                        return finished_loot,finished_loot
 
 def show_rooms(party,world,my_location):
 	libtcod.console_clear(0)
@@ -5290,7 +5580,8 @@ def check_rent(player_party,world):
 	if world.time.day == 1 and world.player_organization.rent_checked == False:
 		if len(world.player_organization.locations_owned) >= 1:
 			for location in world.player_organization.locations_owned:
-				world.player_organization.rent_due.append(location)
+				if location.name != 'Your Squat':
+					world.player_organization.rent_due.append(location)
 			world.player_organization.rent_paid = False
 			world.player_organization.rent_checked = True
 			return world.player_organization.rent_checked 
@@ -5300,28 +5591,27 @@ def show_organization(party,world):
 	finished_organization = False
 	line_count = 1
 	my_location = find_location(party,world)
-	if len(world.player_organization.hq) >= 1:
-                libtcod.console_print(0,1,line_count,'HEADQUARTERS:')
-		line_count += 1
-		for hq in world.player_organization.hq:
-                        libtcod.console_print(0,1,line_count,hq.name)
-			line_count = 1
-	elif len(world.player_organization.hq) <= 0 and len(world.player_organization.locations_owned) >= 1:
-	        libtcod.console_print(0,1,line_count,'No headquarters. [a]ssign')
-		line_count += 2
-
+	my_area = find_area(party,world)
 
 	if len(world.player_organization.locations_owned) >= 1:
+                libtcod.console_print(0,1,line_count,'LOCATIONS:')
+                line_count += 2
+		my_location = []
+		count = 1
 		for location in world.player_organization.locations_owned:
-                        libtcod.console_print(0,1,line_count,'LOCATIONS:')
-			line_count += 2
-			libtcod.console_print(0,1,line_count,location.name)
-			libtcod.console_print(0,20,line_count, "$2000/month")
+			libtcod.console_print(0,1,line_count,"[" + str(count) + "]" + location.name)
+
 			line_count += 1
-			if world.player_organization.rent_paid == False:
-				line_count += 1
-				libtcod.console_print(0,1,line_count,"Rent is due!")
-				line_count += 1
+			count += 1
+		print world.player_organization.rent_amount
+		line_count +=1
+                libtcod.console_print(0,1,line_count,"$" + str(world.player_organization.rent_amount))
+
+		if world.player_organization.rent_paid == False:
+			line_count += 2
+			libtcod.console_print(0,1,line_count,"Rent is due!")
+			line_count += 1
+
 	else:
 		libtcod.console_print(0,1,line_count,"You own no locations")
 		line_count += 1
@@ -5334,17 +5624,22 @@ def show_organization(party,world):
 		line_count += 2
 		my_footsoldiers = []
 		footsoldier_count = 1
+		real_footsoldier_count = 1
 		for footsoldier in world.player_organization.footsoldiers:
-			letter = num_to_letter(footsoldier_count)
-			option = [letter,footsoldier]
-                	libtcod.console_print(0,1,line_count,'[' + letter + '] ' + footsoldier.fname + ' ' + footsoldier.lname)
-                        libtcod.console_print(0,30,line_count,footsoldier.profession)
-	                libtcod.console_print(0,45,line_count,footsoldier.outfit.name)
-                        libtcod.console_print(0,60,line_count,footsoldier.weapon.name)
+			letter = num_to_letter(real_footsoldier_count)
+			option = [letter,footsoldier[0],footsoldier[1],footsoldier_count,footsoldier_count+1]
+                	libtcod.console_print(0,1,line_count,'[' + letter + '] ' + footsoldier[0].fname + ' ' + footsoldier[0].lname)
+                        libtcod.console_print(0,30,line_count,footsoldier[0].profession)
+	                libtcod.console_print(0,45,line_count, footsoldier[1])
+			if footsoldier[2] == 'No home' or footsoldier[2] == None:
+	                        libtcod.console_print(0,65,line_count, 'No home')
+			else:
+                                libtcod.console_print(0,65,line_count, footsoldier[2].name)
+
 			my_footsoldiers.append(option)
 			line_count += 1
-			footsoldier_count += 1
-
+			footsoldier_count += 2
+			real_footsoldier_count += 1
         elif len(world.player_organization.footsoldiers) <= 0:
                 libtcod.console_print(0,1,line_count,"You have no footsoldiers.")
 		my_footsoldiers = []
@@ -5359,7 +5654,10 @@ def show_organization(party,world):
 			finished_organization == True
 			return True
 		elif key.c == ord('p') and world.player_organization.rent_paid == False:
-			rent = 2000 * len(world.player_organization.locations_owned)
+			#places_rented = []
+			#for place in world.player_organization.locations_owned:
+			
+			rent = world.player_organization.rent_amount
 			if party.money >= rent:
 				party.money -= rent
 				world.player_organization.rent_paid = True
@@ -5406,7 +5704,10 @@ def party_turn(player_party,world,party_actions):
 	world.player_organization.check_rent = check_rent(player_party,world)
 	check_evicted(player_party,world)
 #describe the location
-	
+	#make sure no one is still on fire
+	for member in player_party.members:
+		if member.combat_status.on_fire == True:
+			member.combat_status.on_fire = False
 	turn_finished = False
 	described = False
 	while described == False:
@@ -5771,6 +6072,7 @@ def party_turn(player_party,world,party_actions):
 		show_options(my_location,line_count)
 		describe_options = True
 	action  = False
+	exit = False
         while action == False:
 		#get a decision
                 libtcod.console_flush()
@@ -5804,7 +6106,7 @@ def party_turn(player_party,world,party_actions):
 
 			if looting == True:
 				while finished_loot ==  False:
-					finished_loot = loot(player_party,world)
+					finished_loot = loot(player_party,world,party_actions)
 				looting = False
 			action = True
 
@@ -5875,12 +6177,13 @@ def party_turn(player_party,world,party_actions):
 				action = True
 
 
-
-
+		if key.vk == libtcod.KEY_ESCAPE:
+			exit = True
+			action = True
 			#finished_turn = True
 			#if finished_showing == True:
 			#	described = False
-		
+	return action, exit
 
 #start the game
 game = Game(True, True)
@@ -5933,7 +6236,10 @@ def run():
 				#save_game()
 				#world,player_party = load_game()
 				my_location = find_location(player_party,world)
-				turn_finished = party_turn(player_party,world,party_actions)
+				turn_finished,exit = party_turn(player_party,world,party_actions)
+				if exit == True:
+                                        libtcod.console_clear(0)
+                                        game.running,game.starting,confirm = True,True,True
 		confirm = False
 		libtcod.console_clear(0)
 		while game.running == True and game.starting == False and confirm == False and len(player_party.members) <= 0:
