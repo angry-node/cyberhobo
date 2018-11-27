@@ -23,10 +23,11 @@ class Party:
 		self.area_y = area_y
 
 class Party_Actions:
-	def __init__(self,days_survived,kills,stealing,drug_dealing,kidnapping,torture,citizens_killed,faction_members_killed):
+	def __init__(self,days_survived,kills,stealing,robbery,drug_dealing,kidnapping,torture,citizens_killed,faction_members_killed):
 		self.days_survived = days_survived
 		self.kills = kills
 		self.stealing = stealing
+		self.robbery = robbery
 		self.drug_dealing = drug_dealing
 		self.kidnapping = kidnapping
 		self.torture = torture
@@ -43,7 +44,7 @@ class NPC:
 #is_player,leader,members,location,area,district,money,inventory,safehouse,fame
 
 class Char:
-	def __init__(self, gender,age, profession,affiliation, health, stats, injuries, skills,skills_xp,weapon,outfit,tool,traits,drugs,fname,lname,start_money,controlled_by,combat_status,home,mind,hunger,thirst,sleep,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor):
+	def __init__(self, gender,age, profession,affiliation, health, stats, injuries, skills,skills_xp,weapon,outfit,tool,traits,drugs,fname,lname,start_money,controlled_by,combat_status,home,mind,hunger,thirst,sleep,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor,driver,passenger):
 		self.gender = gender
 		self.age = age
 		self.profession = profession
@@ -85,6 +86,9 @@ class Char:
 
 		self.outerwear = outerwear
 		self.armor = armor
+	
+		self.driver = driver
+		self.passenger = passenger
 
 		
 
@@ -124,6 +128,11 @@ class Char:
 			self.sleep -= 8
 
 		#pain
+                for injury in self.injuries:
+        	        #cause pain
+                	if injury.cause_pain >= 1:
+                        	self.health.current_pain += (injury.cause_pain / 2)
+
 		if self.health.current_pain <= 25:
 			base_happiness -= 2
 			base_stress += 3
@@ -223,6 +232,12 @@ class Char:
 					self.drugs.append(cocaine_withdrawl)
 				else:
 					self.drugs.remove(drug)
+				self.health.current_pain = 0
+				for injury in self.injuries:
+                			#cause pain
+                			if injury.cause_pain >= 1:
+                        			target.health.current_pain += (injury.cause_pain / 2)
+
 
 			elif drug.time_to_wear_off >= 2:
 				drug.time_to_wear_off -= 1
@@ -340,24 +355,149 @@ class Addiction:
 
 #starting_addictions = Addictions(cocaine_addiction,opiates_addiction,speed_addiction)
 
-
+#organizations
 
 class Organization:
-	def __init__(self,name,is_player,footsoldiers,player_reputation,hq,locations_owned,power,territory,rent_due,rent_paid,month,rent_checked,debts,rent_amount):
+	def __init__(self,name,is_player,footsoldiers,player_reputation,hq,locations_owned,power,territory,rent_due,rent_paid,month,rent_checked,debts,
+		rent_amount,items_bought,members_killed,theft_from,members_attacked,members_recruited,theft_on_turf,killed_on_turf,members_kidnapped,gifts):
 		self.name = name
 		self.is_player = is_player
 		self.footsoldiers = footsoldiers
 		self.player_reputation = player_reputation
+
 		self.hq = hq
 		self.locations_owned = locations_owned
 		self.power = power
 		self.territory = territory
+
 		self.rent_due = rent_due
 		self.rent_paid = rent_paid
 		self.month = month
 		self.rent_checked = rent_checked
 		self.debts = debts
 		self.rent_amount = rent_amount
+
+		self.items_bought = items_bought
+		self.members_killed = members_killed
+		self.theft_from = theft_from
+
+		self.members_attacked = members_attacked
+		self.members_recruited = members_recruited
+		self.theft_on_turf = theft_on_turf
+		self.killed_on_turf = killed_on_turf
+
+		self.members_kidnapped = members_kidnapped
+		self.gifts = gifts
+	def check_reputation(self,player,world):
+		items_bought_bonus = 0
+		killed_penalty = 0
+		theft_penalty = 0
+		members_attacked_penalty = 0
+		members_recruited_penalty = 0
+		theft_on_turf_penalty = 0
+		killed_on_turf_penalty = 0
+		#bonuses
+		if self.items_bought >= 10000:
+			items_bought_bonus += self.items_bought / 500
+		#penalties
+		killed_penalty -= self.members_killed * 3
+
+		if self.theft_from >= 100:
+			theft_penalty -= self.theft_from / 100
+
+		if self.members_attacked >= 1:
+			members_attacked_penalty -= self.members_attacked
+
+		if self.members_recruited >= 1:
+			members_recruited_penalty = self.members_recruited
+
+		if self.theft_on_turf >= 1000:
+			theft_on_turf_penalty = self.theft_on_turf / 1000
+
+		if self.killed_on_turf >= 1:
+			killed_on_turf_penalty = self.killed_on_turf
+
+		self.player_reputation = (items_bought_bonus + killed_penalty + theft_penalty + members_attacked_penalty + members_recruited_penalty + 
+					theft_on_turf_penalty + killed_on_turf_penalty) / 5
+
+#corporations
+
+class Corporation:
+	def __init__(self,name,industries,locations,debts,items_bought,members_killed,theft_from,members_attacked,members_recruited,theft_on_turf,killed_on_turf,members_kidnapped,gifts,player_reputation):
+		self.name = name
+		self.industries = industries
+		self.locations = locations
+
+		self.debts = debts
+                self.items_bought = items_bought
+                self.members_killed = members_killed
+                self.theft_from = theft_from
+
+                self.members_attacked = members_attacked
+                self.members_recruited = members_recruited
+                self.theft_on_turf = theft_on_turf
+                self.killed_on_turf = killed_on_turf
+
+                self.members_kidnapped = members_kidnapped
+                self.gifts = gifts
+		self.player_reputation = player_reputation
+        def check_reputation(self,player,world):
+                items_bought_bonus = 0
+                killed_penalty = 0
+                theft_penalty = 0
+                members_attacked_penalty = 0
+                members_recruited_penalty = 0
+                theft_on_turf_penalty = 0
+                killed_on_turf_penalty = 0
+                #bonuses
+                if self.items_bought >= 10000:
+                        items_bought_bonus += self.items_bought / 500
+                #penalties
+                killed_penalty -= self.members_killed * 4
+		#if self.members_killed >= 4:
+		#	self.members_killed = self.members_killed / 4
+                if self.theft_from >= 100:
+                        theft_penalty -= self.theft_from / 100
+
+                if self.members_attacked >= 1:
+                        members_attacked_penalty -= self.members_attacked
+
+                if self.members_recruited >= 1:
+                        members_recruited_penalty = self.members_recruited
+
+                if self.theft_on_turf >= 1000:
+                        theft_on_turf_penalty = self.theft_on_turf / 1000
+
+                if self.killed_on_turf >= 1:
+                        killed_on_turf_penalty = self.killed_on_turf
+
+                self.player_reputation = (items_bought_bonus + killed_penalty + theft_penalty + members_attacked_penalty + members_recruited_penalty + 
+                                        theft_on_turf_penalty + killed_on_turf_penalty) / 5
+#corporations
+
+
+#tech companies
+thetacom = Corporation('Thetacom',['Telecom'],[],[],0,0,0,0,0,0,0,0,0,0)  
+newgen_global = Corporation('NewGen',['Security','Big Data'],[],[],0,0,0,0,0,0,0,0,0,0)  
+facebook = Corporation('Facebook',['Social Media'],[],[],0,0,0,0,0,0,0,0,0,0)  
+twitter = Corporation('Twitter',['Social Media'],[],[],0,0,0,0,0,0,0,0,0,0)  
+aci_data = Corporation('ACI Data',['Big Data'],[],[],0,0,0,0,0,0,0,0,0,0)  
+google = Corporation('Google',['Big Data','Security'],[],[],0,0,0,0,0,0,0,0,0,0)  
+
+tech_corps = [thetacom,newgen_global,facebook,twitter,aci_data,google]
+
+#real estate
+united_solidarity = Corporation('United Solidarity',['Health', 'Big Data'],[],[],0,0,0,0,0,0,0,0,0,0)
+chh = Corporation('CHH',['Security', 'Big Data'],[],[],0,0,0,0,0,0,0,0,0,0)  
+gcw_global = Corporation('GCW Global',['Security'],[],[],0,0,0,0,0,0,0,0,0,0)  
+
+real_estate_corps = [united_solidarity,chh,gcw_global]
+
+corps = []
+for corp in real_estate_corps:
+	corps.append(corp)
+for corp in tech_corps:
+	corps.append(corp)
 class Loan:
 	def __init__(self,owed_to,loan_amount,amount_owed,time_due,min_rep):
 		self.owed_to = owed_to
@@ -381,12 +521,15 @@ class Footsoldier:
 		self.orders = orders
 		self.home = home
 class Permissions:
-	def __init__(self,can_eat,can_drink,can_buy_food,can_buy_drink):
+	def __init__(self,can_eat,can_drink,can_buy_food,can_buy_drink,can_use_drugs,can_rest,can_sleep):
 		self.can_eat = can_eat
 		self.can_drink = can_drink
 		self.can_buy_food = can_buy_food
 		self.can_buy_drink = can_buy_drink
-default_permissions = Permissions(True,True,False,False)
+		self.can_use_drugs = can_use_drugs
+		self.can_rest = can_rest
+		self.can_sleep = can_sleep
+default_permissions = Permissions(True,True,False,False,False,True,True)
 
 start_health = Health(100,100,100,100,100,100,0,0,100,0,0,100,100,100)
 
@@ -474,10 +617,11 @@ class Skill_Mod:
 
 class Combat_Status:
 	def __init__(self, knocked_down,stunned,defending,blind,unconscious,on_fire,concussion,gone_insane,turns_stunned,max_stunned,turns_blind,max_blind,
-			turns_on_fire,max_on_fire):
+			turns_on_fire,max_on_fire,tied_up,gagged):
 		self.knocked_down = knocked_down
 		self.stunned = stunned
 		self.defending = defending
+
 		self.blind = blind
 		self.unconscious = unconscious
 		self.on_fire = on_fire
@@ -490,6 +634,9 @@ class Combat_Status:
 		self.max_blind = max_blind
 		self.turns_on_fire = turns_on_fire
 		self.max_on_fire = max_on_fire
+
+		self.tied_up = tied_up
+		self.gagged = gagged
 #health mods
 class Health_Mod:
         def __init__(self, name, mod):
@@ -898,6 +1045,8 @@ jeans = Legs("Jeans", "Jeans",2,2,5,'legwear',True,30)
 ripped_jeans = Legs("Ripped jeans", "Ripped jeans",2,2,5,'legwear',True,45)
 khakis = Legs("Khakis", "Khakis",2,5,5,'legwear',True,45)
 camo_pants = Legs("Camo pants", "Camo pants",2,2,5,'legwear',True,15)
+black_pants = Legs("Black pants", "Black pants",2,2,5,'legwear',True,15)
+
 track_pants = Legs("Track pants", "Track pants",2,2,5,'legwear',True,15)
 suit_pants = Legs("Suit pants", "Suit pants",2,2,5,'legwear',True,90)
 work_pants = Legs("Work pants", "Work pants",2,2,5,'legwear',True,40)
@@ -941,8 +1090,8 @@ nice_dress = Outfit("Nice dress", "Clothes",1,5,5,'outfit',True,500)
 #outerwear
 no_outerwear = Outerwear("None", "Clothes",1,5,5,'outerwear',True,0)
 hoodie = Outerwear("Hoodie", "clothes",3,5,5,'outerwear',True,45)
-sweater = Outfit("Sweater", "Clothes",2,5,5,'outerwear',True,70)
-fancy_sweater = Outfit("Fancy sweater", "Clothes",2,5,5,'outerwear',True,100)
+sweater = Outerwear("Sweater", "Clothes",2,5,5,'outerwear',True,70)
+fancy_sweater = Outerwear("Fancy sweater", "Clothes",2,5,5,'outerwear',True,100)
 jean_jacket = Outfit("Jean jacket", "Clothes",2,5,5,'outerwear',True,50)
 bomber_jacket = Outfit("Bomber jacket", "Clothes",2,5,5,'outerwear',True,65)
 windbreaker = Outfit("Windbreaker", "Clothes",1,5,5,'outerwear',True,30)
@@ -1084,9 +1233,9 @@ body_types = [skinny,fat,muscular,stocky,thin]
 
 #shaved heads
 shaved_blonde_hair = Trait("Blonde Hair(Shaved)","Blonde Hair(Shaved)",30)
-shaved_brown_hair = Trait("Brown Hair(Shaved)","Brown Hair(Shaved",30)
-shaved_red_hair = Trait("Red Hair(Shaved", "Red Hair(Shaved",30)
-shaved_black_hair = Trait("Black Hair(Shaved","Black Hair(Shaved",30)
+shaved_brown_hair = Trait("Brown Hair(Shaved)","Brown Hair(Shaved)",30)
+shaved_red_hair = Trait("Red Hair(Shaved)", "Red Hair(Shaved)",30)
+shaved_black_hair = Trait("Black Hair(Shaved)","Black Hair(Shaved)",30)
 
 shaved_hair = [shaved_brown_hair,shaved_blonde_hair,shaved_red_hair,shaved_black_hair]
 
@@ -1626,7 +1775,7 @@ class Time:
                 self.day = day
                 self.hour = hour
 		self.minute = minute
-        def correct(self):
+        def correct(self,party_actions):
                 count = 1
                 while count <= 8:
                         if self.month >= 13:
@@ -1648,6 +1797,7 @@ class Time:
                         if self.hour >= 24:
                                 self.hour = 0
                                 self.day += 1
+				party_actions.days_survived += 1
 			if self.minute >= 60:
 				self.hour += 1
 				self.minute = 0
@@ -1717,11 +1867,12 @@ class Time:
 start_time = Time(2069,03,21,1,0)
 
 class City:
-	def __init__(self,areas,name,time,player_organization):
+	def __init__(self,areas,name,time,player_organization,corporations):
 		self.areas = areas
 		self.name = name
 		self.time = time
 		self.player_organization = player_organization
+		self.corporations = corporations
 
 class Area:
 	def __init__(self,locations,name,organizations,x,y,randos,price):
@@ -1764,7 +1915,7 @@ class Area:
 
 class Location:
 
-	def __init__(self,name,city,area,type,x,y,actors,items,is_safehouse,corpses,is_store,sold_here,can_sell,services,services_here,time_open,time_close,is_bar,regulars,is_entrance,rooms,is_library,is_hq,owned_by,bombs_here,floors,parent_location,is_apt):
+	def __init__(self,name,city,area,type,x,y,actors,items,is_safehouse,corpses,is_store,sold_here,can_sell,services,services_here,time_open,time_close,is_bar,regulars,is_entrance,rooms,is_library,is_hq,owned_by,bombs_here,floors,parent_location,is_apt,hidden_items,floor,is_exit):
 		self.name = name
 		self.city = city
 		self.area = area
@@ -1793,7 +1944,9 @@ class Location:
 		self.floors = floors
 		self.parent_location = parent_location
 		self.is_apt = is_apt
-
+		self.hidden_items = hidden_items
+		self.floor = floor
+		self.is_exit = is_exit
 class Container:
 	def __init__(self,name,item_type,items,money,is_visible,max_items,max_money,base_value,can_loot):
 		self.name = name
@@ -1874,6 +2027,9 @@ bed = Junk('Bed',500,'junk',False)
 bunk_bed = Junk('Bunk bed',700,'junk',False)
 
 table = Junk('Table',200,'junk',False)
+desk = Junk('Desk',200,'junk',False)
+bookshelf = Junk('Bookshelf',200,'junk',False)
+
 chair = Junk('Chair',50,'junk',True)
 rug = Junk('Rug',500,'junk',True)
 couch = Junk('Couch',400,'junk',False)
@@ -1904,6 +2060,12 @@ desktop_computer = Junk('Desktop computer',200,'junk',False)
 #gear
 sleeping_bag = Junk('Sleeping bag',80,'junk',True)
 rope = Junk('Rope',25,'junk',False)
+
+#computers
+laptop_computer = Junk('Laptop computer',500,'junk',True)
+tablet = Junk('Tablet computer',350,'junk',True)
+smartphone = Junk('Smartphone',350,'junk',True)
+
 
 area_id = 1
 location_id = 1
@@ -2030,7 +2192,7 @@ def create_npc(profession,affiliation,home):
 		#money
 		money = random.randint(50,200)
 		#combat status
-		combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False)
+		combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False)
 		#mind
 		happiness = random.randint(40,100)
 		stress = random.randint(0,20)
@@ -2065,9 +2227,169 @@ def create_npc(profession,affiliation,home):
 		#traits = set(traits)
 		#traits = list(traits)
 		#finally make the npc
-		npc = Char(gender,age, profession,affiliation,health, npc_stats, injuries, skills,skills_xp,weapon,outfit,tool,traits,drugs,fname,lname,money,'enemy',combat_status,home,mind,hunger,thirst,sleep,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor)
+		npc = Char(gender,age, profession,affiliation,health, npc_stats, injuries, skills,skills_xp,weapon,outfit,tool,traits,drugs,fname,lname,money,'enemy',combat_status,home,mind,hunger,thirst,sleep,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor,None,None)
 		return npc
-#crankenstein,sex worker,lost soul,gamer assassin,bike courier,script kiddie
+        elif profession == 'Telemarketer' or profession == 'Data Miner' or profession == 'Fast Food Worker' or profession == 'Fast Food Manager' or profession == 'Vlogger' or profession == 'Shopkeeper' or profession == 'Programmer' or profession == 'Janitor' or profession == 'Warehouse Worker' or profession == 'Warehouse Manager' or profession == 'Chatbot Operator' or profession =='Housekeeper' or profession == 'Bike Courier' or profession == 'Nurse' or profession == 'Hipster' or profession == 'Hippie' or profession == 'Stripper' or profession == 'Mechanic' or profession == 'Security Guard' or profession== 'Manager' or profession == 'Receptionist' or profession == 'Building Manager':
+		strength = random.randint(4,8)
+		base_strength = strength
+                dexterity = random.randint(4,8)
+                dexterity, base_dexterity = dexterity,dexterity
+                willpower = random.randint(5,15)
+                willpower, base_willpower = willpower,willpower
+                intelligence = random.randint(5,15)
+                intelligence, base_intelligence = intelligence,intelligence
+                charisma = random.randint(5,15)
+                charisma, base_charisma = charisma,charisma
+                max_health = strength * 10      
+                health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100)
+                health.current_stamina = random.randint(50,95)
+                npc_stats = Stats(strength, dexterity, intelligence, willpower, charisma, base_strength, base_dexterity, base_intelligence,base_willpower,base_charisma)
+                #injuries
+                injuries = []
+                #skills
+                brawl = 2
+                computers = random.randint(0,2)
+                dodge = random.randint(0,2)
+                disguise = random.randint(0,2)
+                etiquette = random.randint(0,2)
+                explosives = random.randint(0,2)
+                first_aid = random.randint(0,2)
+                investigate = random.randint(0,2)
+                leadership = random.randint(0,2)
+                lying = random.randint(0,2)
+                negotiate = random.randint(0,2)
+                rifle = random.randint(0,2)
+                pickpocket = random.randint(0,2)
+                pistol = random.randint(0,2)
+                persuasion = random.randint(0,2)
+                security = random.randint(0,2)          
+                seduction = random.randint(0,2)
+                shotgun = random.randint(0,2)
+                stealth = random.randint(0,2)
+                streetwise =  random.randint(0,2)
+                throw = random.randint(0,2)
+                torture = random.randint(0,2)
+                trivia = random.randint(0,2)
+                driving = random.randint(0,2)
+                blade = random.randint(0,2)
+                blunt = random.randint(0,2)
+
+                skills = Skills(brawl, computers, dodge, disguise, etiquette, explosives,first_aid, investigate, leadership,
+                lying, negotiate, rifle, pickpocket,pistol, persuasion, security, seduction, shotgun, stealth, streetwise, throw, torture, trivia,driving,blade,blunt)
+                skills_xp = Skills(brawl, computers, dodge, disguise, etiquette, explosives,first_aid, investigate, leadership,
+                lying, negotiate, rifle, pickpocket,pistol, persuasion, security, seduction, shotgun, stealth, streetwise, throw, torture, trivia,driving,blade,blunt)
+                #weapon
+                weapons = [punch]
+                weapon = random.choice(weapons)
+                if weapon.name =='Punch':
+                        skills.brawl = random.randint(1,3)
+                if weapon.name == "Knife" or weapon.name == 'Sword' or weapon.name == 'Machete':
+                        skills.blade = random.randint(1,3)
+                if weapon.name == "Crowbar" or weapon.name == "Baseball bat" or weapon.name == "Shovel":
+                        skills.blunt = random.randint(1,3)
+                elif weapon.name == "9mm Pistol" or weapon.name == "Uzi":
+                        skills.pistol = random.randint(1,3)
+                elif weapon.name == "12g Shotgun": 
+                        skills.shotgun = random.randint(1,3) 
+                elif weapon.name == "AK-47": 
+                        skills.rifle = random.randint(1,3) 
+
+                #outfit
+                #possible_outfits = [hoodie,tshirt,trenchcoat]
+                outfit,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor = gen_player_outfit(profession,gender)
+                #tool
+                tool = None
+                #traits
+                traits = gen_player_traits(gender)
+                #if profession.name == 'Lost Soul':
+                #       traits.append(demonic)
+                #drugs
+                drugs = []
+                chance = 3
+                roll = random.randint(1,3)
+                if roll == 3:
+                        possible_drugs = [crack,cocaine,weed,morphine,speed]
+                        new_drug = random.choice(possible_drugs)
+                        drugs.append(new_drug)
+                else:
+                        drugs = []
+                #name
+                if gender == 'Male':
+                        fname = random.choice(male_fnames)
+                elif gender == "Female":
+                        fname = random.choice(female_fnames)
+                lname = random.choice(surnames)
+                #money
+                money = random.randint(50,200)
+                #combat status
+                combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False)
+                #mind
+                happiness = random.randint(40,100)
+                stress = random.randint(0,20)
+                sanity = random.randint(40,100)
+                horny = random.randint(0,50)
+                #addictions
+                nicotine_addiction = Addiction('Nicotine',0,0,4,[])
+
+                for trait in traits:
+                        if trait.name == 'Smoker':
+                                nicotine_addiction = Addiction('Nicotine',0,random.randint(1,4),4,[])
+
+                caffeine_addiction = Addiction('Caffeine',0,0,2,[])
+                cocaine_addiction = Addiction('Cocaine',0,0,7,[])
+                opiates_addiction = Addiction('Opiates',0,0,10,[])
+                speed_addiction = Addiction('Speed',0,0,7,[])
+                #for trait in traits:
+                #       if trait.name == 'Loves drugs':
+                #               possible_drugs = [speed_addiction,opiates_addiction,cocaine_addiction]
+                #               drug = random.choice(possible_drugs)
+                #               drug.addiction_level = random.randint(2,5)
+
+                addictions = Addictions(cocaine_addiction,opiates_addiction,speed_addiction,caffeine_addiction,nicotine_addiction)
+                trauma = 0
+                mind = Mind(happiness,stress,sanity,horny,addictions,trauma)
+
+                hunger,thirst,sleep = random.randint(3,20),random.randint(6,40),random.randint(50,95)
+
+                #home
+                home = 'None'
+
+                if profession == "Security Guard":
+                        outfit = dress_shirt
+                        legwear = black_pants
+                        footwear = combat_boots
+                        handwear = black_gloves
+                        outerwear  = nice_suit
+                        skills.rifle = random.randint(2,5)
+                        weapon = ak47
+			skills.rifle += 3
+                        armor = body_armor
+                elif profession == "Receptionist":
+                        outfit = dress_shirt
+                        legwear = suit_pants
+                        footwear = dress_shoes
+                        outerwear  = nice_suit
+			weapon = punch
+                elif profession == "Manager":
+                        outfit = dress_shirt
+                        legwear = suit_pants
+                        footwear = dress_shoes
+                        outerwear  = nice_suit
+                        weapon = punch
+                elif profession == "Building Manager":
+                        outfit = dress_shirt
+                        legwear = suit_pants
+                        footwear = dress_shoes
+                        outerwear  = nice_suit
+                        weapon = punch
+                
+                #traits = set(traits)
+                #traits = list(traits)
+                #finally make the npc
+                npc = Char(gender,age, profession,affiliation,health, npc_stats, injuries, skills,skills_xp,weapon,outfit,tool,traits,drugs,fname,lname,money,'enemy',combat_status,home,mind,hunger,thirst,sleep,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor,None,None)
+
+                return npc
+
 	elif profession == "Gamer Assassin" or profession == "Flower Child" or  profession == "Pissboi Leader" or profession == "Pissboi Enforcer" or profession == 'Crankenstein' or profession == "Crankenstein Enforcer" or profession == "Crankenstein Leader" or profession == "Drunkard"  or profession == "Crackhead" or profession == "Drunkard" or profession == "Script Kiddie" or profession == "Crackhead" or profession == "Clerk" or profession == "Nudist" or profession == "Hobo" or  profession == "Rocker" or profession == "Marxist" or profession == 'Rude Boy' or profession == 'Grimesmacker' or profession == 'Cannibal' or profession == 'Slaver' or profession == 'Slave' or profession == 'Cat Person' or profession == 'Booze Knight' or profession == 'Anarchist'or profession == 'Mercenary' or profession == 'Occultist' or profession == 'Scavenger' or profession == 'Survivalist':
 		strength, base_strength = 9,9
 		dexterity, base_dexterity = 8,8
@@ -2279,7 +2601,7 @@ def create_npc(profession,affiliation,home):
         	lname = random.choice(surnames)
 		#money
 		money = random.randint(100,400)
-                combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False)
+                combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False)
 
                 #mind
                 happiness = random.randint(40,100)
@@ -2316,11 +2638,12 @@ def create_npc(profession,affiliation,home):
                 #traits = set(traits)
                 #traits = list(traits)
 		#finally make the npc
-		npc = Char(gender,age, profession,affiliation,health, npc_stats, injuries, skills,skills_xp,weapon,outfit,tool,traits,drugs,fname,lname,money,'enemy',combat_status,home,mind,hunger,thirst,sleep,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor)
+		npc = Char(gender,age, profession,affiliation,health, npc_stats, injuries, skills,skills_xp,weapon,outfit,tool,traits,drugs,fname,lname,money,'enemy',combat_status,home,mind,hunger,thirst,sleep,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor,None,None)
 		return npc
 
 
-
+workers = ['Telemarketer','Chatbot Operator','Fast Food Worker','Vlogger','Programmer','Janitor','Warehouse Worker','Housekeeper','Bike Courier', 'Nurse',
+	'Hippie','Security Guard','Stripper','Mechanic']
 
 #Cliff Heights
 
@@ -2372,6 +2695,7 @@ heroin = Medical('Heroin', 90,1,'medical',True,3,0)
 heroin_3g = Medical('Heroin', 90,3,'medical',True,3,0)
 heroin_7g = Medical('Heroin', 90,7,'medical',True,3,0)
 heroin_14g = Medical('Heroin', 90,14,'medical',True,3,0)
+heroin_28g = Medical('Heroin', 90,28,'medical',True,3,0)
 
 #withdrawls
 
@@ -2437,7 +2761,14 @@ def gen_abandoned_apt_building(x,y):
                		professions = ["Hustler","Meatball","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul"]
                		profession = random.choice(professions)
 			members = []
-               		member = create_npc(profession,'none','None')
+			member_valid = False
+			while member_valid == False:
+				try:
+               				member = create_npc(profession,'none','None')
+					print member
+					member_valid = True
+				except:
+					member_valid = False
                		members.append(member)
 			items.append(bed)
 			#occupant_count += 1
@@ -2451,7 +2782,7 @@ def gen_abandoned_apt_building(x,y):
                 #items.append(shower)
 
        		room = Location(apt_name,'Templeville','Cliff Heights',apt_name,x,y,actors,items,False,[],True,[],False,False,
-       		[],13,23,False,[],False,[],False,False,'No one',[],[],None,True)
+       		[],13,23,False,[],False,[],False,False,'No one',[],[],None,True,[],1,False)
 		room.is_bar = False
 		room.is_store = False
 		room.is_apt = False
@@ -2460,7 +2791,7 @@ def gen_abandoned_apt_building(x,y):
 
 	actors = NPC([],0,[],0)
         building = Location("Abandoned Apt. Building",'Templeville','Cliff Heights','Abandoned Apt. Building',x,y,actors,[],False,[],True,[],False,True,
-        [],13,23,False,[],False,rooms,False,False,'No one',[],floors,None,False)
+        [],13,23,False,[],False,rooms,False,False,'No one',[],floors,None,False,[],1,True)
 	for room in building.rooms:
 		#print room.name
 		room.parent_location = building
@@ -2526,9 +2857,9 @@ def gen_abandoned_building(is_safehouse,locations,name,x,y):
 #	y = random.randint(1,32)
 
 	if is_safehouse == True:
-		building = Location(str(name),'Templeville','Cliff Heights','Abandoned Building',x,y,actors,items,True,corpses,False,[],False,False,[],0,23,False,[],False,[],False,False,'No one',[],[],None,False)
+		building = Location(str(name),'Templeville','Cliff Heights','Abandoned Building',x,y,actors,items,True,corpses,False,[],False,False,[],0,23,False,[],False,[],False,False,'No one',[],[],None,False,[],1,True)
 	elif is_safehouse == False:
-		building = Location(str(name),'Templeville','Cliff Heights','Abandoned Building',x,y,actors,items,False,corpses,False,[],False,False,[],0,23,False,[],False,[],False,False,'No one',[],[],None,False)
+		building = Location(str(name),'Templeville','Cliff Heights','Abandoned Building',x,y,actors,items,False,corpses,False,[],False,False,[],0,23,False,[],False,[],False,False,'No one',[],[],None,False,[],1,True)
 			
 	
 	return building
@@ -2538,14 +2869,14 @@ def gen_pawn_shop(x,y):
 	actors = NPC([],0,[],0)
 	name = gen_pawn_name()
 	building = Location(name,'Templeville','Cliff Heights',name,x,y,actors,[counter,trash],False,[],True,
-	[pistol_9mm,shotgun_12g,ak47,uzi,machete,body_armor,combat_boots,bicycle_helmet,army_helmet,clown_mask,leather_gloves],True,False,[],8,19,False,[],False,[],False,False,'No one',[],[],None,False)
+	[pistol_9mm,shotgun_12g,ak47,uzi,machete,body_armor,combat_boots,bicycle_helmet,army_helmet,clown_mask,leather_gloves],True,False,[],8,19,False,[],False,[],False,False,'No one',[],[],None,False,[],1,True)
 	return building	
 #thrift shop
 def gen_thrift_store(x,y):
         actors = NPC([],0,[],0)
 
 	building = Location("Thrift Store",'Templeville','Cliff Heights','Thrift Store',x,y,actors,[counter,chair],False,[],True,[brass_knuckles,molotov,knife,baseball_bat,crowbar,shuriken,tshirt,tanktop,
-	sweater,hoodie,jean_jacket,vest,bomber_jacket,cheap_suit,nice_suit,dress_shirt,hawaiian_shirt,work_shirt,plaid_shirt,trenchcoat,leather_jacket,army_uniform,nice_dress,shorts,jeans,track_pants,camo_pants,sweat_pants,short_skirt,long_skirt,leggings,khakis,light_boots,running_shoes,dress_shoes,cowboy_boots,high_heels,sandals,baseball_cap,headband,dad_hat,toque,cowboy_hat,army_hat,fedora,balaclava,fingerless_gloves,black_gloves,sunglasses,sleeping_bag,rope],False,False,[],13,23,False,[],False,[],False,False,'No one',[],[],None,False)
+	sweater,hoodie,jean_jacket,vest,bomber_jacket,cheap_suit,nice_suit,dress_shirt,hawaiian_shirt,work_shirt,plaid_shirt,trenchcoat,leather_jacket,army_uniform,nice_dress,shorts,jeans,track_pants,black_pants,camo_pants,sweat_pants,short_skirt,long_skirt,leggings,khakis,light_boots,running_shoes,dress_shoes,cowboy_boots,high_heels,sandals,baseball_cap,headband,dad_hat,toque,cowboy_hat,army_hat,fedora,balaclava,fingerless_gloves,black_gloves,sunglasses,sleeping_bag,rope],False,False,[],13,23,False,[],False,[],False,False,'No one',[],[],None,False,[],1,True)
         return building
 #bar
 def gen_bar(x,y,name):
@@ -2555,7 +2886,11 @@ def gen_bar(x,y,name):
 	num_regulars = random.randint(10,22)
 	count = 1
         while count <= num_regulars:
-	        professions = ["Flower Child", "Gamer Assassin","Crimepunk", "Pissboi","Wastoid","Junkfreak","Meatball","Crankenstein","Crackhead","Script Kiddie","Sex Worker","Lost Soul","Drunkard","Clerk","Nudist","Rocker","Mercenary",'Occultist','Scavenger','Survivalist']
+		roll = random.randint(1,2)
+		if roll == 1:
+	        	professions = ["Flower Child", "Gamer Assassin","Crimepunk", "Pissboi","Wastoid","Junkfreak","Meatball","Crankenstein","Crackhead","Script Kiddie","Sex Worker","Lost Soul","Drunkard","Clerk","Nudist","Rocker","Mercenary",'Occultist','Scavenger','Survivalist']
+		elif roll == 2:
+			professions = workers
                 profession = random.choice(professions)
 		if profession == "Crankenstein" or profession == "Pissboi" or profession == "Flower Child" or profession == "Gamer Assassin"or profession == "Clerk" or profession == "Nudist" or profession == 'Cat Person':
                 	regular = create_npc(profession,'none','None')
@@ -2573,7 +2908,7 @@ def gen_bar(x,y,name):
                 #regulars = NPC(regulars,money,inventory,fame)
 
 	building = Location(name,'Templeville','Cliff Heights','Abandoned Building',x,y,actors,[bar_stool,bar_stool,bar_stool,bar_stool,counter,booth,booth,
-	booth, booth],False,[],True,[beer],False,False,[],11,23,True,regulars,False,[],False,False,'No one',[],[],None,False)
+	booth, booth],False,[],True,[beer],False,False,[],11,23,True,regulars,False,[],False,False,'No one',[],[],None,False,[],1,True)
 	return building
 
 #doctor
@@ -2588,19 +2923,19 @@ def gen_tattoo_shop(x,y):
         actors = NPC([],0,[],0)
 
         building = Location("Tattoo shop",'Templeville','Cliff Heights','Doctor',x,y,actors,[counter],False,[],True,[],False,True,
-        [tattoos],13,23,False,[],False,[],False,False,'No one',[],[],None,False)
+        [tattoos],13,23,False,[],False,[],False,False,'No one',[],[],None,False,[],1,True)
         return building
 def gen_barber_shop(x,y):
         actors = NPC([],0,[],0)
 
         building = Location("Barber shop",'Templeville','Cliff Heights','Doctor',x,y,actors,[counter],False,[],True,[],False,True,
-        [haircuts],13,23,False,[],False,[],False,False,'No one',[],[],None,False)
+        [haircuts],13,23,False,[],False,[],False,False,'No one',[],[],None,False,[],1,True)
         return building
 def gen_doctor(x,y):
         actors = NPC([],0,[],0)
 
         building = Location("Doctor",'Templeville','Cliff Heights','Doctor',x,y,actors,[counter],False,[],True,[bandages,heroin,speed],False,True,
-	[heal_injuries],13,23,False,[],False,[],False,False,'No one',[],[],None,False)
+	[heal_injuries],13,23,False,[],False,[],False,False,'No one',[],[],None,False,[],1,True)
         return building
 
 #crackhouse
@@ -2624,7 +2959,11 @@ def gen_crackhouse(x,y):
         num_regulars = random.randint(10,22)
         count = 1
         while count <= num_regulars:
-                professions = ["Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul",'Hobo','Wastoid','Rocker','Squatter',"Mercenary",'Occultist','Scavenger','Survivalist']
+		roll = random.randint(1,2)
+		if roll == 1:
+                	professions = ["Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul",'Hobo','Wastoid','Rocker','Squatter',"Mercenary",'Occultist','Scavenger','Survivalist']
+		elif roll == 2:
+			professions = workers
                 profession = random.choice(professions)
 		affiliation = 'none'
                 regular = create_npc(profession,'none','None')
@@ -2640,7 +2979,7 @@ def gen_crackhouse(x,y):
                 count += 1
                 #regulars = NPC(regulars,money,inventory,fame)
 
-        building = Location('Crack House','Templeville','Cliff Heights','Crack House',x,y,actors,items,False,[],True,[crack],False,False,[],1,23,True,regulars,False,[],False,False,'No one',[],[],None,False)
+        building = Location('Crack House','Templeville','Cliff Heights','Crack House',x,y,actors,items,False,[],True,[crack],False,False,[],1,23,True,regulars,False,[],False,False,'No one',[],[],None,False,[],1,True)
         return building
 #coffee shop
 def gen_coffee_shop(x,y):
@@ -2663,7 +3002,11 @@ def gen_coffee_shop(x,y):
         num_regulars = random.randint(10,22)
         count = 1
         while count <= num_regulars:
-                professions = ["Hustler","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul",'Hobo','Squatter','Rocker',"Mercenary",'Occultist','Scavenger','Survivalist']
+		roll = random.randint(1,2)
+		if roll == 1:
+                	professions = ["Hustler","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul",'Hobo','Squatter','Rocker',"Mercenary",'Occultist','Scavenger','Survivalist']
+		elif roll == 2:
+			professions = workers
                 profession = random.choice(professions)
                 regular = create_npc(profession,'none','None')
                 regulars.append(regular)
@@ -2676,7 +3019,7 @@ def gen_coffee_shop(x,y):
                 count += 1
                 #regulars = NPC(regulars,money,inventory,fame)
 
-        building = Location('Coffee Shop','Templeville','Cliff Heights','Coffee Shop',x,y,actors,items,False,[],True,[crack],False,False,[],6,23,True,regulars,False,[],False,False,'No one',[],[],None,False)
+        building = Location('Coffee Shop','Templeville','Cliff Heights','Coffee Shop',x,y,actors,items,False,[],True,[crack],False,False,[],6,23,True,regulars,False,[],False,False,'No one',[],[],None,False,[],1,True)
         return building
 
 def gen_mcshits(x,y):
@@ -2700,7 +3043,11 @@ def gen_mcshits(x,y):
         num_regulars = random.randint(10,22)
         count = 1
         while count <= num_regulars:
-                professions = ["Hustler","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul",'Hobo','Rocker','Squatter',"Mercenary",'Occultist','Scavenger','Survivalist']
+		roll = random.randint(1,2)
+		if roll == 1:
+                	professions = ["Hustler","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul",'Hobo','Rocker','Squatter',"Mercenary",'Occultist','Scavenger','Survivalist']
+		elif roll == 2:
+			professions = workers
                 profession = random.choice(professions)
                 regular = create_npc(profession,'none','None')
                 regulars.append(regular)
@@ -2713,7 +3060,7 @@ def gen_mcshits(x,y):
                 count += 1
                 #regulars = NPC(regulars,money,inventory,fame)
 
-        building = Location('McShits','Templeville','Cliff Heights','McShits',x,y,actors,items,False,[],True,[hamburger,fries,cola],False,False,[],6,23,True,regulars,False,[],False,False,'No one',[],[],None,False)
+        building = Location('McShits','Templeville','Cliff Heights','McShits',x,y,actors,items,False,[],True,[hamburger,fries,cola],False,False,[],6,23,True,regulars,False,[],False,False,'No one',[],[],None,False,[],1,True)
         return building
 
 def gen_pizza_place(x,y):
@@ -2737,7 +3084,11 @@ def gen_pizza_place(x,y):
         num_regulars = random.randint(10,22)
         count = 1
         while count <= num_regulars:
-                professions = ["Hustler","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul",'Hobo']
+		roll = random.randint(1,2)
+		if roll == 1:
+                	professions = ["Hustler","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul",'Hobo']
+		elif roll == 2:
+			professions = workers
                 profession = random.choice(professions)
                 regular = create_npc(profession,'none','None')
                 regulars.append(regular)
@@ -2750,7 +3101,7 @@ def gen_pizza_place(x,y):
                 count += 1
                 #regulars = NPC(regulars,money,inventory,fame)
 
-        building = Location('World Famous Pizza','Templeville','Cliff Heights','World Famous Pizza',x,y,actors,items,False,[],True,[pizza,fries,cola],False,False,[],6,23,True,regulars,False,[],False,False,'No one',[],[],None,False)
+        building = Location('World Famous Pizza','Templeville','Cliff Heights','World Famous Pizza',x,y,actors,items,False,[],True,[pizza,fries,cola],False,False,[],6,23,True,regulars,False,[],False,False,'No one',[],[],None,False,[],1,True)
         return building
 
 #convenience store
@@ -2775,7 +3126,11 @@ def gen_convenience_store(x,y):
         num_regulars = random.randint(10,22)
         count = 1
         while count <= num_regulars:
-                professions = ["Hustler","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul",'Hobo','Rocker',"Mercenary",'Occultist','Scavenger','Survivalist']
+		roll = random.randint(1,2)
+		if roll == 1:
+                	professions = ["Hustler","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul",'Hobo','Rocker',"Mercenary",'Occultist','Scavenger','Survivalist']
+		elif roll == 2:
+			professions = workers
                 profession = random.choice(professions)
                 regular = create_npc(profession,'none','None')
                 regulars.append(regular)
@@ -2788,7 +3143,7 @@ def gen_convenience_store(x,y):
                 count += 1
                 #regulars = NPC(regulars,money,inventory,fame)
 
-        building = Location('Convenience store','Templeville','Cliff Heights','Convenience store',x,y,actors,items,False,[],True,[cola,energy_drink,chocolate_bar,candy,chips,peanuts,beef_jerky,corn_dog],False,False,[],6,23,True,regulars,False,[],False,False,'No one',[],[],None,False)
+        building = Location('Convenience store','Templeville','Cliff Heights','Convenience store',x,y,actors,items,False,[],True,[cola,energy_drink,chocolate_bar,candy,chips,peanuts,beef_jerky,corn_dog],False,False,[],6,23,True,regulars,False,[],False,False,'No one',[],[],None,False,[],1,True)
         return building
 
 
@@ -2829,7 +3184,7 @@ def gen_library(x,y):
                 count += 1
                 #regulars = NPC(regulars,money,inventory,fame)
 
-        building = Location('Public Library','Templeville','Cliff Heights','Public Library',x,y,actors,items,False,[],True,[library_card],False,False,[],6,23,True,regulars,False,[],False,False,'No one',[],[],None,False)
+        building = Location('Public Library','Templeville','Cliff Heights','Public Library',x,y,actors,items,False,[],True,[library_card],False,False,[],6,23,True,regulars,False,[],False,False,'No one',[],[],None,False,[],1,True)
         return building
 
 def create_stash(power):
@@ -2879,6 +3234,7 @@ def gen_gang_hq(x,y,name,locations):
         #        count += 1
         #        regulars = NPC(regulars,money,inventory,fame)
 	if name == "Crankensteins":
+		power = 10
 	        while count <= num_regulars:
 	                professions = ["Crankenstein"]
 	                profession = random.choice(professions)
@@ -2890,29 +3246,32 @@ def gen_gang_hq(x,y,name,locations):
 	                count += 1
 			items_sold = [speed_7g,speed_14g,speed_28g,uzi,ak47]
         elif name == "Pissbois":
+		power = 10
                 while count <= num_regulars:
                         professions = ["Pissboi"]
                         profession = random.choice(professions)
                         regular = create_npc(profession,name,'None')
                         regulars.append(regular)
-			items_sold = [crack_3g,crack_7g,crack_14g,crack_28g,sword,molotov]
+			items_sold = [crack_7g,crack_14g,crack_28g,sword]
                         inventory = []
                         fame = 20
                         money = 5
                         count += 1
         elif name == "Gamer Assassins":
+		power = 6
                 while count <= num_regulars:
                         professions = ["Gamer Assassin"]
                         profession = random.choice(professions)
                         regular = create_npc(profession,name,'None')
                         regulars.append(regular)
-                        items_sold = [speed_7g,speed_14g,speed_28g,cocaine_3g,cocaine_7g]
+                        items_sold = [speed_7g,speed_14g,speed_28g,cocaine_14g,cocaine_28g]
 
                         inventory = []
                         fame = 20
                         money = 5
                         count += 1
         elif name == "Flower Collective":
+		power = 9
                 while count <= num_regulars:
                         professions = ["Flower Child"]
                         profession = random.choice(professions)
@@ -2937,6 +3296,7 @@ def gen_gang_hq(x,y,name,locations):
                         money = 500
                         count += 1
         elif name == "Nudists":
+		power = 3
 		while count <= num_regulars:
                         professions = ["Nudist"]
                         profession = random.choice(professions)
@@ -2948,6 +3308,7 @@ def gen_gang_hq(x,y,name,locations):
                         money = 5
                         count += 1
         elif name == "Red Faction":
+		power = 7
                 while count <= num_regulars:
                         professions = ["Marxist"]
                         profession = random.choice(professions)
@@ -2961,6 +3322,7 @@ def gen_gang_hq(x,y,name,locations):
                         count += 1
 			#power = 15
         elif name == "Rude Boys":
+		power = 5
                 while count <= num_regulars:
                         professions = ["Rude Boy"]
                         profession = random.choice(professions)
@@ -2973,6 +3335,7 @@ def gen_gang_hq(x,y,name,locations):
                         money = 5
                         count += 1
         elif name == "Grimesmackers":
+		power = 6
                 while count <= num_regulars:
                         professions = ["Grimesmacker"]
                         profession = random.choice(professions)
@@ -2984,6 +3347,7 @@ def gen_gang_hq(x,y,name,locations):
                         money = 5
                         count += 1
         elif name == "Cannibals":
+		power = 5
                 while count <= num_regulars:
                         professions = ["Cannibal"]
                         profession = random.choice(professions)
@@ -2996,6 +3360,7 @@ def gen_gang_hq(x,y,name,locations):
                         money = 5
                         count += 1
         elif name == "Slavers":
+		power = 8
                 while count <= num_regulars:
                         professions = ["Slaver",'Slave']
                         profession = random.choice(professions)
@@ -3008,6 +3373,7 @@ def gen_gang_hq(x,y,name,locations):
                         money = 5
                         count += 1
         elif name == "Cat People":
+		power = 2
                 while count <= num_regulars:
                         professions = ["Cat Person"]
                         profession = random.choice(professions)
@@ -3020,6 +3386,7 @@ def gen_gang_hq(x,y,name,locations):
                         money = 5
 			count += 1
         elif name == "Booze Knights":
+		power = 5
                 while count <= num_regulars:
                         professions = ["Booze Knight"]
                         profession = random.choice(professions)
@@ -3032,6 +3399,7 @@ def gen_gang_hq(x,y,name,locations):
                         money = 5
                         count += 1
         elif name == "Anarchists":
+		power = 6
                 while count <= num_regulars:
                         professions = ["Anarchist"]
                         profession = random.choice(professions)
@@ -3043,11 +3411,39 @@ def gen_gang_hq(x,y,name,locations):
                         fame = 20
                         money = 5
                         count += 1
+        elif name == "Sex Cult":
+		power = 3
+                while count <= num_regulars:
+                        professions = ["Occultist","Hipster","Slave"]
+                        profession = random.choice(professions)
+                        regular = create_npc(profession,name,'None')
+                        regulars.append(regular)
+                        inventory = []
+                        items_sold = [cocaine_14g,cocaine_28g,heroin_14g,heroin_28g,speed_14g,speed_28g,weed_112g]
 
+                        fame = 20
+		
+                        money = 5
+                        count += 1
+        elif name == "Patriot Nazis":
+		power = 7
+                while count <= num_regulars:
+                        professions = ["Survivalist","Biker","Scumbag"]
+                        profession = random.choice(professions)
+                        regular = create_npc(profession,name,'None')
+                        regulars.append(regular)
+                        items_sold = [cocaine_14g,cocaine_28g,heroin_14g,heroin_28g,speed_28g,speed_14g,weed_112g]
+
+                        items_sold = []
+
+                        fame = 20
+                        money = 5
+			#power = 12
+                        count += 1
 	if power == None:
-		power = random.randint(4,10)
+		power = random.randint(4,7)
 	#amount_sold = random.randint(2,power)
-	possible_items = [pistol_9mm,shotgun_12g,ak47,crack_7g,crack_14g,crack_28g,morphine,speed_7g,speed_14g,speed_28g,body_armor,cocaine_3g,cocaine_7g,cocaine_14g,cocaine_28g,weed_3g,weed_7g,weed_14g,weed_28g]
+	possible_items = [pistol_9mm,shotgun_12g,ak47,crack_7g,crack_14g,crack_28g,morphine,speed_7g,speed_14g,speed_28g,body_armor,cocaine_3g,cocaine_7g,cocaine_14g,cocaine_28g,weed_3g,weed_7g,weed_14g,weed_28g,weed_112g]
 	
 	item_count = 1
 	
@@ -3059,7 +3455,8 @@ def gen_gang_hq(x,y,name,locations):
 
 
 	building = Location(name + ' HQ','Templeville','Cliff Heights', name + ' HQ',x,y,actors,items,False,[],
-	True,items_sold,False,False,[],6,23,True,regulars,False,[],False,True,name,[],[],None,False)
+	True,items_sold,False,False,[],6,23,True,regulars,False,[],False,True,name,[],[],None,False,[],1,True)
+	print 'HQ created'
 #name,is_player,footsoldiers,player_reputation,hq,locations_owned,power,territory)
 #	max_locations = 12
 	
@@ -3085,91 +3482,267 @@ def gen_gang_hq(x,y,name,locations):
 	locations.append(building)
 	count = 1
 	while count <= power:
-		#location_valid = False
-		#while location_valid == False:
 		try:
 			location = random.choice(locations)
 			if location.owned_by == "No one":
-				try:
-        	                	location.owned_by = name
-        	                	locations_owned.append(location)
-        	                	count += 1
-					location_valid = True
-				except:
-					count += 1
-					location_valid = True
+   				location.owned_by = name
+       			        locations_owned.append(location)
+       			        count += 1
+				location_valid = True
 		except:
-			count += 1
 			location_valid = True
+
+	print 'locations assigned'
 	territory = []
 	footsoldiers = []
 	for regular in regulars:
 		footsoldier = [regular, 'No orders']
 		footsoldiers.append(footsoldier)
-	organization = Organization(name,False,footsoldiers,0,building,locations_owned,power,[],[],False,0,False,[],0)
+	print 'footsoldiers added'
+	organization = Organization(name,False,footsoldiers,0,building,locations_owned,power,[],[],False,0,False,[],0,0,0,0,0,0,0,0,0,0)
 #self,name,is_player,footsoldiers,player_reputation,hq,locations_owned,power,territory,rent_due,rent_paid
         return building, organization
 
+def gen_troll_farm(x,y,corp):
+        rooms = []
+        floors = []
+        actors = NPC([],0,[],0)
+        num_rooms = random.randint(4,10)
+	num_floor = random.randint(4,10)
+        room_count = 1
+	floor_count = 1
+	while floor_count <= num_floor:
+		room_count = 1
+		while room_count <= num_rooms:
+	                items = []
+			chance_manager = random.randint(1,7)
+			if chance_manager == 1:
+				profession = 'Manager'
+			else:
+	                	profession = 'Chatbot Operator'
+       		        members = []
+        	        member = create_npc(profession,'none','None')
+			member.affiliation = corp.name
+        	        members.append(member)
+        	        items.append(desk)
+               		items.append(chair)
+                	items.append(desktop_computer)
+	                apt_name = member.fname + " " + member.lname + "'s office" 
+       		        actors = NPC(members,0,[],0)
+                	owned_by = corp.name
+                	room = Location(apt_name,'Templeville','Cliff Heights',apt_name,x,y,actors,items,False,[],True,[],False,False,
+                	        [],13,23,False,[],False,[],False,False,'No one',[],[],None,True,[],floor_count,False)
+			room.is_store = True
+			room.time_open = 9
+			room.time_close = 17
+                	rooms.append(room)
+                	room_count += 1
+		floor_count += 1
+        building_name = 'Troll Farm(' + corp.name + ')' 
+        members = []
+        member = create_npc('Building Manager','none','None')
+	member.affiliation = corp.name
+        members.append(member) 
+        guard_amount = random.randint(1,6) 
+        guard_count = 0
+        while guard_count <= guard_amount:
+                member = create_npc('Security Guard',corp.name,'None')
+		member.affiliation = corp.name
+                members.append(member) 
+                guard_count += 1 
 
+        actors = NPC([],0,[],0)
+        building = Location(building_name,'Templeville','Cliff Heights',building_name,x,y,actors,[],False,[],True,[],False,True,
+        [],13,23,False,[],False,rooms,False,False,corp.name,[],floors,None,False,[],1,True)
+	building.is_store = True
+	building.time_open = 9
+	building.time_close = 17
+        for room in building.rooms:
+                #print room.name
+                room.parent_location = building
+                for actor in actors.members:
+                        #print actor.fname
+                        actor.home = room
+        return building
+
+
+def gen_data_mine(x,y,corp):
+	rooms = []
+	floors = []
+        actors = NPC([],0,[],0)
+	num_floors = random.randint(4,10)
+	num_rooms = random.randint(4,10)
+	floor_count = 1
+	while floor_count <= num_floors:
+		room_count = 1
+		while room_count <= num_rooms:
+			items = []
+			chance_manager = random.randint(1,7)
+			if chance_manager == 1:
+				profession = 'Manager'
+			else:
+				profession = 'Data Miner'
+        	        members = []
+                	member = create_npc(profession,'none','None')
+			member.affiliation = corp.name
+                	members.append(member)
+			items.append(desk)
+			items.append(chair)
+			items.append(desktop_computer)
+                	apt_name = member.fname + " " + member.lname + "'s office" 
+                	actors = NPC(members,0,[],0)
+                	owned_by = corp.name
+                	room = Location(apt_name,'Templeville','Cliff Heights',apt_name,x,y,actors,items,False,[],True,[],False,False,
+	        	        [],13,23,False,[],False,[],False,False,'No one',[],[],None,True,[],floor_count,False)
+			rooms.append(room)
+			room_count += 1
+		floor_count +=1
+        building_name = 'Data Mine(' + corp.name + ')'
+
+        members = []
+        member = create_npc('Receptionist','none','None')
+	member.affiliation = corp.name
+        members.append(member)
+	guard_amount = random.randint(1,4) 
+	guard_count = 0
+	while guard_count <= guard_amount:
+        	member = create_npc('Security Guard','none','None')
+		member.affiliation = corp.name
+        	members.append(member)
+		guard_count += 1 
+        actors = NPC(members,0,[],0)
+        building = Location(building_name,'Templeville','Cliff Heights',building_name,x,y,actors,[],False,[],True,[],False,True,
+        [],13,23,False,[],False,rooms,False,False,corp.name,[],floors,None,False,[],1,True)
+        for room in building.rooms:
+                #print room.name
+                room.parent_location = building
+                for actor in actors.members:
+                        #print actor.fname
+                        actor.home = room
+	return building
 def gen_apt_building(x,y):
         actors = NPC([],0,[],0)
 	floors =[]
 	rooms = []
-
-	num_floors = 1
-	rooms_per_floor = random.randint(4,24)
+	#print 'apt building'
+	num_floors = random.randint(4,8)
+	max = 10
+	max_rooms = max
 	floor1 = []
 	floor2 = []
 	room_count = 1
 	#items = []
-	while room_count <= rooms_per_floor:
-		is_vacant = random.randint(1,4)
-		items = []
-		if is_vacant == 1:
-			apt_name = 'Vacant Apartment'
-		        actors = NPC([],0,[],0)
-			items = []
-			owned_by = 'No one'
-		elif is_vacant != 1:
-               		professions = ["Hustler","Meatball","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul"]
-               		profession = random.choice(professions)
-			members = []
-               		member = create_npc(profession,'none','None')
-               		members.append(member)
-			items.append(bed)
-			#occupant_count += 1
-			apt_name = member.fname + " " + member.lname + "'s apartment" 
-                        actors = NPC(members,0,[],0)
-			owned_by = member.fname + " " + member.lname
-			items.append(bed)
-			items.append(table)
-			items.append(chair)
-                        items.append(chair)
-			items.append(shower)
-			rug_chance = random.randint(1,2)
-			if rug_chance == 1:
-				items.append(rug)
-			#actors = NPC([],0,[],0)
-                items.append(sink)
-                items.append(stove)
-                items.append(toilet2)
-                items.append(shower)
+	floor_count = 1
+	while floor_count <= num_floors:
+		room_count = 1
+		while room_count <= max_rooms:
+			try:
+				is_vacant = random.randint(1,7)
+				items = []
+				if is_vacant == 1:
+					apt_name = 'Vacant Apartment'
+				        actors = NPC([],0,[],0)
+					items = []
+					owned_by = 'No one'
 
-       		room = Location(apt_name,'Templeville','Cliff Heights',apt_name,x,y,actors,items,False,[],True,[],False,False,
-       		[],13,23,False,[],False,[],False,False,'No one',[],[],None,True)
-		room.is_bar = False
-		room.is_store = False
-		rooms.append(room)
-		room_count += 1
+				elif is_vacant != 1:
+					roll = random.randint(1,6)
+					if roll == 1:
+               					professions = ["Hustler","Meatball","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul"]
+					else:
+						professions = workers
+        	       			profession = random.choice(professions)
+					members = []
+               				member = create_npc(profession,'none','None')
+               				members.append(member)
+					items.append(bed)
+					#occupant_count += 1
+					apt_name = member.fname + " " + member.lname + "'s apartment" 
+               	        		actors = NPC(members,0,[],0)
+					owned_by = member.fname + " " + member.lname
+					items.append(bed)
+					items.append(table)
+					items.append(chair)
+                       	 		items.append(chair)
+					items.append(shower)
+					#items.append(toilet)
+					if roll != 1:
+						items.append(desk)
+						comp = random.randint(1,2)
+						if comp == 1:
+							items.append(laptop)
+						elif comp == 2:
+							items.append(tablet)
+						bookshelf_chance = random.randint(1,2)
+						if bookshelf_chance == 1:
+							items.append(bookshelf)
+						smartphone_chance = random.randint(1,2)
+						if smartphone_chance == 1:
+							items.append(smartphone)
+					rug_chance = random.randint(1,2)
+					if rug_chance == 1:
+						items.append(rug)
+				
+					#actors = NPC([],0,[],0)
+                			items.append(sink)
+                			items.append(stove)
+                			items.append(toilet2)
+                			items.append(shower)
+					bike_chance = random.randint(1,6)
+					if bike_chance == 1:
+						bikes= [bmx_bike,mountain_bike]
+						bike = random.choice(bikes)
+						items.append(bike)
+				hidden_items = []
+				chance_hidden_items = random.randint(1,2)
+                #chance_hidden_items = 1
+
+				if chance_hidden_items == 1:
+					num_hidden_items = random.randint(1,4)
+					count = 1
+					while count <= num_hidden_items:
+						if roll == 1:
+							possible_hidden_items = [pistol_9mm,shotgun_12g,uzi,ak47,body_armor,cocaine_14g,crack_14g,speed_14g,heroin_14g,weed_28g,weed_112g]
+						else:
+							possible_hidden_items(pistol_9mm,weed_28g,cocaine_14g,nice_suit,nice_dress)
+						hidden_item = random.choice(possible_hidden_items)
+						hidden_items.append(hidden_item)
+						count += 1
+
+       				room = Location(apt_name,'Templeville','Cliff Heights',apt_name,x,y,actors,items,False,[],True,[],False,False,       			[],13,23,False,[],False,[],False,False,'No one',[],[],None,True,hidden_items,floor_count,False)
+				room.is_bar = False
+				room.is_store = False
+				rooms.append(room)
+				room_count += 1
+			except:
+				room_count  = room_count
+		floor_count += 1
 	building_name = gen_apt_name()
 	actors = NPC([],0,[],0)
         building = Location(building_name,'Templeville','Cliff Heights',building_name,x,y,actors,[],False,[],True,[],False,True,
-        [],13,23,False,[],False,rooms,False,False,'No one',[],floors,None,False)
+        [],13,23,False,[],False,rooms,False,False,'No one',[],floors,None,False,[],1,True)
+	#is owned by corp
+	chance_corp = 1
+	if chance_corp == 1:
+		owned_by_corp = random.choice(real_estate_corps)
+		building.owned_by  = owned_by_corp.name
+        members = []
+        member = create_npc('Building Manager','none','None')
+        member.affiliation = owned_by_corp.name
+        members.append(member) 
+        guard_amount = random.randint(1,6) 
+        guard_count = 0
+        while guard_count <= guard_amount:
+                member = create_npc('Security Guard','none','None')
+                member.affiliation = owned_by_corp.name
+                members.append(member) 
+                guard_count += 1 
+	building.actors.members = members
 	for room in building.rooms:
 		#print room.name
 		room.parent_location = building
 		for actor in actors.members:
-			print actor.fname
+			#print actor.fname
 			actor.home = room
         return building
 
@@ -3207,10 +3780,23 @@ def gen_shack(x,y):
 		#	items.append(rug)
 		#actors = NPC([],0,[],0)
 		occupant_count += 1
+	hidden_items = []
+        chance_hidden_items = random.randint(1,3)
+        #chance_hidden_items = 1
+
+        if chance_hidden_items == 1:
+        	num_hidden_items = random.randint(1,4)
+                count = 1
+                while count <= num_hidden_items:
+                	possible_hidden_items = [pistol_9mm,shotgun_12g,uzi,ak47,body_armor,cocaine_28g,crack_28g,heroin_28g,speed_28g,weed_112g]
+                        hidden_item = random.choice(possible_hidden_items)
+                        hidden_items.append(hidden_item)
+			count += 1
+
 	#rooms = floor1
 	actors = NPC(members,0,[],0)
     	building = Location(apt_name,'Templeville','Cliff Heights','House',x,y,actors,items,False,[],True,[],False,True,
-    	[],13,23,False,[],False,rooms,False,False,'No one',[],floors,None,True)
+    	[],13,23,False,[],False,rooms,False,False,'No one',[],floors,None,True,hidden_items,1,True)
 	building.is_bar = False
         for room in building.rooms:
                 #print room.name
@@ -3259,7 +3845,7 @@ def gen_park(x,y):
                 count += 1
                 #regulars = NPC(regulars,money,inventory,fame)
 	name = gen_park_name()
-        building = Location(name,'Templeville','Cliff Heights',name,x,y,actors,items,False,[],True,[crack],False,False,[],1,24,True,regulars,False,[],False,False,'No one',[],[],None,False)
+        building = Location(name,'Templeville','Cliff Heights',name,x,y,actors,items,False,[],True,[crack],False,False,[],1,24,True,regulars,False,[],False,False,'No one',[],[],None,False,[],1,True)
         return building
 
 
@@ -3269,9 +3855,10 @@ def gen_park(x,y):
 def gen_neighborhood(type,neighborhood_name):
 	global location_id
 	organizations = []
-        organization = Organization(neighborhood_name,False,[],0,None,[],0,[],[],False,0,False,[],0)
+        organization = Organization(neighborhood_name,False,[],0,None,[],0,[],[],False,0,False,[],0,0,0,0,0,0,0,0,0,0)
         organizations.append(organization)
 	num_locations = 0
+	num_abandoned_apt = 0
 	locations = []
 	count = 1
 	first_building = True
@@ -3279,10 +3866,20 @@ def gen_neighborhood(type,neighborhood_name):
 	name = 'Abandoned Building'
 	if neighborhood_name == 'Cliff Heights':
 		num_abandoned_buildings = random.randint(15,20)
+		num_abandoned_apt = 8
         elif neighborhood_name == 'Bad Town':
                 num_abandoned_buildings = random.randint(15,20)
 	elif neighborhood_name == 'Elephant Rock':
 		num_abandoned_buildings = random.randint(4,5)
+        elif neighborhood_name == "Bastard's Cove":
+                num_abandoned_buildings = random.randint(7,12)
+        elif neighborhood_name == "The Scabs":
+                num_abandoned_buildings = random.randint(17,20)
+        elif neighborhood_name == "Bernal Park":
+                num_abandoned_buildings = random.randint(17,20)
+        elif neighborhood_name == "Maplewood":
+                num_abandoned_buildings = random.randint(17,20)
+
 
 	while count <= num_abandoned_buildings:
 		if first_building == True:
@@ -3310,6 +3907,27 @@ def gen_neighborhood(type,neighborhood_name):
 			locations.append(abandoned_building)
 			num_locations += 1
 			count += 1
+	
+	#num_abandoned_apt = 0
+#	apt_count = 1
+#	if num_abandoned_apt >= 1:
+#		while apt_count <= num_abandoned_apt:
+ #                       checked = False
+  #                      exists = False
+   #                     while checked == False:
+    #                            x = random.randint(1,16)
+     #                           y = random.randint(1,16)
+      #                          for location in locations:
+        #                                if location.x == x and location.y == y:
+       #                                         exists = True
+         #                                       checked = True
+          #                              if exists == False:
+           #                                     checked = True
+                                
+            #            abandoned_apt_building = gen_abandoned_apt_building(x,y)
+             #           locations.append(abandoned_apt_building)
+              #          num_locations += 1
+               #         apt_count += 1
 
 
 	#pawn shop
@@ -3336,26 +3954,8 @@ def gen_neighborhood(type,neighborhood_name):
 			return x, y
 	 	       	#checked = True
 	#x, y = get_unused_location()
-	
-	#abandoned apt buildings
-        if neighborhood_name == 'Bad Town':
 
-	        apt_count = 1
-	        num_apt = random.randint(9,12)
-	        while apt_count <= num_apt:
-	                x, y = get_unused_location()
-	                apt_finished = False
-	                while apt_finished == False:
-	                        try:
-	                                apt_building = gen_abandoned_apt_building(x,y)
-	                                locations.append(apt_building)
-	                                apt_finished = True
-					num_locations += 1
-	                                apt_count += 1
-	                        except:
-	                                apt_finished = False
-
-	#pawn shop
+#pawn shop
         if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'Elephant Rock':
 		pawn_count = 1
 		pawn_max = 1
@@ -3368,7 +3968,7 @@ def gen_neighborhood(type,neighborhood_name):
 			num_locations += 1
 
 	#thrift store
-        if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'Bad Town':
+        if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'Bad Town' or neighborhood_name == 'The Scabs':
 		num_stores = 1
 		store_count = 1
 		while store_count <= num_stores:
@@ -3386,6 +3986,8 @@ def gen_neighborhood(type,neighborhood_name):
 		bar_names = ['The Lazy Den']
 	elif neighborhood_name == 'Elephant Rock':
 		bar_names = ['Quest']
+	elif neighborhood_name == 'The Scabs':
+		bar_names = ['Chateau Below','The Tank']
 	max_bars = random.randint(3,5)
 	count = 1
 	for bar_name in bar_names:
@@ -3397,20 +3999,20 @@ def gen_neighborhood(type,neighborhood_name):
 
 		print 'bar'
 	#doctor
-        if neighborhood_name == 'Cliff Heights':
-		x, y = get_unused_location()
-		doctor = gen_doctor(x,y)
-		locations.append(doctor)
-		print 'doctor'
-        #tattoos
 	if neighborhood_name == 'Cliff Heights':
+        	x, y = get_unused_location()
+        	doctor = gen_doctor(x,y)
+        	locations.append(doctor)
+        	print 'doctor'
+        #tattoos
+	if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'The Scabs':
         	x, y = get_unused_location()
         	tattoos = gen_tattoo_shop(x,y)
         	locations.append(tattoos)
 		num_locations += 1
         	print 'tattoos'
         #barbers
-	if neighborhood_name == 'Cliff Heights':
+	if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'The Scabs':
         	x, y = get_unused_location()
         	barber = gen_barber_shop(x,y)
         	locations.append(barber)
@@ -3429,7 +4031,7 @@ def gen_neighborhood(type,neighborhood_name):
 		num_locations += 1
 
         #coffee shop
-	if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'Bad Town':
+	if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'Bad Town' or neighborhood_name == 'The Scabs':
 		num_coffee_shop = 1
 		count = 1
 		while count <= num_coffee_shop:
@@ -3439,7 +4041,7 @@ def gen_neighborhood(type,neighborhood_name):
 			print 'coffee shop'
 			count += 1
         #mcshits
-        if neighborhood_name == 'Cliff Heights':
+        if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'The Scabs':
 	        x, y = get_unused_location()
 	        mcshits = gen_mcshits(x,y)
 	        locations.append(mcshits)
@@ -3447,7 +4049,7 @@ def gen_neighborhood(type,neighborhood_name):
 		num_locations += 1
 
         #pizza
-        if neighborhood_name == 'Cliff Heights':
+        if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'The Scabs' or neighborhood_name == 'Elephant Rock':
 	        x, y = get_unused_location()
 	        pizza_place = gen_pizza_place(x,y)
 	        locations.append(pizza_place)
@@ -3461,6 +4063,8 @@ def gen_neighborhood(type,neighborhood_name):
                 num_convenience_store = 2
 	elif neighborhood_name == 'Elephant Rock':
 		num_convenience_store = 1
+	elif neighborhood_name == 'The Scabs':
+		num_convenience_store = 2
         count = 1
         while count <= num_convenience_store:
                 x, y = get_unused_location()
@@ -3478,6 +4082,17 @@ def gen_neighborhood(type,neighborhood_name):
 		#organizations = []
 		print 'library'
 		num_locations += 1
+	#troll farm
+	if neighborhood_name == 'Cliff Heights':
+		num_troll_farm = 5
+		farm_count = 1
+		while farm_count <= num_troll_farm:
+			x,y = get_unused_location()
+			corp = random.choice(tech_corps)
+			troll_farm = gen_troll_farm(x,y,corp)
+			locations.append(troll_farm)
+			num_locations += 1
+			farm_count += 1
 
         #apt building
         apt_count = 1
@@ -3487,7 +4102,8 @@ def gen_neighborhood(type,neighborhood_name):
                 num_apt = 0
 	elif neighborhood_name == 'Elephant Rock':
 		num_apt = random.randint(7,10)
-
+	elif neighborhood_name == 'The Scabs':
+		num_apt = 0
         while apt_count <= num_apt:
                 x, y = get_unused_location()
                 apt_finished = False
@@ -3502,7 +4118,7 @@ def gen_neighborhood(type,neighborhood_name):
                         except:
                                 apt_finished = False
         #parks
-	if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'Elephant Rock':
+	if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'Elephant Rock' or neighborhood_name == 'The Scabs':
         	max_parks = random.randint(2,3)
 	else:
 		max_parks = 1
@@ -3518,29 +4134,49 @@ def gen_neighborhood(type,neighborhood_name):
 	#gang hq
 	#organizations = []
 	if neighborhood_name == 'Cliff Heights':
-		gang_names = ["Crankensteins", "Pissbois","Gamer Assassins","Flower Collective","Clerks","Nudists"]
+		gang_names = ["Crankensteins", "Pissbois","Nudists"]
 	elif neighborhood_name == 'Bad Town':
-		gang_names = ['Red Faction','Rude Boys','Grimesmackers','Cannibals','Slavers']
+		gang_names = ['Red Faction','Slavers']
 	elif neighborhood_name == 'Elephant Rock':
-		gang_names = ['Cat People','Booze Knights','Anarchists']
+		gang_names = ['Anarchists','Sex Cult']
+	elif neighborhood_name == 'The Scabs':
+		gang_names = ['Flower Collective', 'Gamer Assassins','Patriot Nazis']
 	for name in gang_names:
 			gang_valid = False
 			while gang_valid == False:
-				x, y = get_unused_location()
+				location_valid = False
+				while location_valid == False:
+					try:
+						x, y = get_unused_location()
+						location_valid = True
+					except:
+						location_valid = False
+						print 'try another location'
 				print x, y
-				gang_hq,organization = gen_gang_hq(x,y,name,locations)
-				num_locations += 1
+				gang_good = False
+				while gang_good == False:
+					try:
+						gang_hq,organization = gen_gang_hq(x,y,name,locations)
+						num_locations += 1
+				
 
-				print gang_hq
-				print organization
-				print organization.name
-				organizations.append(organization)
-				gang_valid = True
+						print gang_hq
+						print organization
+						print organization.name
+						organizations.append(organization)
+						gang_valid,gang_good = True,True
+					except:
+						print 'try again'
+						gang_good = False
 				#gang_valid = False
         #houses
         count  = 1
 	if neighborhood_name == 'Elephant Rock':
-		max_shacks = 6
+		max_shacks = 22
+	elif neighborhood_name == 'The Scabs':
+		max_shacks = 32
+	elif neighborhood_name == 'Bad Town':
+		max_shacks = 25
         else:
 		max_shacks = random.randint(14,20)
 	count = 1
@@ -3560,7 +4196,8 @@ def gen_neighborhood(type,neighborhood_name):
 		price = 2000
 	elif neighborhood_name == 'Elephant Rock':
 		price = 1600
-		
+	elif neighborhood_name == 'The Scabs':
+		price = 2300
 	#assign homes/addictions to npcs
 	for location in locations:
 		for member in location.actors.members:
@@ -3637,25 +4274,25 @@ def gen_world_tile():
 		possible_items = [tree,bush,small_tree]
 
         building = Location("Wasteland",'Templeville',' ','Wasteland',x,y,actors,items,False,[],True,[],False,True,
-        [],13,23,False,[],False,rooms,False,False,'No one',[],floors,None,True)
+        [],13,23,False,[],False,rooms,False,False,'No one',[],floors,None,True,1,True)
 
 def gen_new_city():
-	player_organization = Organization('Player organization',True,[],0,[],[],1,[],[],False,0,False,[],0)
+	
+	player_organization = Organization("Player Organization",False,[],0,None,[],0,[],[],False,0,False,[],0,0,0,0,0,0,0,0,0,0)
 	player_organization.locations_owned = []
 	player_organization.rent_amount = 0
 #self,name,is_player,footsoldiers,player_reputation,hq,locations_owned,power,territory,rent_due,rent_paid
 	city_created = False
 	while city_created == False:
 		cliff_heights = gen_neighborhood('Slum','Cliff Heights')
-                bad_town = gen_neighborhood('Slum','Bad Town')
-		elephant_rock = gen_neighborhood('Slum','Elephant Rock')
+        	bad_town = gen_neighborhood('Slum','Bad Town')
+        	elephant_rock = gen_neighborhood('Slum','Elephant Rock')
+                the_scabs = gen_neighborhood('Slum','The Scabs')
 
 		city_created = True
-	areas = [cliff_heights,bad_town,elephant_rock]
+	areas = [cliff_heights,bad_town,elephant_rock,the_scabs]
 	name = "Templeville"
 	time = start_time
-	city = City(areas,name,time,player_organization)
+	city = City(areas,name,time,player_organization,corps)
 	return city
-
-#templeville = gen_district()
 
