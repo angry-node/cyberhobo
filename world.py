@@ -899,9 +899,18 @@ class Attack:
 		self.weapon = weapon
 		self.attack_mod = attack_mod
 		self.injury_inflicted = injury_inflicted
+class Clothing_Properties:
+	def __init__(self,damage,blood,wet,dirty,body_odor,warmth):
+		self.damage = damage
+		self.blood = blood
+		self.wet = wet
+		self.dirty = dirty
+		self.body_odor = body_odor
+		self.warmth = warmth
+default_properties = Clothing_Properties(0,0,0,0,0,0)
 #outfits
 class Outfit:
-	def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value):
+	def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth):
 		self.name = name
 		self.outfit_type = outfit_type
 		self.defense = defense
@@ -910,9 +919,16 @@ class Outfit:
 		self.item_type = item_type
 		self.can_loot = can_loot
 		self.base_value = base_value
+                self.damage = damage
+                self.blood = blood
+                self.wet = wet
+                self.dirty = dirty
+                self.body_odor = body_odor
+                self.warmth = warmth
+
 
 class Headwear:
-        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value):
+        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth):
                 self.name = name
                 self.outfit_type = outfit_type
                 self.defense = defense
@@ -921,8 +937,15 @@ class Headwear:
                 self.item_type = item_type
                 self.can_loot = can_loot
                 self.base_value = base_value
+                self.damage = damage
+                self.blood = blood
+                self.wet = wet
+                self.dirty = dirty
+                self.body_odor = body_odor
+                self.warmth = warmth
+
 class Eyewear:
-        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value):
+        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth):
                 self.name = name
                 self.outfit_type = outfit_type
                 self.defense = defense
@@ -931,8 +954,15 @@ class Eyewear:
                 self.item_type = item_type
                 self.can_loot = can_loot
                 self.base_value = base_value
+                self.damage = damage
+                self.blood = blood
+                self.wet = wet
+                self.dirty = dirty
+                self.body_odor = body_odor
+                self.warmth = warmth
+
 class Facewear:
-        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value):
+        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth):
                 self.name = name
                 self.outfit_type = outfit_type
                 self.defense = defense
@@ -941,8 +971,15 @@ class Facewear:
                 self.item_type = item_type
                 self.can_loot = can_loot
                 self.base_value = base_value
+                self.damage = damage
+                self.blood = blood
+                self.wet = wet
+                self.dirty = dirty
+                self.body_odor = body_odor
+                self.warmth = warmth
+
 class Hands:
-        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value):
+        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth):
                 self.name = name
                 self.outfit_type = outfit_type
                 self.defense = defense
@@ -951,8 +988,15 @@ class Hands:
                 self.item_type = item_type
                 self.can_loot = can_loot
                 self.base_value = base_value
+                self.damage = damage
+                self.blood = blood
+                self.wet = wet
+                self.dirty = dirty
+                self.body_odor = body_odor
+                self.warmth = warmth
+
 class Legs:
-        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value):
+        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth):
                 self.name = name
                 self.outfit_type = outfit_type
                 self.defense = defense
@@ -961,8 +1005,15 @@ class Legs:
                 self.item_type = item_type
                 self.can_loot = can_loot
                 self.base_value = base_value
+                self.damage = damage
+                self.blood = blood
+                self.wet = wet
+                self.dirty = dirty
+                self.body_odor = body_odor
+                self.warmth = warmth
+
 class Feet:
-        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value):
+        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth):
                 self.name = name
                 self.outfit_type = outfit_type
                 self.defense = defense
@@ -971,8 +1022,9 @@ class Feet:
                 self.item_type = item_type
                 self.can_loot = can_loot
                 self.base_value = base_value
+		self.properties =properties
 class Armor:
-        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value):
+        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth):
                 self.name = name
                 self.outfit_type = outfit_type
                 self.defense = defense
@@ -981,8 +1033,15 @@ class Armor:
                 self.item_type = item_type
                 self.can_loot = can_loot
                 self.base_value = base_value
+                self.damage = damage
+                self.blood = blood
+                self.wet = wet
+                self.dirty = dirty
+                self.body_odor = body_odor
+                self.warmth = warmth
+
 class Outerwear:
-        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value):
+        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth):
                 self.name = name
                 self.outfit_type = outfit_type
                 self.defense = defense
@@ -991,125 +1050,132 @@ class Outerwear:
                 self.item_type = item_type
                 self.can_loot = can_loot
                 self.base_value = base_value
+                self.damage = damage
+                self.blood = blood
+                self.wet = wet
+                self.dirty = dirty
+                self.body_odor = body_odor
+                self.warmth = warmth
+
 
 #headwear
-no_headwear = Headwear("None", "None",1,5,5,'headwear',True,0)
+no_headwear = Headwear("None", "None",1,5,5,'headwear',True,0,0,0,0,0,0,0)
 
-headband = Headwear("Headband", "Headband",1,5,5,'headwear',True,15)
-baseball_cap = Headwear("Baseball cap", "Baseball cap",1,5,5,'headwear',True,45)
-dad_hat = Headwear("Dad hat", "Dad hat",1,5,5,'headwear',True,35)
-toque = Headwear("Toque", "Toque",1,5,5,'headwear',True,20)
-beret = Headwear("Beret", "Beret",1,5,5,'headwear',True,20)
-red_beret = Headwear("Red beret", "Red beret",1,5,5,'headwear',True,20)
-fedora = Headwear("Fedora", "Fedora",1,5,5,'headwear',True,60)
+headband = Headwear("Headband", "Headband",1,5,5,'headwear',True,15,0,0,0,0,0,1)
+baseball_cap = Headwear("Baseball cap", "Baseball cap",1,5,5,'headwear',True,45,0,0,0,0,0,2)
+dad_hat = Headwear("Dad hat", "Dad hat",1,5,5,'headwear',True,35,0,0,0,0,0,2)
+toque = Headwear("Toque", "Toque",1,5,5,'headwear',True,20,0,0,0,0,0,5)
+beret = Headwear("Beret", "Beret",1,5,5,'headwear',True,20,0,0,0,0,0,2)
+red_beret = Headwear("Red beret", "Red beret",1,5,5,'headwear',True,20,0,0,0,0,0,2)
+fedora = Headwear("Fedora", "Fedora",1,5,5,'headwear',True,60,0,0,0,0,0,2)
 
-army_hat = Headwear("Army hat", "Army hat",1,5,5,'headwear',True,20)
+army_hat = Headwear("Army hat", "Army hat",1,5,5,'headwear',True,20,0,0,0,0,0,2)
 
-bicycle_helmet = Headwear("Bicycle helmet", "Bicycle helmet",4,5,5,'headwear',True,50)
-army_helmet = Headwear("Army helmet", "Army helmet",6,5,5,'headwear',True,100)
-cowboy_hat = Headwear("Cowboy hat", "Cowboy hat",1,5,5,'headwear',True,100)
+bicycle_helmet = Headwear("Bicycle helmet", "Bicycle helmet",4,5,5,'headwear',True,50,0,0,0,0,0,1)
+army_helmet = Headwear("Army helmet", "Army helmet",6,5,5,'headwear',True,100,0,0,0,0,0,2)
+cowboy_hat = Headwear("Cowboy hat", "Cowboy hat",1,5,5,'headwear',True,100,0,0,0,0,0,2)
 
-cat_ears = Headwear("Cat ears", "Cat ears",1,5,5,'headwear',True,100)
+cat_ears = Headwear("Cat ears", "Cat ears",1,5,5,'headwear',True,100,0,0,0,0,0,0)
 
 
 headwear_types = [headband,baseball_cap,dad_hat,toque,cowboy_hat]
 
 #eyewear
-no_eyewear = Eyewear("None", "None",0,5,5,'eyewear',True,0)
+no_eyewear = Eyewear("None", "None",0,5,5,'eyewear',True,0,0,0,0,0,0,0)
 
-sunglasses = Eyewear("Sunglasses", "Sunglasses",0,5,5,'eyewear',True,30)
+sunglasses = Eyewear("Sunglasses", "Sunglasses",0,5,5,'eyewear',True,30,0,0,0,0,0,0)
 
 #facewear
-no_facewear = Facewear("None", "None",1,5,5,'facewear',True,0)
-black_facemask = Facewear("Black facemask", "Black facemask",1,5,5,'facewear',True,15)
-red_facemask = Facewear("Red facemask", "Red facemask",1,5,5,'facewear',True,15)
+no_facewear = Facewear("None", "None",1,5,5,'facewear',True,0,0,0,0,0,0,0)
+black_facemask = Facewear("Black facemask", "Black facemask",1,5,5,'facewear',True,15,0,0,0,0,0,2)
+red_facemask = Facewear("Red facemask", "Red facemask",1,5,5,'facewear',True,15,0,0,0,0,0,2)
 
 
-balaclava = Facewear("Balaclava", "Balaclava",1,5,5,'facewear',True,15)
-clown_mask = Facewear("Clown mask", "Clown mask",2,5,5,'facewear',True,80)
-anonymous_mask = Facewear("Anonymous mask", "Anonymous mask",2,5,5,'facewear',True,80)
+balaclava = Facewear("Balaclava", "Balaclava",1,5,5,'facewear',True,15,0,0,0,0,0,5)
+clown_mask = Facewear("Clown mask", "Clown mask",2,5,5,'facewear',True,80,0,0,0,0,0,2)
+anonymous_mask = Facewear("Anonymous mask", "Anonymous mask",2,5,5,'facewear',True,80,0,0,0,0,0,1)
 
 
 
 #hands
-no_handwear = Hands("None", "None",1,5,5,'handwear',True,0)
-fingerless_gloves = Hands("Fingerless gloves", "Black glove",1,5,5,'handwear',True,10)
-black_gloves = Hands("Black gloves", "Black glove",1,5,5,'handwear',True,10)
-leather_gloves = Hands("Leather gloves", "Leather glove",2,5,5,'handwear',True,50)
+no_handwear = Hands("None", "None",1,5,5,'handwear',True,0,0,0,0,0,0,0)
+fingerless_gloves = Hands("Fingerless gloves", "Black glove",1,5,5,'handwear',True,10,0,0,0,0,0,1)
+black_gloves = Hands("Black gloves", "Black glove",1,5,5,'handwear',True,10,0,0,0,0,0,4)
+leather_gloves = Hands("Leather gloves", "Leather glove",2,5,5,'handwear',True,50,0,0,0,0,0,6)
 
 #legs
-no_legwear = Legs("None", "None",1,5,5,'legwear',True,0)
+no_legwear = Legs("None", "None",1,5,5,'legwear',True,0,0,0,0,0,0,0)
 
-shorts = Legs("Shorts", "Shorts",1,1,5,'legwear',True,20)
-jeans = Legs("Jeans", "Jeans",2,2,5,'legwear',True,30)
-ripped_jeans = Legs("Ripped jeans", "Ripped jeans",2,2,5,'legwear',True,45)
-khakis = Legs("Khakis", "Khakis",2,5,5,'legwear',True,45)
-camo_pants = Legs("Camo pants", "Camo pants",2,2,5,'legwear',True,15)
-black_pants = Legs("Black pants", "Black pants",2,2,5,'legwear',True,15)
+shorts = Legs("Shorts", "Shorts",1,1,5,'legwear',True,20,0,0,0,0,0,3)
+jeans = Legs("Jeans", "Jeans",2,2,5,'legwear',True,30,0,0,0,0,0,6)
+ripped_jeans = Legs("Ripped jeans", "Ripped jeans",2,2,5,'legwear',True,45,0,0,0,0,0,4)
+khakis = Legs("Khakis", "Khakis",2,5,5,'legwear',True,45,0,0,0,0,0,5)
+camo_pants = Legs("Camo pants", "Camo pants",2,2,5,'legwear',True,15,0,0,0,0,0,7)
+black_pants = Legs("Black pants", "Black pants",2,2,5,'legwear',True,15,0,0,0,0,0,6)
 
-track_pants = Legs("Track pants", "Track pants",2,2,5,'legwear',True,15)
-suit_pants = Legs("Suit pants", "Suit pants",2,2,5,'legwear',True,90)
-work_pants = Legs("Work pants", "Work pants",2,2,5,'legwear',True,40)
-sweat_pants = Legs("Sweat pants", "Sweat pants",2,2,5,'legwear',True,40)
+track_pants = Legs("Track pants", "Track pants",2,2,5,'legwear',True,15,0,0,0,0,0,4)
+suit_pants = Legs("Suit pants", "Suit pants",2,2,5,'legwear',True,90,0,0,0,0,0,6)
+work_pants = Legs("Work pants", "Work pants",2,2,5,'legwear',True,40,0,0,0,0,0,4)
+sweat_pants = Legs("Sweat pants", "Sweat pants",2,2,5,'legwear',True,40,0,0,0,0,0,7)
 
-long_skirt = Legs("Long skirt", "Long skirt",1,1,5,'legwear',True,45)
-short_skirt = Legs("Short skirt", "Short skirt",1,1,5,'legwear',True,40)
-leggings = Legs("Leggings", "Leggings",1,5,5,'legwear',True,25)
+long_skirt = Legs("Long skirt", "Long skirt",1,1,5,'legwear',True,45,0,0,0,0,0,5)
+short_skirt = Legs("Short skirt", "Short skirt",1,1,5,'legwear',True,40,0,0,0,0,0,3)
+leggings = Legs("Leggings", "Leggings",1,5,5,'legwear',True,25,0,0,0,0,0,4)
 
 mens_legwear = [shorts,jeans,khakis,track_pants,work_pants,ripped_jeans,camo_pants,sweat_pants]
 womens_legwear = [shorts,jeans,khakis,track_pants,sweat_pants, work_pants,long_skirt,short_skirt,leggings]
 
 #feet
-no_footwear = Legs("None", "None",1,5,5,'footwear',True,0)
+no_footwear = Legs("None", "None",1,5,5,'footwear',True,0,0,0,0,0,0,0)
 
-running_shoes = Legs("Running shoes", "Running shoes",2,1,5,'footwear',True,100)
-sandals = Legs("Sandals", "Sandals",1,1,5,'footwear',True,40)
-high_heels = Legs("High heels", "High heels",1,5,5,'footwear',True,50)
-dress_shoes = Legs("Dress shoes", "Dress shoes",1,5,5,'footwear',True,130)
-light_boots = Legs("Light boots", "Light boots",3,5,5,'footwear',True,150)
-combat_boots = Legs("Combat boots", "Combat boots",4,5,5,'footwear',True,200)
-cowboy_boots = Legs("Cowboy boots", "Cowboy boots",4,5,5,'footwear',True,200)
+running_shoes = Legs("Running shoes", "Running shoes",2,1,5,'footwear',True,100,0,0,0,0,0,4)
+sandals = Legs("Sandals", "Sandals",1,1,5,'footwear',True,40,0,0,0,0,0,1)
+high_heels = Legs("High heels", "High heels",1,5,5,'footwear',True,50,0,0,0,0,0,1)
+dress_shoes = Legs("Dress shoes", "Dress shoes",1,5,5,'footwear',True,130,0,0,0,0,0,3)
+light_boots = Legs("Light boots", "Light boots",3,5,5,'footwear',True,150,0,0,0,0,0,6)
+combat_boots = Legs("Combat boots", "Combat boots",4,5,5,'footwear',True,200,0,0,0,0,0,8)
+cowboy_boots = Legs("Cowboy boots", "Cowboy boots",4,5,5,'footwear',True,200,0,0,0,0,0,5)
 
 mens_footwear = [running_shoes,sandals,light_boots,combat_boots,cowboy_boots]
 womens_footwear = [running_shoes,sandals,high_heels,light_boots,combat_boots,cowboy_boots]
 
 #clothes
-naked = Outfit("None", "Clothes",1,5,5,'outfit',True,0)
-tshirt = Outfit("T-Shirt", "Clothes",2,5,5,'outfit',True,25)
-tanktop = Outfit("Tanktop", "Clothes",2,5,5,'outfit',True,25)
+naked = Outfit("None", "Clothes",1,5,5,'outfit',True,0,0,0,0,0,0,0)
+tshirt = Outfit("T-Shirt", "Clothes",2,5,5,'outfit',True,25,0,0,0,0,0,3)
+tanktop = Outfit("Tanktop", "Clothes",2,5,5,'outfit',True,25,0,0,0,0,0,2)
 
-dress_shirt = Outfit("Dress shirt", "Clothes",2,5,5,'outfit',True,60)
-work_shirt = Outfit("Work shirt", "Clothes",2,5,5,'outfit',True,35)
-hawaiian_shirt = Outfit("Hawaiian shirt", "Clothes",2,5,5,'outfit',True,35)
+dress_shirt = Outfit("Dress shirt", "Clothes",2,5,5,'outfit',True,60,0,0,0,0,0,4)
+work_shirt = Outfit("Work shirt", "Clothes",2,5,5,'outfit',True,35,0,0,0,0,0,5)
+hawaiian_shirt = Outfit("Hawaiian shirt", "Clothes",2,5,5,'outfit',True,35,0,0,0,0,0,4)
 
-plaid_shirt = Outfit("Plaid shirt", "Clothes",2,5,5,'outfit',True,40)
-tie_dye_shirt = Outfit("Tie dye shirt", "Clothes",2,5,5,'outfit',True,30)
-dress = Outfit("Dress", "Clothes",2,5,5,'outfit',True,80)
-nice_dress = Outfit("Nice dress", "Clothes",1,5,5,'outfit',True,500)
+plaid_shirt = Outfit("Plaid shirt", "Clothes",2,5,5,'outfit',True,40,0,0,0,0,0,6)
+tie_dye_shirt = Outfit("Tie dye shirt", "Clothes",2,5,5,'outfit',True,30,0,0,0,0,0,3)
+dress = Outfit("Dress", "Clothes",2,5,5,'outfit',True,80,0,0,0,0,0,4)
+nice_dress = Outfit("Nice dress", "Clothes",1,5,5,'outfit',True,500,0,0,0,0,0,3)
 
 #outerwear
-no_outerwear = Outerwear("None", "Clothes",1,5,5,'outerwear',True,0)
-hoodie = Outerwear("Hoodie", "clothes",3,5,5,'outerwear',True,45)
-sweater = Outerwear("Sweater", "Clothes",2,5,5,'outerwear',True,70)
-fancy_sweater = Outerwear("Fancy sweater", "Clothes",2,5,5,'outerwear',True,100)
-jean_jacket = Outfit("Jean jacket", "Clothes",2,5,5,'outerwear',True,50)
-bomber_jacket = Outfit("Bomber jacket", "Clothes",2,5,5,'outerwear',True,65)
-windbreaker = Outfit("Windbreaker", "Clothes",1,5,5,'outerwear',True,30)
-vest = Outfit("Vest", "Clothes",1,5,5,'outerwear',True,30)
+no_outerwear = Outerwear("None", "Clothes",1,5,5,'outerwear',True,0,0,0,0,0,0,0)
+hoodie = Outerwear("Hoodie", "clothes",3,5,5,'outerwear',True,45,0,0,0,0,0,7)
+sweater = Outerwear("Sweater", "Clothes",2,5,5,'outerwear',True,70,0,0,0,0,0,5)
+fancy_sweater = Outerwear("Fancy sweater", "Clothes",2,5,5,'outerwear',True,100,0,0,0,0,0,5)
+jean_jacket = Outfit("Jean jacket", "Clothes",2,5,5,'outerwear',True,50,0,0,0,0,0,8)
+bomber_jacket = Outfit("Bomber jacket", "Clothes",2,5,5,'outerwear',True,65,0,0,0,0,0,7)
+windbreaker = Outfit("Windbreaker", "Clothes",1,5,5,'outerwear',True,30,0,0,0,0,0,4)
+vest = Outfit("Vest", "Clothes",1,5,5,'outerwear',True,30,0,0,0,0,0,4)
 
-sports_jacket = Outerwear("Sports jacket", "Clothes",2,5,5,'outerwear',True,80)
-trenchcoat= Outerwear("Trench coat", "Clothes",3,4,5,'outerwear',True,100)
-cheap_suit= Outerwear("Cheap suit", "Clothes",2,4,5,'outerwear',True,130)
-leather_jacket = Outerwear("Leather jacket", "Clothes",5,5,5,'outerwear',True,150)
-army_uniform = Outerwear("Army jacket", "Clothes",4,5,5,'outerwear',True,100)
-nice_suit = Outerwear("Nice suit", "Clothes",2,5,5,'outerwear',True,500)
+sports_jacket = Outerwear("Sports jacket", "Clothes",2,5,5,'outerwear',True,80,0,0,0,0,0,8)
+trenchcoat= Outerwear("Trench coat", "Clothes",3,4,5,'outerwear',True,100,0,0,0,0,0,10)
+cheap_suit= Outerwear("Cheap suit", "Clothes",2,4,5,'outerwear',True,130,0,0,0,0,0,6)
+leather_jacket = Outerwear("Leather jacket", "Clothes",5,5,5,'outerwear',True,150,0,0,0,0,0,9)
+army_uniform = Outerwear("Army jacket", "Clothes",4,5,5,'outerwear',True,100,0,0,0,0,0,6)
+nice_suit = Outerwear("Nice suit", "Clothes",2,5,5,'outerwear',True,500,0,0,0,0,0,5)
 
 
 
 #armor
-no_armor = Armor("None", "Clothes",1,5,5,'armor',True,0)
+no_armor = Armor("None", "Clothes",1,5,5,'armor',True,0,0,0,0,0,0,0)
 
-body_armor = Armor("Body armor", "Clothes",8,5,5,'armor',True,750)
+body_armor = Armor("Body armor", "Clothes",8,5,5,'armor',True,750,0,0,0,0,0,4)
 
 #backpack
 class Backpack:
@@ -1126,16 +1192,17 @@ large_backpack = Backpack('Large backpack',7,5,130,'backpack',True)
 
 
 class Dress_Code:
-	def __init__(self,name,headwear,outfit,outerwear,legwear,footwear):
+	def __init__(self,name,headwear,outfit,outerwear,legwear,footwear,weapons):
 		self.name = name
 		self.headwear = headwear
 		self.outfit = outfit
 		self.outerwear = outerwear
 		self.legwear = legwear
 		self.footwear = footwear
+		self.weapons = weapons
 
-no_dress_code = Dress_Code('none',[],[],[],[],[])
-office_dress_code = Dress_Code('Office',[],[dress_shirt,nice_dress],[cheap_suit,nice_suit],[suit_pants,black_pants,long_skirt,short_skirt],[dress_shoes,high_heels])
+no_dress_code = Dress_Code('none',[],[],[],[],[],[])
+office_dress_code = Dress_Code('Office',[],[dress_shirt,nice_dress],[cheap_suit,nice_suit],[suit_pants,black_pants,long_skirt,short_skirt],[dress_shoes,high_heels],[])
 
 
 #traits
@@ -1962,7 +2029,7 @@ class Location:
 		self.alarm_level = alarm_level
 		self.dress_code = dress_code
 class Container:
-	def __init__(self,name,item_type,items,money,is_visible,max_items,max_money,base_value,can_loot):
+	def __init__(self,name,item_type,items,money,is_visible,max_items,max_money,base_value,can_loot,is_destroyed,lock_level):
 		self.name = name
 		self.item_type = item_type
 		self.items = items
@@ -1972,8 +2039,10 @@ class Container:
 		self.max_money = max_money
 		self.base_value = base_value
 		self.can_loot = can_loot
-fridge = Container('Fridge','container',[],0,True,18,0,1200,True)
-small_safe = Container('Small safe','container',[],0,True,0,10000,300,True)
+		self.is_destroyed = is_destroyed
+		self.lock_level = lock_level
+fridge = Container('Fridge','container',[],0,True,18,0,1200,True,False,0)
+small_safe = Container('Small safe','container',[],0,True,0,15000,300,False,False,7)
 
 class Junk:
 	def __init__(self,name,base_value,item_type,can_loot):
@@ -2082,10 +2151,10 @@ smartphone = Junk('Smartphone',350,'junk',True)
 server = Junk('Server',2000,'junk',False)
 
 #files
-client_list = Junk('Client list',5000,'junk',True)
-company_plans = Junk('Company plans',10000,'junk',True)
-meeting_minutes = Junk('Meeting minutes',2000,'junk',True)
-confidential_memo = Junk('Confidential memo',3000,'junk',True)
+client_list = Junk('Client list',20000,'junk',True)
+company_plans = Junk('Company plans',50000,'junk',True)
+meeting_minutes = Junk('Meeting minutes',5000,'junk',True)
+confidential_memo = Junk('Confidential memo',15000,'junk',True)
 
 
 area_id = 1
@@ -2250,7 +2319,7 @@ def create_npc(profession,affiliation,home):
 		#finally make the npc
 		npc = Char(gender,age, profession,affiliation,health, npc_stats, injuries, skills,skills_xp,weapon,outfit,tool,traits,drugs,fname,lname,money,'enemy',combat_status,home,mind,hunger,thirst,sleep,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor,None,None)
 		return npc
-        elif profession == 'Telemarketer' or profession == 'Data Miner' or profession == 'Fast Food Worker' or profession == 'Fast Food Manager' or profession == 'Vlogger' or profession == 'Shopkeeper' or profession == 'Programmer' or profession == 'Janitor' or profession == 'Warehouse Worker' or profession == 'Warehouse Manager' or profession == 'Chatbot Operator' or profession =='Housekeeper' or profession == 'Bike Courier' or profession == 'Nurse' or profession == 'Hipster' or profession == 'Hippie' or profession == 'Stripper' or profession == 'Mechanic' or profession == 'Security Guard' or profession== 'Manager' or profession == 'Receptionist' or profession == 'Building Manager':
+        elif profession == 'Telemarketer' or profession == 'Data Miner' or profession == 'Fast Food Worker' or profession == 'Fast Food Manager' or profession == 'Vlogger' or profession == 'Shopkeeper' or profession == 'Programmer' or profession == 'Janitor' or profession == 'Warehouse Worker' or profession == 'Warehouse Manager' or profession == 'Chatbot Operator' or profession =='Housekeeper' or profession == 'Bike Courier' or profession == 'Nurse' or profession == 'Hipster' or profession == 'Hippie' or profession == 'Stripper' or profession == 'Mechanic' or profession == 'Security Guard' or profession== 'Manager' or profession == 'Receptionist' or profession == 'Building Manager' or profession == "Office Worker":
 		strength = random.randint(4,8)
 		base_strength = strength
                 dexterity = random.randint(4,8)
@@ -2391,7 +2460,7 @@ def create_npc(profession,affiliation,home):
                         footwear = dress_shoes
                         outerwear  = nice_suit
 			weapon = punch
-                elif profession == "Manager":
+                elif profession == "Manager" or profession == "Office Worker":
                         outfit = dress_shirt
                         legwear = suit_pants
                         footwear = dress_shoes
@@ -2411,7 +2480,7 @@ def create_npc(profession,affiliation,home):
 
                 return npc
 
-	elif profession == "Gamer Assassin" or profession == "Flower Child" or  profession == "Pissboi Leader" or profession == "Pissboi Enforcer" or profession == 'Crankenstein' or profession == "Crankenstein Enforcer" or profession == "Crankenstein Leader" or profession == "Drunkard"  or profession == "Crackhead" or profession == "Drunkard" or profession == "Script Kiddie" or profession == "Crackhead" or profession == "Clerk" or profession == "Nudist" or profession == "Hobo" or  profession == "Rocker" or profession == "Marxist" or profession == 'Rude Boy' or profession == 'Grimesmacker' or profession == 'Cannibal' or profession == 'Slaver' or profession == 'Slave' or profession == 'Cat Person' or profession == 'Booze Knight' or profession == 'Anarchist'or profession == 'Mercenary' or profession == 'Occultist' or profession == 'Scavenger' or profession == 'Survivalist':
+	elif profession == "Gamer Assassin" or profession == "Flower Child" or  profession == "Pissboi Leader" or profession == "Pissboi Enforcer" or profession == 'Crankenstein' or profession == "Crankenstein Enforcer" or profession == "Crankenstein Leader" or profession == "Drunkard"  or profession == "Crackhead" or profession == "Drunkard" or profession == "Script Kiddie" or profession == "Crackhead" or profession == "Clerk" or profession == "Nudist" or profession == "Hobo" or  profession == "Rocker" or profession == "Marxist" or profession == 'Rude Boy' or profession == 'Grimesmacker' or profession == 'Cannibal' or profession == 'Slaver' or profession == 'Slave' or profession == 'Cat Person' or profession == 'Booze Knight' or profession == 'Anarchist'or profession == 'Mercenary' or profession == 'Occultist' or profession == 'Scavenger' or profession == 'Survivalist' or profession == "Drug Dealer":
 		strength, base_strength = 9,9
 		dexterity, base_dexterity = 8,8
 		willpower, base_willpower = 9,9
@@ -2447,7 +2516,7 @@ def create_npc(profession,affiliation,home):
 			leadership = random.randint(3,5)
 			rifle = random.randint(3,5)
 			weapon = ak47
-                elif profession == "Pissboi" or profession == 'Grimesmacker':
+                elif profession == "Pissboi" or profession == 'Grimesmacker' or profession == "Drug Dealer":
                         leadership = random.randint(3,5)
                         pistol = random.randint(3,5)
                         weapon = uzi
@@ -3471,7 +3540,7 @@ def gen_gang_hq(x,y,name,locations):
 	
 	stash_items = create_stash(power)
 	money = random.randint(2000,10000)
-	stash = Container(name + ' Stash','container',stash_items,money,False,power,20000,10000,True)
+	stash = Container(name + ' Stash','container',stash_items,money,False,power,20000,10000,True,False,0)
 	items.append(stash)
 
 
@@ -3527,15 +3596,17 @@ def gen_office(x,y,corp,type):
         rooms = []
         floors = []
         actors = NPC([],0,[],0)
-        num_rooms = random.randint(4,10)
-	num_floor = random.randint(4,10)
+        num_rooms = random.randint(4,6)
+	num_floor = random.randint(4,15)
+	security = random.randint(2,7)
         room_count = 1
 	floor_count = 1
-	while floor_count <= num_floor:
+	while floor_count <= num_floor and num_rooms <= 75:
 		room_count = 1
 		while room_count <= num_rooms:
 			room_chance = random.randint(1,7)
-
+			if floor_count >= 8:
+				security = security * 5
 	                items = []
 			hidden_item = None
 			if room_chance != 1:
@@ -3546,10 +3617,13 @@ def gen_office(x,y,corp,type):
 					hidden_item = random.choice(possible_hidden_items)
 				else:
 					if type == 'Troll Farm':
-						professions = ['Programmer','Chatbot Operator']
+						professions = ['Programmer','Chatbot Operator','Receptionist',"Office Worker"]
 		                		profession = random.choice(professions)
 					elif type == 'Call Centre':
-						profession = 'Telemarketer'
+						professions = ['Telemarketer',"Office Worker"]
+						profession = random.choice(professions)
+					elif type == "Office":
+						profession = "Office Worker"
        		        	members = []
         	        	member = create_npc(profession,'none','None')
 				member.affiliation = corp.name
@@ -3561,7 +3635,7 @@ def gen_office(x,y,corp,type):
        		        	actors = NPC(members,0,[],0)
                 		owned_by = corp.name
                 		room = Location(apt_name,'Templeville','Cliff Heights',apt_name,x,y,actors,items,False,[],True,[],False,False,
-                		        [],13,23,False,[],False,[],False,False,'No one',[],[],None,True,[],floor_count,False,1,0,office_dress_code)
+                		        [],13,23,False,[],False,[],False,False,'No one',[],[],None,True,[],floor_count,False,security,0,office_dress_code)
 				room.regulars = members
 
 				room.is_store = True
@@ -3589,7 +3663,7 @@ def gen_office(x,y,corp,type):
                                 actors = NPC(members,0,[],0)
                                 owned_by = corp.name
                                 room = Location(apt_name,'Templeville','Cliff Heights',apt_name,x,y,actors,items,False,[],True,[],False,False,
-                                        [],13,23,False,[],False,[],False,False,'No one',[],[],None,True,[],floor_count,False,1,0,office_dress_code)
+                                        [],13,23,False,[],False,[],False,False,'No one',[],[],None,True,[],floor_count,False,security,0,office_dress_code)
                                 room.regulars = members
 
                                 room.is_store = True
@@ -3616,7 +3690,7 @@ def gen_office(x,y,corp,type):
 
         actors = NPC(members,0,[],0)
         building = Location(building_name,'Templeville','Cliff Heights',building_name,x,y,actors,[],False,[],True,[],False,True,
-        [],13,23,False,[],False,rooms,False,False,corp.name,[],floors,None,False,[],1,True,5,0,office_dress_code)
+        [],13,23,False,[],False,rooms,False,False,corp.name,[],floors,None,False,[],1,True,security,0,office_dress_code)
 	building.is_store = True
 	building.time_open = 9
 	building.time_close = 17
@@ -3712,7 +3786,7 @@ def gen_apt_building(x,y):
 				elif is_vacant != 1:
 					roll = random.randint(1,6)
 					if roll == 1:
-               					professions = ["Hustler","Meatball","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul"]
+               					professions = ["Hustler","Meatball","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul","Drug Dealer"]
 					else:
 						professions = workers
         	       			profession = random.choice(professions)
@@ -3758,7 +3832,7 @@ def gen_apt_building(x,y):
 						bike = random.choice(bikes)
 						items.append(bike)
 				hidden_items = []
-				chance_hidden_items = random.randint(1,2)
+				chance_hidden_items = random.randint(1,4)
                 #chance_hidden_items = 1
 
 				if chance_hidden_items == 1:
@@ -3772,6 +3846,19 @@ def gen_apt_building(x,y):
 						hidden_item = random.choice(possible_hidden_items)
 						hidden_items.append(hidden_item)
 						count += 1
+				if profession == "Drug Dealer":
+					possible_drugs = [crack_28g,speed_28g,cocaine_28g,heroin_28g]
+					num_drugs = random.randint(2,10)
+					member.money = random.randint(500,2000)
+					drug_count = 1
+					drugs = []
+					while drug_count <= num_drugs:
+						drug = random.choice(possible_drugs)
+						items.append(drug)
+						drug_count += 1
+					money = random.randint(3000,10000)
+					stash = Container(member.fname + ' Stash','container',drugs,money,True,5,20000,10000,True,False,0)
+					items.append(stash)
 
        				room = Location(apt_name,'Templeville','Cliff Heights',apt_name,x,y,actors,items,False,[],True,[],False,False,       			[],13,23,False,[],False,[],False,False,'No one',[],[],None,True,hidden_items,floor_count,False,4,0,no_dress_code)
 				room.is_bar = False

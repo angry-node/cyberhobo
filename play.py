@@ -721,8 +721,20 @@ def travel(party,world,start,my_area):
 			#hour = world.time.hour
 		
 			world.time.correct(party_actions)
+			#daily maitenance
 			if world.time.day <= day + 1:
+				#clean up corpses, etc
 				my_area.clean_up()
+				#reduce alarm levels
+				for area in world.areas:
+					for location in area.locations:
+						if location.alarm_level >= 1:
+							location.alarm_level -= 1
+						if location.rooms != None and len(location.rooms) >= 1:
+							for room in location.rooms:
+								if room.alarm_level >= 1:
+									room.alarm_level -= 1
+			#handle hour changes
 			if world.time.hour >= hour + 1 or world.time.hour == 0:
 				for member in party.members:
 					member.handle_mind()
@@ -1462,6 +1474,9 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
         if damage_taken <= -1:
 	        damage_taken = 0
 
+	#damage clothing
+	#def damage_clothing(attacker,target,injury):
+		
 	#if attack hits
 	if defend_roll <=attack_roll and damage_taken <= 0:
                 libtcod.console_print(0,1,line_count,target.fname + " " + target.lname + " was unharmed.")
@@ -1599,6 +1614,55 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
                         	injury = random.choice(minor_cuts)
 			elif damage_taken >= 31:
 				injury = random.choice(major_cuts)
+		#damage clothing
+		if injury.location == 'head' or injury.location == 'neck' or injury.location == 'jaw' or injury.location == 'face':
+			if target.headwear != None:
+				if target.headwear.name!= 'No headwear':
+					target.headwear.damage += random.randint(1,3)
+					if injury.cause_bleeding >= 1:
+						target.headwear.blood += injury.cause_bleeding / 2
+                elif injury.location == 'right arm' or injury.location == 'left arm' or injury.location == 'ribs' or injury.location == 'right collarbone' or injury.location =='left collarbone':
+			
+                        if target.outerwear != None:
+                                if target.outerwear.name!= 'No outerwear':
+                                        target.outerwear.damage += random.randint(1,3)
+                                        if injury.cause_bleeding >= 1:
+                                                target.outerwear.blood += injury.cause_bleeding / 2
+
+			elif outerwear == None or outerwear.name== 'No outerwear':
+				if target.outfit != None:
+					if target.outfit.name != 'No outfit':
+						target.outfit.damage += random.randint(1,3)
+                                        	if injury.cause_bleeding >= 1:
+                                                	target.outfit.blood += injury.cause_bleeding / 2
+
+		elif injury.location == 'torso':
+			if target.armor != None:
+				if target.armor.name != 'No armor':
+					target.armor.damage += 2
+                                        if injury.cause_bleeding >= 1:
+                                                target.armor.blood += injury.cause_bleeding / 2
+
+			elif target.armor == None or target.armor.name == 'No armor':
+                                if target.outerwear != None:
+                                	if target.outerwear.name!= 'No outerwear':
+                                        	target.outerwear.damage += random.randint(1,3)
+                                        	if injury.cause_bleeding >= 1:
+                                        	        target.outerwear.blood += injury.cause_bleeding / 2
+
+                                        elif outerwear == None or outerwear.name== 'No outerwear':
+                                                if target.outfit != None:
+                                                        if target.outfit.name != 'No outfit':
+                                                                target.outfit.damage += random.randint(1,3)
+                                        			if injury.cause_bleeding >= 1:
+                                                			target.outfit.blood += injury.cause_bleeding / 2
+
+                if injury.location == 'left leg' or injury.location == 'right leg' or injury.location == 'groin':
+                        if target.legwear != None:
+                                if target.legwear.name!= 'No headwear':
+					target.legwear.damage += random.randint(1,3)
+                                        if injury.cause_bleeding >= 1:
+                                                target.legwear.blood += injury.cause_bleeding / 2
 
 		min_bonus_damage = injury.damage_bonus / 2
 		max_bonus_damage = injury.damage_bonus 
@@ -1619,7 +1683,7 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
                         target.health.current_stamina -= (injury.cause_stamina_loss)
 		#cause trauma
 		if (damage_taken + bonus_damage) >= (target.health.max_health / 4):
-			target.mind.trauma += 2
+			target.mind.trauma += random.randint(2,8)
 
 		#check if target knocked down
 		just_knocked_down = False
@@ -2251,6 +2315,235 @@ def battle(player,enemy,location,world,show_fight,party_actions):
                                        	#print 'fight!'
                                        	round_finished,initiative_finished = True,True
 
+#talk to patrol
+
+#dress code
+def check_dress_code(player_party,my_location):
+	if my_location.security_level >= 1:
+#		if dress_code.name == 'none' or dress_code == None:
+
+		if my_location.dress_code.name != None:
+			passed_check = True
+			num_violations = 0
+			#hats and headwear
+			if len(my_location.dress_code.headwear) == 0:
+				for member in player_party.members:
+					if member.headwear != no_headwear:
+						passed_check = False
+						num_violations += 1
+			elif len(my_location.dress_code.headwear) >= 1:
+				if member.headwear not in my_location.dress_code.headwear:
+					passed_check = False
+					num_violations += 1
+			elif my_location.dress_code.headwear == None:
+				num_violations = num_violations
+                        #shirts
+                        if len(my_location.dress_code.outfit) == 0:
+        	                for member in player_party.members:
+                	                if member.outfit != naked:
+                        	                passed_check = False
+						num_violations += 1
+
+                        elif len(my_location.dress_code.outfit) >= 1:
+                        	if member.outfit not in my_location.dress_code.outfit:
+                                	passed_check = False
+					num_violations += 1
+			elif my_location.dress_code.outfit == None:
+				num_violations = num_violations
+                        #outerwear
+                        if len(my_location.dress_code.outerwear) == 0:
+                                for member in player_party.members:
+                                        if member.outerwear != no_outerwear:
+                        	                passed_check = False
+						num_violations += 1
+
+                        elif len(my_location.dress_code.outerwear) >= 1:
+                                if member.outerwear not in my_location.dress_code.outerwear:
+                                        passed_check = False
+					num_violations += 1
+			elif my_location.dress_code.outerwear == None:
+				num_violations = num_violations
+                        #legwear
+                        if len(my_location.dress_code.legwear) == 0:
+                                for member in player_party.members:
+                                        if member.legwear != no_legwear:
+                        	                passed_check = False
+						num_violations += 1
+
+                        elif len(my_location.dress_code.legwear) >= 1:
+                                if member.legwear not in my_location.dress_code.legwear:
+                                        passed_check = False
+					num_violations += 1
+                        elif my_location.dress_code.legwear == None:
+                                num_violations = num_violations
+
+                        #footwear
+                        if len(my_location.dress_code.footwear) == 0:
+                                for member in player_party.members:
+                                        if member.footwear != no_footwear:
+                          	        	passed_check = False
+						num_violations += 1
+
+                        elif len(my_location.dress_code.footwear) >= 1:
+                                if member.footwear not in my_location.dress_code.footwear:
+                                        passed_check = False
+					num_violations += 1
+                        elif my_location.dress_code.footwear == None:
+                                num_violations = num_violations
+
+			print 'dress code: ' + str(passed_check)
+			print str(num_violations) + ' violations.'
+			#is there anyone here to notice we aren't wearing the right clothes
+			violations_noticed = 0
+			if len(my_location.actors.members) >= 1:
+				
+				for member in my_location.actors.members:
+					disguise_roll = random.randint(1,10)						
+					notice_roll = random.randint(1,10)
+					if disguise_roll <= member.skills.disguise:
+						notice_roll += random.randint(1,3)
+					etiquette_roll = random.randint(1,10)
+					if etiquette_roll <= member.skills.etiquette:
+						notice_roll += random.randint(1,3)
+					if my_location.alarm_level >= 1:
+						notice_roll -= my_location.alarm_level
+					if notice_roll <= my_location.security_level:
+						violations_noticed += 1
+						my_location.alarm_level += 1
+
+                                        #increase_disguise = 1 + member.skills.disguise * 10
+                                        #chance_disguise_increase = random.randint(1,increase_disguise)
+					#if chance_disguise_increase == 1:
+						#member = random.choice(player_party.members)
+					#	member.skills.disguise += 1
+                                        #increase_etiquette = member.skills.etiquette * 15
+                                        #chance_etiquette_increase = random.randint(1,increase_etiquette)
+					#if chance_etiquette_increase == 1:
+					#	member.skills.etiquette += 1
+				print str(violations_noticed) + ' violations noticed.'
+				#if violations_noticed <= 4:
+				#	chance_call_security = 5
+				#elif violations_noticed >= 5:
+				#	chance_call_security = 7
+				#call_security_count = 0
+				#alarm_count = 0
+				#while violations_noticed <= call_security_count:
+				#	chance = random.randint(1,10)
+				#	if chance <= chance_call_security:
+				#		alarm_count += 1
+				#	call_security_count += 1
+				print str(my_location.alarm_level) + ' suspicion.'
+				if my_location.parent_location == None:
+					for room in my_location.rooms:
+						room.alarm_level = my_location.alarm_level
+				else:
+					for room in my_location.parent_location.rooms:
+						room.alarm_level = my_location.alarm_level
+				#fight?
+				fight = False
+				fight_chance = my_location.alarm_level + violations_noticed
+
+				if fight_chance >= my_location.security_level:
+					libtcod.console_clear(0)
+					line_count = 1
+					libtcod.console_print(0,1,line_count,"The patrol approaches you.")
+					line_count += 2
+					libtcod.console_print(0,1,line_count,"[t]alk")
+					line_count += 1
+					libtcod.console_print(0,1,line_count,"[f]ight")
+					libtcod.console_flush()
+					choice_made = False
+					while choice_made == False:
+						key = libtcod.console_check_for_keypress()
+						if key.c == ord('f'):
+							print 'fight!'
+							return True
+						elif key.c == ord('t'):
+							finished_talking = False
+							libtcod.console_clear(0)
+							line_count = 1
+		                                        libtcod.console_print(0,1,line_count,"Who will do the talking?")
+                                                        libtcod.console_print(0,35,line_count,"e")
+                                                        libtcod.console_print(0,40,line_count,"l")
+                                                        libtcod.console_print(0,45,line_count,"p")
+
+
+							line_count += 2
+							options = []
+							member_count = 1
+							for member in player_party.members:
+								letter = num_to_letter(member_count)
+								option = [letter, member]
+								libtcod.console_print(0,1,line_count,"[" + option[0] + "] " + option[1].fname + " " + option[1].lname)
+	                                                        libtcod.console_print(0,35,line_count,str(option[1].skills.etiquette))
+                                                                libtcod.console_print(0,40,line_count,str(option[1].skills.lying))
+                                                                libtcod.console_print(0,45,line_count,str(option[1].skills.persuasion))
+
+								options.append(option)
+								member_count += 1
+								line_count += 1
+							libtcod.console_flush()
+
+							while finished_talking == False:
+								key = libtcod.console_check_for_keypress()
+								for option in options:
+									if key.c == ord(option[0]):
+										passed_check = False
+										libtcod.console_clear(0)
+										line_count = 0
+										libtcod.console_print(0,1,line_count,"What will " + option[1].fname + " " + option[1].lname + " do?")
+										line_count += 2
+										libtcod.console_print(0,1,line_count,"[e]tiquette       (" + str(option[1].skills.etiquette) + ")" )
+										line_count += 1
+										libtcod.console_print(0,1,line_count,"[l]ie             (" + str(option[1].skills.lying) + ")")
+										line_count += 1
+										libtcod.console_print(0,1,line_count,"[p]ersuasion      (" + str(option[1].skills.persuasion) + ")")
+										line_count += 1
+										libtcod.console_flush()
+										finished_choosing = False
+										while finished_choosing == False:
+											key = libtcod.console_check_for_keypress()
+											if key.c == ord('e'):
+												libtcod.console_clear(0)
+												roll = random.randint(1,15)
+												if roll <= option[1].skills.etiquette:
+													passed_check = True
+												increase_chance = 1 + option[1].skills.etiquette * 10
+												increase_roll = random.randint(1,increase_chance)
+												if increase_roll == 1:
+													option[1].skills.etiquette += 1
+												finished_choosing = True
+                                                                                        if key.c == ord('l'):
+                                                                                                libtcod.console_clear(0)
+                                                                                                roll = random.randint(1,15)
+                                                                                                if roll <= option[1].skills.lying:
+                                                                                                        passed_check = True
+                                                                                                increase_chance = 1 + option[1].skills.lying * 10
+                                                                                                increase_roll = random.randint(1,increase_chance)
+                                                                                                if increase_roll == 1:
+                                                                                                        option[1].skills.lying += 1
+
+                                                                                                finished_choosing = True
+                                                                                        if key.c == ord('p'):
+                                                                                                libtcod.console_clear(0)
+                                                                                                roll = random.randint(1,15)
+                                                                                                if roll <= option[1].skills.persuasion:
+                                                                                                        passed_check = True
+                                                                                                increase_chance = 1 + option[1].skills.persuasion * 10
+                                                                                                increase_roll = random.randint(1,increase_chance)
+                                                                                                if increase_roll == 1:
+                                                                                                        option[1].skills.persuasion += 1
+
+                                                                                                finished_choosing = True
+										if passed_check == True:
+											return False
+										else:
+											return True
+
+				else:
+					return False
+		#print my_location .name
+
 def show_container(container,player_party,world,party_actions):
         my_area = find_area(player_party,world)
 	my_location = find_location(player_party,world)
@@ -2280,7 +2573,10 @@ def show_container(container,player_party,world,party_actions):
 	line_count += 3
 	if container.money >= 1:
         	libtcod.console_print(0,1,line_count,"[t]ake the money")
-	line_count += 1
+		line_count += 1
+	if my_location.owned_by == 'Player':
+		libtcod.console_print(0,1,line_count,"[p]ut money in the container")
+		line_count += 1
         libtcod.console_print(0,1,line_count,"[r]eturn")
 	line_count += 1
 	libtcod.console_flush()
@@ -2297,6 +2593,58 @@ def show_container(container,player_party,world,party_actions):
                                         		organization.player_reputation -= random.randint(5,15) 
 					finished_investigating_container = True
 					return finished_investigating_container
+		if key.c == ord('p') and my_location.owned_by == 'Player':
+			libtcod.console_clear(0)
+			libtcod.console_print(0,1,1,"How much?")
+	
+			libtcod.console_print(0,1,3,"[a] $50")
+                        libtcod.console_print(0,1,4,"[b] $100")
+                        libtcod.console_print(0,1,5,"[c] $250")
+                        libtcod.console_print(0,1,6,"[d] $500")
+                        libtcod.console_print(0,1,7,"[e] $1000")
+                        libtcod.console_print(0,1,8,"[f] $5000")
+			
+                        libtcod.console_print(0,1,10,"[ESC]")
+
+			libtcod.console_flush()
+			finished_money = False
+			while finished_money == False:
+				key = libtcod.console_check_for_keypress()
+				if key.vk == libtcod.KEY_ESCAPE:
+					finished_money = True
+				elif key.c == ord('a'):
+					if player_party.money >= 50:
+						player_party.money -= 50
+						container.money += 50
+						finished_money = True
+                                elif key.c == ord('b'):
+                                        if player_party.money >= 100:
+                                                player_party.money -= 100
+                                                container.money += 100
+						finished_money = True
+                               	elif key.c == ord('c'):
+                                        if player_party.money >= 250:
+                                                player_party.money -= 250
+                                                container.money += 250
+                                                finished_money = True
+                                elif key.c == ord('d'):
+                                        if player_party.money >= 500:
+                                                player_party.money -= 500
+                                                container.money += 500
+                                                finished_money = True
+                               	elif key.c == ord('e'):
+                                        if player_party.money >= 1000:
+                                                player_party.money -= 1000
+                                                container.money += 1000
+                                                finished_money = True
+                                elif key.c == ord('f'):
+                                        if player_party.money >= 5000:
+                                                player_party.money -= 5000
+                                                container.money += 5000
+                                                finished_money = True
+                        finished_investigating_container = True
+                        return finished_investigating_container
+
 		if key.c == ord('r'):
 			finished_investigating_container = True
 			return finished_investigating_container
@@ -2365,7 +2713,11 @@ def investigate(my_location,world,party,party_actions):
 
 	while finished_investigating == False:
 	        key = libtcod.console_check_for_keypress()
-	
+		can_search = True
+		if len(my_location.actors.members) >= 1:
+			for member in my_location.actors.members:
+				if member.affiliation != None and member.affiliation != 'none' and member.affiliation == my_location.owned_by:
+					can_search = False
 		if key.vk != libtcod.KEY_ESCAPE and key.vk!= libtcod.KEY_ENTER:
 			#print key.c
 			for corpse in corpses_to_investigate:
@@ -2387,7 +2739,7 @@ def investigate(my_location,world,party,party_actions):
                                         finished_investigating = True
                                         return finished_investigating
 		
-		elif key.vk == libtcod.KEY_ENTER:
+		elif key.vk == libtcod.KEY_ENTER and can_search == True:
 			libtcod.console_clear(0)
 			total_investigate = 2
 			for member in party.members:
@@ -2420,6 +2772,19 @@ def investigate(my_location,world,party,party_actions):
 					return finished_investigating
 			world.time.minute += 5
 			world.time.correct(party_actions)
+		elif key.vk == libtcod.KEY_ENTER and can_search == False:
+			libtcod.console_clear(0)
+			libtcod.console_print(0,1,1, "You cannot search here.")
+			libtcod.console_print(0,1,3, "[c]ontinue")
+			libtcod.console_flush()
+			confirm = False
+                        while confirm == False:
+                                key = libtcod.console_check_for_keypress()
+                                if key.c == ord('c'):
+                                        finished_viewing = True
+                                        finished_investigating = True
+                                        return finished_investigating
+
 		elif key.vk == libtcod.KEY_ESCAPE:
 		        finished_viewing = True
 	                finished_investigating = True
@@ -2740,6 +3105,15 @@ def rest(party,world,hours,guard):
 	my_area = find_area(party,world)
 	count = 1
 	interrupted = False
+	can_rest = False
+	if my_location.owned_by == None and my_location.owned_by == 'Player':
+		can_rest = True
+	else:
+		can_rest = False
+	if can_rest == False:
+		message = 'You cannot rest here.'
+		messages.append(message)
+	print can_rest
 	while count <= hours and interrupted == False:
 		owned = False
 		#do we own this location
@@ -2820,7 +3194,7 @@ def rest(party,world,hours,guard):
 				beds.append(item)
 			if item.name == 'Cat':
 				cats.append(cat)
-			if item.name == 'Chair':
+			if item.name == 'Chair' or item.name == "Couch":
 				relax.append(item)
                 for item in party.inventory:
                         if item.name == "Sleeping bag":
@@ -3202,7 +3576,7 @@ def deal_drugs(party,world,length_time,party_actions):
 					interrupted = True
 					return interrupted
 	elif drugs_value >= 1000 and my_location.owned_by == 'No one':
-		chance = drugs_value / 1000
+		chance = random.randint(1,50)
 		chance_robbery = random.randint(1,250)
 		if chance_robbery <= chance:
 			robbery(party,world,False,party_actions)
@@ -3292,7 +3666,7 @@ def deal_drugs(party,world,length_time,party_actions):
         my_location = find_location(party,world)
 	for member in party.members:
 		if member == party.leader:
-			chance = party.leader.skills.leadership * 50
+			chance = party.leader.skills.leadership + 1 * 50
 			roll = random.randint(1,chance)
 			if roll == 1:
 				party.leader.skills.leadership += 1
@@ -3815,55 +4189,209 @@ def show_character(target,world,corpse,my_location,player_party,creation):
         libtcod.console_print(0, 1, 5, "Age: " + str(target.age))
 	if target.headwear.name != 'None':
 	        libtcod.console_print(0, 25, 1, target.headwear.name)
+		if target.headwear.damage >= 3:
+                	libtcod.console_set_default_foreground(0, libtcod.dark_gray)
+	                libtcod.console_print(0, 42, 1, 'd')
+	                libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.headwear.blood >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_red)
+                        libtcod.console_print(0, 43, 1, 'b')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.headwear.dirty >= 3:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_brown)
+                        libtcod.console_print(0, 44, 1, 'd')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.headwear.wet >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_blue)
+                        libtcod.console_print(0, 45, 1, 'w')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+
+
         elif target.headwear.name == 'None':
                 libtcod.console_set_default_foreground(0, libtcod.gray)
                 libtcod.console_print(0, 25, 1, 'No headwear')
                 libtcod.console_set_default_foreground(0, libtcod.white)
-        libtcod.console_print(0, 25, 2, target.outfit.name)
+
+	if target.outfit != None:
+        	libtcod.console_print(0, 25, 2, target.outfit.name)
+                if target.outfit.damage >= 3:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_gray)
+                        libtcod.console_print(0, 42, 2, 'd')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.outfit.blood >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_red)
+                        libtcod.console_print(0, 43, 2, 'b')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.outfit.dirty >= 3:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_brown)
+                        libtcod.console_print(0, 44, 2, 'd')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.outfit.wet >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_blue)
+                        libtcod.console_print(0, 45, 2, 'w')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
         if target.legwear.name != 'None':
                 libtcod.console_print(0, 25, 3, target.legwear.name)
+                if target.legwear.damage >= 3:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_gray)
+                        libtcod.console_print(0, 42, 3, 'd')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.legwear.blood >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_red)
+                        libtcod.console_print(0, 43, 3, 'b')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.legwear.dirty >= 3:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_brown)
+                        libtcod.console_print(0, 44, 3, 'd')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.legwear.wet >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_blue)
+                        libtcod.console_print(0, 45, 3, 'w')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
         elif target.legwear.name == 'None':
                 libtcod.console_set_default_foreground(0, libtcod.gray)
                 libtcod.console_print(0, 25, 3, 'No bottoms')
                 libtcod.console_set_default_foreground(0, libtcod.white)
         if target.footwear.name != 'None':
                 libtcod.console_print(0, 25, 4, target.footwear.name)
+                if target.footwear.damage >= 3:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_gray)
+                        libtcod.console_print(0, 42, 4, 'd')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.footwear.blood >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_red)
+                        libtcod.console_print(0, 43, 4, 'b')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.footwear.dirty >= 3:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_brown)
+                        libtcod.console_print(0, 44, 4, 'd')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.footwear.wet >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_blue)
+                        libtcod.console_print(0, 45, 4, 'w')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+
         elif target.footwear.name == 'None':
                 libtcod.console_set_default_foreground(0, libtcod.gray)
                 libtcod.console_print(0, 25, 4, 'No footwear')
                 libtcod.console_set_default_foreground(0, libtcod.white)
         if target.outerwear.name != 'None':
                 libtcod.console_print(0, 25, 5, target.outerwear.name)
+                if target.outerwear.damage >= 3:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_gray)
+                        libtcod.console_print(0, 42, 5, 'd')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.outerwear.blood >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_red)
+                        libtcod.console_print(0, 43, 5, 'b')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.outerwear.dirty >= 3:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_brown)
+                        libtcod.console_print(0, 44, 5, 'd')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.outerwear.wet >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_blue)
+                        libtcod.console_print(0, 45, 5, 'w')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+
         elif target.outerwear.name == 'None':
                 libtcod.console_set_default_foreground(0, libtcod.gray)
                 libtcod.console_print(0, 25, 5, 'No outerwear')
                 libtcod.console_set_default_foreground(0, libtcod.white)
 
-        libtcod.console_print(0, 45, 1, target.weapon.name)
+        libtcod.console_print(0, 50, 1, target.weapon.name)
         if target.facewear.name != 'None':
-                libtcod.console_print(0, 45, 2, target.facewear.name)
+                libtcod.console_print(0, 50, 2, target.facewear.name)
+                if target.facewear.damage >= 3:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_gray)
+                        libtcod.console_print(0, 67, 2, 'd')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.facewear.blood >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_red)
+                        libtcod.console_print(0, 68, 2, 'b')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.facewear.dirty >= 3:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_brown)
+                        libtcod.console_print(0, 69, 2, 'd')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.facewear.wet >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_blue)
+                        libtcod.console_print(0, 70, 2, 'w')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+
 	elif target.facewear.name == 'None':
                 libtcod.console_set_default_foreground(0, libtcod.gray)
-                libtcod.console_print(0, 45, 2, 'No facewear')
+                libtcod.console_print(0, 50, 2, 'No facewear')
                 libtcod.console_set_default_foreground(0, libtcod.white)
 	
         if target.eyewear.name != 'None':
-                libtcod.console_print(0, 45, 3, target.eyewear.name)
+                libtcod.console_print(0, 50, 3, target.eyewear.name)
+                if target.eyewear.damage >= 3:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_gray)
+                        libtcod.console_print(0, 67, 3, 'd')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.eyewear.blood >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_red)
+                        libtcod.console_print(0, 68, 3, 'b')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.eyewear.dirty >= 3:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_brown)
+                        libtcod.console_print(0, 69, 3, 'd')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.eyewear.wet >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_blue)
+                        libtcod.console_print(0, 70, 3, 'w')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+
         elif target.eyewear.name == 'None':
                 libtcod.console_set_default_foreground(0, libtcod.gray)
-                libtcod.console_print(0, 45, 3, 'No eyewear')
+                libtcod.console_print(0, 50, 3, 'No eyewear')
                 libtcod.console_set_default_foreground(0, libtcod.white)
         if target.handwear.name != 'None':
-                libtcod.console_print(0, 45, 4, target.handwear.name)
+                libtcod.console_print(0, 50, 4, target.handwear.name)
+                if target.handwear.damage >= 3:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_gray)
+                        libtcod.console_print(0, 67, 4, 'd')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.handwear.blood >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_red)
+                        libtcod.console_print(0, 68, 4, 'b')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.handwear.dirty >= 3:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_brown)
+                        libtcod.console_print(0, 69, 4, 'd')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.handwear.wet >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_blue)
+                        libtcod.console_print(0, 70, 4, 'w')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+
         elif target.handwear.name == 'None':
                 libtcod.console_set_default_foreground(0, libtcod.gray)
-                libtcod.console_print(0, 45, 4, 'No handwear')
+                libtcod.console_print(0, 50, 4, 'No handwear')
                 libtcod.console_set_default_foreground(0, libtcod.white)
         if target.armor.name != 'None':
-                libtcod.console_print(0, 45, 5, target.armor.name)
+                libtcod.console_print(0, 50, 5, target.armor.name)
+                if target.armor.damage >= 3:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_gray)
+                        libtcod.console_print(0, 67, 5, 'd')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.armor.blood >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_red)
+                        libtcod.console_print(0, 68, 5, 'b')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.armor.dirty >= 3:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_brown)
+                        libtcod.console_print(0, 69, 5, 'd')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                if target.armor.wet >= 1:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_blue)
+                        libtcod.console_print(0, 70, 5, 'w')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+
         elif target.armor.name == 'None':
                 libtcod.console_set_default_foreground(0, libtcod.gray)
-                libtcod.console_print(0, 45, 5, 'No armor')
+                libtcod.console_print(0, 50, 5, 'No armor')
                 libtcod.console_set_default_foreground(0, libtcod.white)
 
 
@@ -4552,9 +5080,9 @@ def use_item(target,world,player_party):
                                                                         drugs_used.append(drug_used)
                                                                         if item_to_use.number >= 2:
                                                                                 item_to_use.number -= 1
-                                                                        elif item_to_use.number == 1 and item.number == 1:
+                                                                        elif item_to_use.number == 1:
                                                                                 target.inventory.remove(item_to_use)
-                                                                        elif item_to_use.number == 1 and item.number != 1:
+                                                                        elif item_to_use.number == 1:
 										item_to_use.number -= 1
                                                                                 target.inventory.remove(item_to_use)
 										
@@ -5868,19 +6396,78 @@ def rob_npc(char,target,world,player,location):
 	        libtcod.console_clear(0)
 	        line_count = 1
 	        libtcod.console_print(0,1,line_count, '[a] "Hand over your money!"')
+		line_count += 1
 	        libtcod.console_print(0,1,line_count+1, '[b] "Hand over your weapons!"')
+                line_count += 1
                 libtcod.console_print(0,1,line_count+2, '[c] "Hand over your clothes!"')
+		line_count += 1
 
 	        if len(my_location.actors.members) == 1:
-                	libtcod.console_print(0,1,line_count+3, '[d] "Where is the stash?!?!"')
-        	libtcod.console_print(0,1,line_count+5, '[f] finished')
+                	libtcod.console_print(0,1,line_count, '[d] "Where is the stash?"')
+			line_count += 2
+                        libtcod.console_print(0,1,line_count, '[e] Tie them up.')
+                        line_count += 1
+
+		elif target.affiliation == my_location.owned_by:
+                        libtcod.console_print(0,1,line_count, '[g] "Who is the boss?"')
+		line_count += 2
+        	libtcod.console_print(0,1,line_count+5, '[ENTER] finished')
 		libtcod.console_flush()
 		finished_choice = False
 		member_count = len(player_party.members)
 		while finished_choice == False:
 
 	        	key = libtcod.console_check_for_keypress()
-			if key.c == ord('d'):
+			if key.c == ord('g') and target.affiliation == my_location.owned_by and len(my_location.parent_location.rooms) >= 1:
+				line_count = 1
+				libtcod.console_clear(0)
+				found = False
+				while found == False:
+					if my_location.parent_location != None and len(my_location.parent_location.rooms) >= 1:
+						for room in my_location.parent_location:
+							for member in room.members:
+								if member.profession == "Manager":
+ 									libtcod.console_print(0,1,line_count, '"' + member.fname + ' ' + member.lname + '"')
+									libtcod.console_flush()
+									found = True
+					else:
+						libtcod.console_print(0,1,line_count, '''"I don't know anything!"''')
+						libtcod.console_flush()
+						found = True
+				line_count += 2
+				confirm = False
+
+ 			elif key.c == ord('e') and len(my_location.actors.members) == 1:
+				have_rope = False
+				finished_search = False
+				while finished_search == False:
+					for item in player_party.inventory:
+						if item.name == "Rope":
+							player_party.inventory.remove(item)
+							print 'found rope'
+							have_rope = True
+							#finished_search = True
+					finished_search = True
+				print 'clear'
+				libtcod.console_clear(0)
+				line_count = 1
+				if have_rope == False:
+                                        libtcod.console_print(0,1,line_count, 'You have no Rope.')
+					line_count += 2
+                                elif have_rope == True:
+#                                        libtcod.console_print(0,1,line_count, 'You have tie up ')
+					for member in my_location.actors.members:
+	                                        libtcod.console_print(0,1,line_count, 'You tie up ' + member.fname + " " + member.lname + ".")
+						member.tied_up = True
+						line_count += 2
+				libtcod.console_print(0,1,line_count, '[c]ontinue')
+				libtcod.console_flush()
+				finished_tie = False
+				while finished_tie == False:
+					key = libtcod.console_check_for_keypress()
+					if key.c == ord('c'):
+						finished_tie = True
+			elif key.c == ord('d'):
 				#print 'stash'
 				line_count = 1
 
@@ -5931,7 +6518,7 @@ def rob_npc(char,target,world,player,location):
 						finished = True
 						#return False
 				#return True
-			elif key.c == ord('f'):
+			elif key.vk == libtcod.KEY_ENTER:
 				return True
 			elif key.c == ord('a') or key.c == ord('b') or key.c == ord('c'):
 				npc_attack = 0
@@ -6036,7 +6623,7 @@ def rob_npc(char,target,world,player,location):
                 	                                                                                organization.theft_from += value /4
                                                 		for corporation in world.corporations:
                                                         		if corporation.name == my_location.owned_by:
-                                                                		corporation.theft_on_turf += item.base_value / 4
+                                                                		corporation.theft_on_turf += value / 4
                                                                 		#player_actions.stealing += 1
 
 
@@ -6345,11 +6932,36 @@ def conversation(char,target,player,world,location):
 
 		elif key.c == ord('a'):
 			libtcod.console_clear(0)
-			libtcod.console_print(0,1,1, target.fname + " " + target.lname + " says:")
-			dialogue = random.choice(standard_npc_responses)
-			libtcod.console_print(0,1,2, dialogue + ".")
-		
-			libtcod.console_print(0,1,4, "[r]eturn")
+
+			streetwise_roll = random.randint(1,6)
+			if streetwise_roll <= char.skills.streetwise + 1:
+				#find a tip
+				print 'passed streetwise roll'
+				#drug dealer
+				dealers = []
+				for area in world.areas:
+					for location in area.locations:
+						if len(location.rooms) >= 2:
+							for room in location.rooms:
+								for member in room.actors.members:
+									if member.profession == "Drug Dealer":
+										dealers.append(member)
+				if len(dealers) <= 1:
+                                	libtcod.console_print(0,1,1, target.fname + " " + target.lname + " says:")
+                                	dialogue = random.choice(standard_npc_responses)
+                                	libtcod.console_print(0,1,2, dialogue + ".")
+                                	libtcod.console_print(0,1,4, "[r]eturn")
+				elif len(dealers) >= 2:
+					dealer = random.choice(dealers)
+                                        libtcod.console_print(0,1,1, dealer.fname + " " + dealer.lname + " lives at " + dealer.home.parent_location.name + " in " + dealer.home.parent_location.area + ".")
+                                        libtcod.console_print(0,1,4, "[r]eturn")
+
+			else:
+				print 'failed streetwise roll'
+				libtcod.console_print(0,1,1, target.fname + " " + target.lname + " says:")
+				dialogue = random.choice(standard_npc_responses)
+				libtcod.console_print(0,1,2, dialogue + ".")
+				libtcod.console_print(0,1,4, "[r]eturn")
 			libtcod.console_flush()
 			confirm = False
 			while confirm == False:
@@ -6532,14 +7144,22 @@ def show_patrol(party,world,my_location,party_actions):
 	libtcod.console_clear(0)
 	libtcod.console_print(0, 1, 1, 'A security patrol approaches...')
         #libtcod.console_print(0, 1, 2, '"Intruders! Get them!"')
-
-	libtcod.console_print(0, 1, 3, '[f]ight')
-        libtcod.console_print(0, 1, 4, '[h]ide')
+	open = False
+	if world.time.hour >= my_location.time_open and world.time.hour <= my_location.time_close:
+		open = True
+		print 'open'
+	line_count = 3
+	if open == True:
+        	libtcod.console_print(0, 1, line_count, '[a]ct natural')
+	line_count += 1
+	libtcod.console_print(0, 1, line_count, '[f]ight')
+	line_count += 1
+        libtcod.console_print(0, 1, line_count, '[h]ide')
         #libtcod.console_print(0, 1, 5, '[r]un')
 
 	libtcod.console_flush()
 	decision = False
-	num_patrol = random.randint(2,4)
+	num_patrol = random.randint(1,3)
 	patrol_count = 1
 	patrol_members = []
 	#member = create_npc('Security Guard',my_location.owned_by,'None')
@@ -6550,6 +7170,45 @@ def show_patrol(party,world,my_location,party_actions):
 	actors = NPC(patrol_members,0,[],0)
 	while decision == False:
 		key = libtcod.console_check_for_keypress()
+		if key.c == ord('a') and open== True:
+			fight = check_dress_code(player_party,my_location)
+			if fight == True:
+				libtcod.console_clear(0)
+           	        	for member in patrol_members:
+           	                	for corp in world.corporations:
+               		                	if corp.name == member.affiliation:
+                        		        	corp.members_attacked += 1
+                        	#for room in my_location.parent_location.rooms:
+                        	#	room.alarm_level += random.randint(2,5)
+                        	libtcod.console_clear(0)
+                        	battle(party,actors,my_location,world,True,party_actions)
+                        	libtcod.console_clear(0)
+                        	decision = True
+			elif fight == False:
+				libtcod.console_clear(0)
+				libtcod.console_print(0, 1, 1, 'The patrol leaves.')
+				libtcod.console_print(0, 1, 3, '[c]ontinue')
+				libtcod.console_flush()
+				confirm = False
+				while confirm == False:
+					key = libtcod.console_check_for_keypress()
+					if key.c == ord('c'):
+						libtcod.console_clear(0)
+						decision = True
+						confirm = True
+			else:
+                                libtcod.console_clear(0)
+                                libtcod.console_print(0, 1, 1, 'The patrol leaves.')
+                                libtcod.console_print(0, 1, 3, '[c]ontinue')
+                                libtcod.console_flush()
+                                confirm = False
+                                while confirm == False:
+                                        key = libtcod.console_check_for_keypress()
+                                        if key.c == ord('c'):
+                                                libtcod.console_clear(0)
+                                                decision = True
+                                                confirm = True
+
 		if key.c == ord('f'):
 			for member in patrol_members:
 				for corp in world.corporations:
@@ -6989,6 +7648,12 @@ def party_turn(player_party,world,party_actions):
 					#		alarm_count += 1
 					#	call_security_count += 1
 					print str(my_location.alarm_level) + ' suspicion.'
+					if my_location.parent_location == None:
+						for room in my_location.rooms:
+							room.alarm_level = my_location.alarm_level
+					else:
+						for room in my_location.parent_location.rooms:
+							room.alarm_level = my_location.alarm_level
 		#print my_location .name
 		#describe area
 	        libtcod.console_clear(0)
@@ -7448,10 +8113,19 @@ def party_turn(player_party,world,party_actions):
                 if key.c == ord('r'):
                         finished_rest = False
                         while finished_rest == False:
-                                finished_rest = show_rest(player_party,world)
+				can_rest = False
+				if my_location.owned_by == 'Player' or my_location.owned_by == None or my_location.owned_by == 'No one':
+					can_rest = True
+				else:
+					can_rest = False
+				if can_rest == True:
+                                	finished_rest = show_rest(player_party,world)
 
-                                action = True
-
+                                	action = True
+				if can_rest == False:
+					#libtcod.console_clear(0)
+					finished_rest = True
+					action = True
 		#speak
                 if key.c == ord('s'):
                         finished_speaking = False
