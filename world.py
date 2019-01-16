@@ -699,6 +699,33 @@ bruised_right_leg = Injury("bruise","right leg", "'s right leg was bruised",[],[
 
 bruises = [bruised_groin,bruised_torso,bruised_neck,bruised_face,bruised_left_arm,bruised_right_arm,bruised_left_leg,bruised_right_leg]
 
+#maimed
+
+maimed_groin = Injury("maimed","groin", "'s groin was maimed",[],[],lower_max_health,True,0,48,20,100,5,60,35)
+maimed_torso = Injury("maimed","torso", "'s torso was maimed",[],[],lower_max_health,True,0,48,8,100,5,40,50)
+maimed_neck = Injury("maimed","neck", "'s neck was maimed",[],[],lower_max_health,True,0,48,10,100,16,40,50)
+maimed_face = Injury("maimed","face", "'s face was maimed",[],[],lower_max_health,True,0,48,10,100,10,45,55)
+maimed_left_arm = Injury("maimed","left arm", "'s left arm was maimed",[],[],lower_max_health,True,0,48,8,100,5,40,50)
+maimed_right_arm = Injury("maimed","right arm", "'s right arm was maimed",[],[],lower_max_health,True,0,48,8,100,5,40,50)
+maimed_left_leg = Injury("maimed","left leg", "'s left leg was maimed",[],[],lower_max_health,True,0,48,8,100,5,30,50)
+maimed_right_leg = Injury("maimed","right leg", "'s right leg was maimed",[],[],lower_max_health,True,0,48,8,100,5,30,50)
+
+maimings = [maimed_groin,maimed_torso,maimed_neck,maimed_face,maimed_left_arm,maimed_right_arm,maimed_left_leg,maimed_right_leg]
+
+
+#mangled
+
+mangled_groin = Injury("mangled","groin", "'s groin was mangled",[],[],lower_max_health,True,0,48,15,100,3,60,35)
+mangled_torso = Injury("mangled","torso", "'s torso was mangled",[],[],lower_max_health,True,0,48,9,100,3,40,50)
+mangled_neck = Injury("mangled","neck", "'s neck was mangled",[],[],lower_max_health,True,0,48,10,100,15,40,50)
+mangled_face = Injury("mangled","face", "'s face was mangled",[],[],lower_max_health,True,0,48,10,100,6,45,55)
+mangled_left_arm = Injury("mangled","left arm", "'s left arm was mangled",[],[],lower_max_health,True,0,48,6,100,3,40,50)
+mangled_right_arm = Injury("mangled","right arm", "'s right arm was mangled",[],[],lower_max_health,True,0,48,6,100,3,40,50)
+mangled_left_leg = Injury("mangled","left leg", "'s left leg was mangled",[],[],lower_max_health,True,0,48,6,100,3,30,50)
+mangled_right_leg = Injury("mangled","right leg", "'s right leg was mangled",[],[],lower_max_health,True,0,48,6,100,3,30,50)
+
+manglings = [mangled_groin,mangled_torso,mangled_neck,mangled_face,mangled_left_arm,mangled_right_arm,mangled_left_leg,mangled_right_leg]
+
 #fractures
 
 fractured_skull = Injury("fracture","skull", "'s skull was fractured",[],[],lower_max_health,True,0,48,120,2000,0,45,40)
@@ -749,6 +776,21 @@ major_cut_left_leg = Injury("cut","left leg","'s left leg was badly cut",[],[],l
 major_cut_right_leg = Injury("cut","right leg","'s right leg was badly cut",[],[],lower_max_health,False,0,48,16,400,4,20,25)
 
 major_cuts = [major_cut_head,major_cut_torso,major_cut_neck,major_cut_face,major_cut_left_arm,major_cut_right_arm,major_cut_left_leg,major_cut_right_leg]
+
+#slashes
+
+slash_head = Injury("slash","head","'s head was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25)
+slash_torso = Injury("slash","torso","'s torso was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25)
+slash_neck = Injury("slash","neck","'s throat was slashed",[],[],lower_max_health,False,0,48,32,900,4,20,25)
+slash_face = Injury("slash","face","'s face was slashed",[],[],lower_max_health,False,0,48,24,400,4,20,25)
+slash_left_arm = Injury("slash","left arm","'s left arm was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25)
+slash_right_arm = Injury("slash","right arm","'s right arm was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25)
+slash_left_leg = Injury("slash","left leg","'s left leg was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25)
+slash_right_leg = Injury("slash","right leg","'s right leg was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25)
+
+slashes = [slash_head,slash_torso,slash_neck,slash_face,slash_left_arm,slash_right_arm,slash_left_leg,slash_right_leg]
+
+
 
 
 #severed limbs
@@ -3008,7 +3050,14 @@ max_health = Service("restore health",500,"restore character to max health")
 #cosmetic
 tattoos = Service("tattoos",0,"tattoos")
 haircuts = Service("haircuts",0,"haircuts")
+#laundry
+laundromat = Service("laundry",0,"laundry")
+def gen_laundromat(x,y):
+        actors = NPC([],0,[],0)
 
+        building = Location("Landromat",'Templeville','Cliff Heights','Laundromat',x,y,actors,[counter],False,[],True,[],False,True,
+        [laundromat],13,23,False,[],False,[],False,False,'No one',[],[],None,False,[],1,True,0,0,no_dress_code)
+        return building
 def gen_tattoo_shop(x,y):
         actors = NPC([],0,[],0)
 
@@ -3622,6 +3671,10 @@ def gen_office(x,y,corp,type):
 					elif type == 'Call Centre':
 						professions = ['Telemarketer',"Office Worker"]
 						profession = random.choice(professions)
+					elif type == 'Data Mine':
+						professions = ['Data Miner','Office Worker']
+						profession = random.choice(professions)
+
 					elif type == "Office":
 						profession = "Office Worker"
        		        	members = []
@@ -4035,6 +4088,8 @@ def gen_neighborhood(type,neighborhood_name):
                 num_abandoned_buildings = random.randint(17,20)
         elif neighborhood_name == "Maplewood":
                 num_abandoned_buildings = random.randint(17,20)
+        elif neighborhood_name == "Rose Heights":
+                num_abandoned_buildings = random.randint(4,6)
 
 
 	while count <= num_abandoned_buildings:
@@ -4144,6 +4199,9 @@ def gen_neighborhood(type,neighborhood_name):
 		bar_names = ['Quest']
 	elif neighborhood_name == 'The Scabs':
 		bar_names = ['Chateau Below','The Tank']
+        elif neighborhood_name == 'Rose Heights':
+                bar_names = ['The Keg',"Eddie's","Roughriders"]
+
 	max_bars = random.randint(3,5)
 	count = 1
 	for bar_name in bar_names:
@@ -4155,36 +4213,44 @@ def gen_neighborhood(type,neighborhood_name):
 
 		print 'bar'
 	#doctor
-	if neighborhood_name == 'Cliff Heights':
+	if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'Rose Heights':
         	x, y = get_unused_location()
         	doctor = gen_doctor(x,y)
         	locations.append(doctor)
         	print 'doctor'
         #tattoos
-	if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'The Scabs':
+        if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'The Scabs' or neighborhood_name == 'Rose Heights':
+                x, y = get_unused_location()
+                laundromat = gen_laundromat(x,y)
+                locations.append(laundromat)
+                num_locations += 1
+                print 'laundromat'
+
+        #tattoos
+	if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'The Scabs' or neighborhood_name == 'Rose Heights':
         	x, y = get_unused_location()
         	tattoos = gen_tattoo_shop(x,y)
         	locations.append(tattoos)
 		num_locations += 1
         	print 'tattoos'
         #barbers
-	if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'The Scabs':
+	if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'The Scabs' or neighborhood_name == 'Rose Heights':
         	x, y = get_unused_location()
         	barber = gen_barber_shop(x,y)
         	locations.append(barber)
         	print 'barber'
 		num_locations += 1
         #crackhouses
-
-	num_crackhouses = random.randint(1,4)
-	count = 1
-	while count <= num_crackhouses:
-	        x, y = get_unused_location()
-	        crackhouse = gen_crackhouse(x,y)
-	        locations.append(crackhouse)
-		print 'crackhouse'
-		count += 1
-		num_locations += 1
+	if neighborhood_name != 'Cliff Heights' and neighborhood_name != 'Rose Heights':
+		num_crackhouses = random.randint(1,4)
+		count = 1
+		while count <= num_crackhouses:
+		        x, y = get_unused_location()
+		        crackhouse = gen_crackhouse(x,y)
+		        locations.append(crackhouse)
+			print 'crackhouse'
+			count += 1
+			num_locations += 1
 
         #coffee shop
 	if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'Bad Town' or neighborhood_name == 'The Scabs':
@@ -4196,8 +4262,17 @@ def gen_neighborhood(type,neighborhood_name):
         		locations.append(coffee_shop)
 			print 'coffee shop'
 			count += 1
+        if neighborhood_name == 'Rose Heights':
+                num_coffee_shop = 2
+                count = 1
+                while count <= num_coffee_shop:
+                        x, y = get_unused_location()
+                        coffee_shop = gen_coffee_shop(x,y)
+                        locations.append(coffee_shop)
+                        print 'coffee shop'
+                        count += 1
         #mcshits
-        if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'The Scabs':
+        if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'The Scabs' or neighborhood_name == 'Rose Heights':
 	        x, y = get_unused_location()
 	        mcshits = gen_mcshits(x,y)
 	        locations.append(mcshits)
@@ -4205,7 +4280,7 @@ def gen_neighborhood(type,neighborhood_name):
 		num_locations += 1
 
         #pizza
-        if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'The Scabs' or neighborhood_name == 'Elephant Rock':
+        if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'The Scabs' or neighborhood_name == 'Elephant Rock' or neighborhood_name == 'Rose Heights':
 	        x, y = get_unused_location()
 	        pizza_place = gen_pizza_place(x,y)
 	        locations.append(pizza_place)
@@ -4221,6 +4296,9 @@ def gen_neighborhood(type,neighborhood_name):
 		num_convenience_store = 1
 	elif neighborhood_name == 'The Scabs':
 		num_convenience_store = 2
+        elif neighborhood_name == 'Rose Heights':
+                num_convenience_store = 2
+
         count = 1
         while count <= num_convenience_store:
                 x, y = get_unused_location()
@@ -4238,9 +4316,11 @@ def gen_neighborhood(type,neighborhood_name):
 		#organizations = []
 		print 'library'
 		num_locations += 1
-	#troll farm
-	if neighborhood_name == 'Cliff Heights':
+	#offices
+	if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'Rose Heights':
 		num_troll_farm = 5
+		if neighborhood_name == 'Rose Heights':
+			num_troll_farm = 10
 		farm_count = 1
 		while farm_count <= num_troll_farm:
 			x,y = get_unused_location()
@@ -4251,6 +4331,8 @@ def gen_neighborhood(type,neighborhood_name):
 			farm_count += 1
         
                 num_call_centre = 3
+		if neighborhood_name == 'Rose Heights':
+			num_call_centre = 7
                 call_centre_count = 1
                 while call_centre_count <= num_call_centre:
                         x,y = get_unused_location()
@@ -4259,12 +4341,24 @@ def gen_neighborhood(type,neighborhood_name):
                         locations.append(troll_farm)
                         num_locations += 1
                         call_centre_count += 1
+                num_data_mine = 3
+                if neighborhood_name == 'Rose Heights':
+                        num_data_mine = 7
+                data_mine_count = 1
+                while data_mine_count <= num_data_mine:
+                        x,y = get_unused_location()
+                        corp = random.choice(tech_corps)
+                        troll_farm = gen_office(x,y,corp,'Data Mine')
+                        locations.append(troll_farm)
+                        num_locations += 1
+                        data_mine_count += 1
+
 
 
         #apt building
         apt_count = 1
-	if neighborhood_name == 'Cliff Heights':
-        	num_apt = random.randint(10,16)
+	if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'Rose Heights':
+        	num_apt = random.randint(15,20)
         elif neighborhood_name == 'Bad Town':
                 num_apt = 0
 	elif neighborhood_name == 'Elephant Rock':
@@ -4285,7 +4379,7 @@ def gen_neighborhood(type,neighborhood_name):
                         except:
                                 apt_finished = False
         #parks
-	if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'Elephant Rock' or neighborhood_name == 'The Scabs':
+	if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'Elephant Rock' or neighborhood_name == 'The Scabs' or neighborhood_name == 'Rose Heights':
         	max_parks = random.randint(2,3)
 	else:
 		max_parks = 1
@@ -4308,6 +4402,8 @@ def gen_neighborhood(type,neighborhood_name):
 		gang_names = ['Anarchists','Sex Cult']
 	elif neighborhood_name == 'The Scabs':
 		gang_names = ['Flower Collective', 'Gamer Assassins','Patriot Nazis']
+	elif neighborhood_name == 'Rose Heights':
+		gang_names = ['Clerks','Grimesmackers']
 	for name in gang_names:
 			gang_valid = False
 			while gang_valid == False:
@@ -4345,7 +4441,7 @@ def gen_neighborhood(type,neighborhood_name):
 	elif neighborhood_name == 'Bad Town':
 		max_shacks = 25
         else:
-		max_shacks = random.randint(14,20)
+		max_shacks = random.randint(6,12)
 	count = 1
 
         while count <= max_shacks and num_locations <= 80:
@@ -4365,6 +4461,9 @@ def gen_neighborhood(type,neighborhood_name):
 		price = 1600
 	elif neighborhood_name == 'The Scabs':
 		price = 2300
+        elif neighborhood_name == 'Rose Heights':
+                price = 3200
+
 	#assign homes/addictions to npcs
 	for location in locations:
 		for member in location.actors.members:
@@ -4455,9 +4554,10 @@ def gen_new_city():
         	bad_town = gen_neighborhood('Slum','Bad Town')
         	elephant_rock = gen_neighborhood('Slum','Elephant Rock')
                 the_scabs = gen_neighborhood('Slum','The Scabs')
+                rose_heights = gen_neighborhood('Slum','Rose Heights')
 
 		city_created = True
-	areas = [cliff_heights,bad_town,elephant_rock,the_scabs]
+	areas = [cliff_heights,bad_town,elephant_rock,the_scabs,rose_heights]
 	name = "Templeville"
 	time = start_time
 	city = City(areas,name,time,player_organization,corps)

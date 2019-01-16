@@ -1508,7 +1508,7 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 			elif injury_type == 'fracture':
 				injury = random.choice(fractures)
 		elif attacker.weapon.name == "Knife" and damage_taken >= 1:
-			attack_types = ['major cut','minor cut','stab']
+			attack_types = ['major cut','minor cut','stab','slash']
 			attack_type = random.choice(attack_types)
 			if attack_type == 'major cut':
 				injury = random.choice(major_cuts)
@@ -1516,8 +1516,10 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 				injury = random.choice(minor_cuts)
 			elif attack_type == 'stab':
 				injury = random.choice(stab_wounds)
+			elif attack_type == 'slash':
+				injury = random.choice(slashes)
                 elif attacker.weapon.name == "Sword" or attacker.weapon.name == 'Machete' and damage_taken >= 1:
-                        attack_types = ['major cut','minor cut','stab','sever']
+                        attack_types = ['major cut','minor cut','stab','sever','slash']
                         attack_type = random.choice(attack_types)
                         if attack_type == 'major cut':
                                 injury = random.choice(major_cuts)
@@ -1525,6 +1527,8 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
                                 injury = random.choice(minor_cuts)
                         elif attack_type == 'stab':
                                 injury = random.choice(stab_wounds)
+                        elif attack_type == 'slash':
+                                injury = random.choice(slashes)
                         elif attack_type == 'sever':
 				check_exists = False
 				while check_exists == False:
@@ -1546,12 +1550,16 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 
 
 		elif attacker.weapon.name == "Baseball Bat" or attacker.weapon.name == "Crowbar" or attacker.weapon.name == "Shovel" and damage_taken >= 1:
-			attack_types = ["bruise","fracture"]
+			attack_types = ["bruise","fracture",'mangled','maimed']
 			attack_type = random.choice(attack_types)
 			if attack_type == "bruise":
 				injury = random.choice(bruises)
 			elif attack_type == "fracture":
 				injury = random.choice(fractures)
+			elif attack_type == 'mangled':
+				injury = random.choice(manglings)
+			elif attack_type == 'maimed':
+				injury = random.choice(maimings)
 		elif attacker.weapon.name == "9mm Pistol":
 			injury = random.choice(shot_9mm)
 		elif attacker.weapon.name == "12g Shotgun":
@@ -1621,6 +1629,10 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 					target.headwear.damage += random.randint(1,3)
 					if injury.cause_bleeding >= 1:
 						target.headwear.blood += injury.cause_bleeding / 2
+					chance_splatter  = random.randint(1,2)
+					if chance_splatter == 1:
+						target.outfit.blood += injury.cause_bleeding
+						
                 elif injury.location == 'right arm' or injury.location == 'left arm' or injury.location == 'ribs' or injury.location == 'right collarbone' or injury.location =='left collarbone':
 			
                         if target.outerwear != None:
@@ -1628,7 +1640,7 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
                                         target.outerwear.damage += random.randint(1,3)
                                         if injury.cause_bleeding >= 1:
                                                 target.outerwear.blood += injury.cause_bleeding / 2
-
+						target.outfit.blood += injury.cause_bleeding / 2
 			elif outerwear == None or outerwear.name== 'No outerwear':
 				if target.outfit != None:
 					if target.outfit.name != 'No outfit':
@@ -1642,6 +1654,8 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 					target.armor.damage += 2
                                         if injury.cause_bleeding >= 1:
                                                 target.armor.blood += injury.cause_bleeding / 2
+                                                target.outerwear.blood += injury.cause_bleeding / 2
+                                                target.outfit.blood += injury.cause_bleeding / 2
 
 			elif target.armor == None or target.armor.name == 'No armor':
                                 if target.outerwear != None:
@@ -1649,6 +1663,8 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
                                         	target.outerwear.damage += random.randint(1,3)
                                         	if injury.cause_bleeding >= 1:
                                         	        target.outerwear.blood += injury.cause_bleeding / 2
+							#if target.outfit != None and target.outfit != 'No outfit':
+							target.outfit.blood += injury.cause_bleeding /2
 
                                         elif outerwear == None or outerwear.name== 'No outerwear':
                                                 if target.outfit != None:
@@ -2391,6 +2407,53 @@ def check_dress_code(player_party,my_location):
                         elif my_location.dress_code.footwear == None:
                                 num_violations = num_violations
 
+			#bloody clothes
+			for member in player_party.members:
+				if member.headwear != no_headwear and member.headwear != None:
+					if member.headwear.blood >= 1:
+						num_violations += 1
+                                if member.facewear != no_facewear and member.facewear != None:
+                                        if member.facewear.blood >= 1:
+                                                num_violations += 1
+                                if member.outfit != naked and member.outfit != None:
+                                        if member.outfit.blood >= 1:
+                                                num_violations += 1
+                                if member.outerwear != no_outerwear and member.outerwear != None:
+                                        if member.outerwear.blood >= 1:
+                                                num_violations += 1
+                                if member.legwear != no_legwear and member.legwear != None:
+                                        if member.legwear.blood >= 1:
+                                                num_violations += 1
+                                if member.footwear != no_footwear and member.footwear != None:
+                                        if member.footwear.blood >= 1:
+                                                num_violations += 1
+                                if member.armor != no_armor and member.armor != None:
+                                        if member.armor.blood >= 1:
+                                                num_violations += 1
+                        #damaged clothes
+                        for member in player_party.members:
+                                if member.headwear != no_headwear and member.headwear != None:
+                                        if member.headwear.damage >= 1:
+                                                num_violations += 1
+                                if member.facewear != no_facewear and member.facewear != None:
+                                        if member.facewear.damage >= 1:
+                                                num_violations += 1
+                                if member.outfit != naked and member.outfit != None:
+                                        if member.outfit.damage >= 1:
+                                                num_violations += 1
+                                if member.outerwear != no_outerwear and member.outerwear != None:
+                                        if member.outerwear.damage >= 1:
+                                                num_violations += 1
+                                if member.legwear != no_legwear and member.legwear != None:
+                                        if member.legwear.damage >= 1:
+                                                num_violations += 1
+                                if member.footwear != no_footwear and member.footwear != None:
+                                        if member.footwear.damage >= 1:
+                                                num_violations += 1
+                                if member.armor != no_armor and member.armor != None:
+                                        if member.armor.damage >= 1:
+                                                num_violations += 1
+
 			print 'dress code: ' + str(passed_check)
 			print str(num_violations) + ' violations.'
 			#is there anyone here to notice we aren't wearing the right clothes
@@ -2420,18 +2483,26 @@ def check_dress_code(player_party,my_location):
                                         #chance_etiquette_increase = random.randint(1,increase_etiquette)
 					#if chance_etiquette_increase == 1:
 					#	member.skills.etiquette += 1
+
+
+
+
+
+
+
+
 				print str(violations_noticed) + ' violations noticed.'
-				#if violations_noticed <= 4:
-				#	chance_call_security = 5
-				#elif violations_noticed >= 5:
-				#	chance_call_security = 7
-				#call_security_count = 0
-				#alarm_count = 0
-				#while violations_noticed <= call_security_count:
-				#	chance = random.randint(1,10)
-				#	if chance <= chance_call_security:
-				#		alarm_count += 1
-				#	call_security_count += 1
+				if violations_noticed <= 4:
+					chance_call_security = 5
+				elif violations_noticed >= 5:
+					chance_call_security = 7
+				call_security_count = 0
+				alarm_count = 0
+				while violations_noticed <= call_security_count:
+					chance = random.randint(1,10)
+					if chance <= chance_call_security:
+						alarm_count += 1
+					call_security_count += 1
 				print str(my_location.alarm_level) + ' suspicion.'
 				if my_location.parent_location == None:
 					for room in my_location.rooms:
@@ -4617,6 +4688,10 @@ def show_character(target,world,corpse,my_location,player_party,creation):
 	#elif type(my_location) is list:
 	#	print my_location
          #       libtcod.console_print(0,40,13, "Location:" + my_location[0])
+	if target.combat_status.tied_up == True:
+        	libtcod.console_set_default_foreground(0, libtcod.yellow)
+        	libtcod.console_print(0,1,45, 'TIED UP')
+        	libtcod.console_set_default_foreground(0, libtcod.white)
 
 
 	libtcod.console_print(0,1,47, "[ESC]")
@@ -6264,6 +6339,49 @@ def tattoos(player,location):
 							return True
 			elif key.c == ord('*'):
 				return True
+
+
+def laundry(player,location):
+	cost = len(player.members) * 7
+        libtcod.console_clear
+        libtcod.console_print(0,1,1, "LAUNDRY:")
+
+        libtcod.console_print(0,1,3, "[d]o laundry ($" + str(cost) + ")")
+        libtcod.console_print(0,1,4, "[l]eave")
+	libtcod.console_flush()
+	finished_laundry = False
+	while finished_laundry == False:
+		key = libtcod.console_check_for_keypress()
+		if key.c == ord('l'):
+			finished_laundry = True
+		elif key.c == ord('d') and player.money >= cost:
+			player.money -= cost
+                        for member in player.members:
+                                if member.headwear != no_headwear and member.headwear != None:
+                                        if member.headwear.blood >= 1:
+                                                member.headwear.blood = 0
+                                if member.facewear != no_facewear and member.facewear != None:
+                                        if member.facewear.blood >= 1:
+                                                member.facewear.blood = 0
+                                if member.outfit != naked and member.outfit != None:
+                                        if member.outfit.blood >= 1:
+                                                member.outfit.blood = 0
+                                if member.outerwear != no_outerwear and member.outerwear != None:
+                                        if member.outerwear.blood >= 1:
+                                                member.outerwear.blood = 0
+                                if member.legwear != no_legwear and member.legwear != None:
+                                        if member.legwear.blood >= 1:
+                                                member.legwear.blood = 0
+                                if member.footwear != no_footwear and member.footwear != None:
+                                        if member.footwear.blood >= 1:
+                                                member.footwear.blood = 0
+                                if member.armor != no_armor and member.armor != None:
+                                        if member.armor.blood >= 1:
+                                                member.armor.blood = 0
+			finished_laundry = True
+			
+
+
 def services(player,location):
 	libtcod.console_clear
 	libtcod.console_print(0,1,1, "SERVICES:")
@@ -6285,7 +6403,15 @@ def services(player,location):
                 key = libtcod.console_check_for_keypress()
 		for available_service in available_services:
 			if key.c == ord(available_service[0]):
-				if available_service[1].name == "heal injuries":
+				libtcod.console_clear
+                                if available_service[1].name == "laundry":
+                                        doing_laundry = False
+                                        while doing_laundry == False:
+                                                doing_laundry = laundry(player,location)
+                                        finished_services = True
+                                        return finished_services
+
+				elif available_service[1].name == "heal injuries":
 					healing_injuries = False
 					while healing_injuries == False:
 						healing_injuries = heal_injuries(player,location)
@@ -6457,9 +6583,13 @@ def rob_npc(char,target,world,player,location):
                                 elif have_rope == True:
 #                                        libtcod.console_print(0,1,line_count, 'You have tie up ')
 					for member in my_location.actors.members:
-	                                        libtcod.console_print(0,1,line_count, 'You tie up ' + member.fname + " " + member.lname + ".")
-						member.tied_up = True
-						line_count += 2
+						if member.tied_up == False:
+	                                        	libtcod.console_print(0,1,line_count, 'You tie up ' + member.fname + " " + member.lname + ".")
+							member.tied_up = True
+							line_count += 2
+						elif member.tied_up == True:
+                                                        libtcod.console_print(0,1,line_count, member.fname + " " + member.lname + " is already tied up.")
+							line_count += 2
 				libtcod.console_print(0,1,line_count, '[c]ontinue')
 				libtcod.console_flush()
 				finished_tie = False
@@ -7679,9 +7809,11 @@ def party_turn(player_party,world,party_actions):
 	                #employees = []
         	        if my_location.is_store == True and open == False:
                 	        #employees = []
-                        	for member in my_location.regulars:
-                                	if member.profession == 'Security Guard':
-                                	        employees.append(member)
+				if len(my_location.regulars) >= 1:
+                        		for member in my_location.regulars:
+						if member != None:
+                                			if member.profession == 'Security Guard':
+                                			        employees.append(member)
                 #if len(employees) >= 1:
                  #       for members in es:
                   #              my_location.actors.members.append(employee)
