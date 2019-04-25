@@ -21,7 +21,29 @@ class Party:
 		self.y = y
 		self.area_x = area_x
 		self.area_y = area_y
+	def handle_cold(self,world):
+		for member in self.members:
+			clothing_warmth = member.check_clothing_warmth()
+			member.health.cold_rating = clothing_warmth  + world.weather.temperature
+			if member.health.cold_rating >= 20 and member.health.cold_rating <= 30:
+				member.health.body_temp += 1
+			elif member.health.cold_rating >= 30:
+				member.health.body_temp += 3
+			elif member.health.cold_rating <= 19 and member.health.cold_rating >= -5 and member.health.body_temp <= -1:
+				member.health.body_temp += 1
+                        elif member.health.cold_rating <= 19 and member.health.cold_rating >= -5 and member.health.body_temp >= 51:
+                                member.health.body_temp -= 1
+                        elif member.health.cold_rating <= 19 and member.health.cold_rating >= -5 and member.health.body_temp >= 0 and member.health.body_temp <= 50:
+                                member.health.body_temp = member.health.body_temp
 
+			elif member.health.cold_rating <= 6 and member.health.cold_rating >= -10:
+				member.health.body_temp -= 1
+			elif member.health.cold_rating >= -11:
+                                member.health.body_temp -= 3
+			if member.health.body_temp <= -100:
+				member.health.body_temp = -100
+			elif member.health.body_temp >= 100:
+				member.health.body_temp = 100
 class Party_Actions:
 	def __init__(self,days_survived,kills,stealing,robbery,drug_dealing,kidnapping,torture,citizens_killed,faction_members_killed,missions_completed):
 		self.days_survived = days_survived
@@ -158,6 +180,27 @@ class Char:
                 elif self.health.current_blood <= 25:
                         base_happiness -= 40
                         base_stress += 50
+		#hunger and thirst
+		if self.thirst <= -1:
+			base_happiness -= 20
+			base_stress += 20
+		if self.hunger <= -1:
+			base_happiness -= 15
+			base_stress += 15
+
+		#cold
+		if self.health.body_temp <= -1 and self.health.body_temp >= -24:
+                        base_happiness -= 20
+                        base_stress += 20
+                elif self.health.body_temp <= -25:
+                        base_happiness -= 40
+                        base_stress += 40
+                #sleep
+                if self.sleep <= -1:
+                        base_happiness -= 20
+                        base_stress += 20
+
+
 		#drugs,withdrawls,cravings
 		for drug in self.drugs:
 			if drug.name == "Morphine" or drug.name == "Heroin":
@@ -300,6 +343,33 @@ class Char:
 	def can_walk(self):
 		if self.health.current_stamina <= 0:
 			self.combat_status.knocked_down = True
+	def check_clothing_warmth(self):
+		total_warmth = 0
+		if self.headwear != None:
+			if self.headwear.name != "None":
+				total_warmth += self.headwear.warmth
+                if self.facewear != None:
+                        if self.facewear.name != "None":
+                                total_warmth += self.facewear.warmth
+                if self.outfit != None:
+                        if self.outfit.name != "None":
+                                total_warmth += self.outfit.warmth
+                if self.outerwear != None:
+                        if self.outerwear.name != "None":
+                                total_warmth += self.outerwear.warmth
+                if self.handwear != None:
+                        if self.handwear.name != "None":
+                                total_warmth += self.handwear.warmth
+                if self.legwear != None:
+                        if self.legwear.name != "None":
+                                total_warmth += self.legwear.warmth
+                if self.footwear != None:
+                        if self.footwear.name != "None":
+                                total_warmth += self.footwear.warmth
+                if self.armor != None:
+                        if self.armor.name != "None":
+                                total_warmth += self.armor.warmth
+		return total_warmth
 
 class Date_of_Birth:
 	def __init__(self,day,month,year):
@@ -309,7 +379,7 @@ class Date_of_Birth:
 
 class Health:
 	def __init__(self, base_max, max_health, current_health,base_blood,max_blood,current_blood,bleeding_rate,base_pain,max_pain,
-	current_pain,base_current_pain,base_stamina,current_stamina,max_stamina):
+	current_pain,base_current_pain,base_stamina,current_stamina,max_stamina, body_temp,cold_rating):
 		self.base_max = base_max
 		self.max_health = max_health
 		self.current_health = current_health
@@ -327,6 +397,9 @@ class Health:
 		self.base_stamina = base_stamina
 		self.current_stamina = current_stamina
 		self.max_stamina = max_stamina
+
+		self.body_temp = body_temp
+		self.cold_rating = cold_rating
 
 class Mind:
 	def __init__(self,happiness,stress,sanity,horny,addictions,trauma):
@@ -524,7 +597,7 @@ class Loan:
 
 #Broker
 class Broker:
-	def __init__(self,npc,factions,min_fame,jobs,player_reputation,missions_completed,missions_failed):
+	def __init__(self,npc,factions,min_fame,jobs,player_reputation,missions_completed,missions_failed,guards):
 		self.npc = npc
 		self.factions = factions
 		self.min_fame = min_fame
@@ -532,6 +605,7 @@ class Broker:
 		self.player_reputation = player_reputation
 		self.missions_completed = missions_completed
 		self.missions_failed = missions_failed
+		self.guards = guards
 class Job:
 	def __init__(self,name,type,employer,mission,reward,broker,broker_location):
 		self.name = name
@@ -571,7 +645,7 @@ class Permissions:
 		self.can_sleep = can_sleep
 default_permissions = Permissions(True,True,False,False,False,True,True)
 
-start_health = Health(100,100,100,100,100,100,0,0,100,0,0,100,100,100)
+start_health = Health(100,100,100,100,100,100,0,0,100,0,0,100,100,100,50,5)
 
 class Stats:
 	def __init__(self, strength, dexterity, intelligence, willpower, charisma, base_strength, base_dexterity, base_intelligence,base_willpower, 
@@ -1197,18 +1271,18 @@ class Outerwear:
 no_headwear = Headwear("None", "None",1,5,5,'headwear',True,0,0,0,0,0,0,0)
 
 headband = Headwear("Headband", "Headband",1,5,5,'headwear',True,15,0,0,0,0,0,1)
-baseball_cap = Headwear("Baseball cap", "Baseball cap",1,5,5,'headwear',True,45,0,0,0,0,0,2)
-dad_hat = Headwear("Dad hat", "Dad hat",1,5,5,'headwear',True,35,0,0,0,0,0,2)
+baseball_cap = Headwear("Baseball cap", "Baseball cap",1,5,5,'headwear',True,45,0,0,0,0,0,1)
+dad_hat = Headwear("Dad hat", "Dad hat",1,5,5,'headwear',True,35,0,0,0,0,0,1)
 toque = Headwear("Toque", "Toque",1,5,5,'headwear',True,20,0,0,0,0,0,5)
 beret = Headwear("Beret", "Beret",1,5,5,'headwear',True,20,0,0,0,0,0,2)
 red_beret = Headwear("Red beret", "Red beret",1,5,5,'headwear',True,20,0,0,0,0,0,2)
-fedora = Headwear("Fedora", "Fedora",1,5,5,'headwear',True,60,0,0,0,0,0,2)
+fedora = Headwear("Fedora", "Fedora",1,5,5,'headwear',True,60,0,0,0,0,0,1)
 
-army_hat = Headwear("Army hat", "Army hat",1,5,5,'headwear',True,20,0,0,0,0,0,2)
+army_hat = Headwear("Army hat", "Army hat",1,5,5,'headwear',True,20,0,0,0,0,0,1)
 
 bicycle_helmet = Headwear("Bicycle helmet", "Bicycle helmet",4,5,5,'headwear',True,50,0,0,0,0,0,1)
 army_helmet = Headwear("Army helmet", "Army helmet",6,5,5,'headwear',True,100,0,0,0,0,0,2)
-cowboy_hat = Headwear("Cowboy hat", "Cowboy hat",1,5,5,'headwear',True,100,0,0,0,0,0,2)
+cowboy_hat = Headwear("Cowboy hat", "Cowboy hat",1,5,5,'headwear',True,100,0,0,0,0,0,1)
 
 cat_ears = Headwear("Cat ears", "Cat ears",1,5,5,'headwear',True,100,0,0,0,0,0,0)
 
@@ -1227,7 +1301,7 @@ red_facemask = Facewear("Red facemask", "Red facemask",1,5,5,'facewear',True,15,
 
 
 balaclava = Facewear("Balaclava", "Balaclava",1,5,5,'facewear',True,15,0,0,0,0,0,5)
-clown_mask = Facewear("Clown mask", "Clown mask",2,5,5,'facewear',True,80,0,0,0,0,0,2)
+clown_mask = Facewear("Clown mask", "Clown mask",2,5,5,'facewear',True,80,0,0,0,0,0,1)
 anonymous_mask = Facewear("Anonymous mask", "Anonymous mask",2,5,5,'facewear',True,80,0,0,0,0,0,1)
 
 
@@ -1235,27 +1309,27 @@ anonymous_mask = Facewear("Anonymous mask", "Anonymous mask",2,5,5,'facewear',Tr
 #hands
 no_handwear = Hands("None", "None",1,5,5,'handwear',True,0,0,0,0,0,0,0)
 fingerless_gloves = Hands("Fingerless gloves", "Black glove",1,5,5,'handwear',True,10,0,0,0,0,0,1)
-black_gloves = Hands("Black gloves", "Black glove",1,5,5,'handwear',True,10,0,0,0,0,0,4)
-leather_gloves = Hands("Leather gloves", "Leather glove",2,5,5,'handwear',True,50,0,0,0,0,0,6)
+black_gloves = Hands("Black gloves", "Black glove",1,5,5,'handwear',True,10,0,0,0,0,0,2)
+leather_gloves = Hands("Leather gloves", "Leather glove",2,5,5,'handwear',True,50,0,0,0,0,0,2)
 
 #legs
 no_legwear = Legs("None", "None",1,5,5,'legwear',True,0,0,0,0,0,0,0)
 
-shorts = Legs("Shorts", "Shorts",1,1,5,'legwear',True,20,0,0,0,0,0,3)
-jeans = Legs("Jeans", "Jeans",2,2,5,'legwear',True,30,0,0,0,0,0,6)
-ripped_jeans = Legs("Ripped jeans", "Ripped jeans",2,2,5,'legwear',True,45,0,0,0,0,0,4)
-khakis = Legs("Khakis", "Khakis",2,5,5,'legwear',True,45,0,0,0,0,0,5)
-camo_pants = Legs("Camo pants", "Camo pants",2,2,5,'legwear',True,15,0,0,0,0,0,7)
-black_pants = Legs("Black pants", "Black pants",2,2,5,'legwear',True,15,0,0,0,0,0,6)
+shorts = Legs("Shorts", "Shorts",1,1,5,'legwear',True,20,0,0,0,0,0,1)
+jeans = Legs("Jeans", "Jeans",2,2,5,'legwear',True,30,0,0,0,0,0,3)
+ripped_jeans = Legs("Ripped jeans", "Ripped jeans",2,2,5,'legwear',True,45,0,0,0,0,0,2)
+khakis = Legs("Khakis", "Khakis",2,5,5,'legwear',True,45,0,0,0,0,0,3)
+camo_pants = Legs("Camo pants", "Camo pants",2,2,5,'legwear',True,15,0,0,0,0,0,4)
+black_pants = Legs("Black pants", "Black pants",2,2,5,'legwear',True,15,0,0,0,0,0,3)
 
-track_pants = Legs("Track pants", "Track pants",2,2,5,'legwear',True,15,0,0,0,0,0,4)
-suit_pants = Legs("Suit pants", "Suit pants",2,2,5,'legwear',True,90,0,0,0,0,0,6)
-work_pants = Legs("Work pants", "Work pants",2,2,5,'legwear',True,40,0,0,0,0,0,4)
-sweat_pants = Legs("Sweat pants", "Sweat pants",2,2,5,'legwear',True,40,0,0,0,0,0,7)
+track_pants = Legs("Track pants", "Track pants",2,2,5,'legwear',True,15,0,0,0,0,0,3)
+suit_pants = Legs("Suit pants", "Suit pants",2,2,5,'legwear',True,90,0,0,0,0,0,2)
+work_pants = Legs("Work pants", "Work pants",2,2,5,'legwear',True,40,0,0,0,0,0,2)
+sweat_pants = Legs("Sweat pants", "Sweat pants",2,2,5,'legwear',True,40,0,0,0,0,0,3)
 
-long_skirt = Legs("Long skirt", "Long skirt",1,1,5,'legwear',True,45,0,0,0,0,0,5)
-short_skirt = Legs("Short skirt", "Short skirt",1,1,5,'legwear',True,40,0,0,0,0,0,3)
-leggings = Legs("Leggings", "Leggings",1,5,5,'legwear',True,25,0,0,0,0,0,4)
+long_skirt = Legs("Long skirt", "Long skirt",1,1,5,'legwear',True,45,0,0,0,0,0,1)
+short_skirt = Legs("Short skirt", "Short skirt",1,1,5,'legwear',True,40,0,0,0,0,0,0)
+leggings = Legs("Leggings", "Leggings",1,5,5,'legwear',True,25,0,0,0,0,0,2)
 
 mens_legwear = [shorts,jeans,khakis,track_pants,work_pants,ripped_jeans,camo_pants,sweat_pants]
 womens_legwear = [shorts,jeans,khakis,track_pants,sweat_pants, work_pants,long_skirt,short_skirt,leggings]
@@ -1263,47 +1337,47 @@ womens_legwear = [shorts,jeans,khakis,track_pants,sweat_pants, work_pants,long_s
 #feet
 no_footwear = Legs("None", "None",1,5,5,'footwear',True,0,0,0,0,0,0,0)
 
-running_shoes = Legs("Running shoes", "Running shoes",2,1,5,'footwear',True,100,0,0,0,0,0,4)
+running_shoes = Legs("Running shoes", "Running shoes",2,1,5,'footwear',True,100,0,0,0,0,0,2)
 sandals = Legs("Sandals", "Sandals",1,1,5,'footwear',True,40,0,0,0,0,0,1)
 high_heels = Legs("High heels", "High heels",1,5,5,'footwear',True,50,0,0,0,0,0,1)
-dress_shoes = Legs("Dress shoes", "Dress shoes",1,5,5,'footwear',True,130,0,0,0,0,0,3)
-light_boots = Legs("Light boots", "Light boots",3,5,5,'footwear',True,150,0,0,0,0,0,6)
-combat_boots = Legs("Combat boots", "Combat boots",4,5,5,'footwear',True,200,0,0,0,0,0,8)
-cowboy_boots = Legs("Cowboy boots", "Cowboy boots",4,5,5,'footwear',True,200,0,0,0,0,0,5)
+dress_shoes = Legs("Dress shoes", "Dress shoes",1,5,5,'footwear',True,130,0,0,0,0,0,2)
+light_boots = Legs("Light boots", "Light boots",3,5,5,'footwear',True,150,0,0,0,0,0,4)
+combat_boots = Legs("Combat boots", "Combat boots",4,5,5,'footwear',True,200,0,0,0,0,0,6)
+cowboy_boots = Legs("Cowboy boots", "Cowboy boots",4,5,5,'footwear',True,200,0,0,0,0,0,3)
 
 mens_footwear = [running_shoes,sandals,light_boots,combat_boots,cowboy_boots]
 womens_footwear = [running_shoes,sandals,high_heels,light_boots,combat_boots,cowboy_boots]
 
 #clothes
 naked = Outfit("None", "Clothes",1,5,5,'outfit',True,0,0,0,0,0,0,0)
-tshirt = Outfit("T-Shirt", "Clothes",2,5,5,'outfit',True,25,0,0,0,0,0,3)
-tanktop = Outfit("Tanktop", "Clothes",2,5,5,'outfit',True,25,0,0,0,0,0,2)
+tshirt = Outfit("T-Shirt", "Clothes",2,5,5,'outfit',True,25,0,0,0,0,0,1)
+tanktop = Outfit("Tanktop", "Clothes",2,5,5,'outfit',True,25,0,0,0,0,0,1)
 
-dress_shirt = Outfit("Dress shirt", "Clothes",2,5,5,'outfit',True,60,0,0,0,0,0,4)
-work_shirt = Outfit("Work shirt", "Clothes",2,5,5,'outfit',True,35,0,0,0,0,0,5)
-hawaiian_shirt = Outfit("Hawaiian shirt", "Clothes",2,5,5,'outfit',True,35,0,0,0,0,0,4)
+dress_shirt = Outfit("Dress shirt", "Clothes",2,5,5,'outfit',True,60,0,0,0,0,0,2)
+work_shirt = Outfit("Work shirt", "Clothes",2,5,5,'outfit',True,35,0,0,0,0,0,3)
+hawaiian_shirt = Outfit("Hawaiian shirt", "Clothes",2,5,5,'outfit',True,35,0,0,0,0,0,2)
 
-plaid_shirt = Outfit("Plaid shirt", "Clothes",2,5,5,'outfit',True,40,0,0,0,0,0,6)
-tie_dye_shirt = Outfit("Tie dye shirt", "Clothes",2,5,5,'outfit',True,30,0,0,0,0,0,3)
-dress = Outfit("Dress", "Clothes",2,5,5,'outfit',True,80,0,0,0,0,0,4)
-nice_dress = Outfit("Nice dress", "Clothes",1,5,5,'outfit',True,500,0,0,0,0,0,3)
+plaid_shirt = Outfit("Plaid shirt", "Clothes",2,5,5,'outfit',True,40,0,0,0,0,0,4)
+tie_dye_shirt = Outfit("Tie dye shirt", "Clothes",2,5,5,'outfit',True,30,0,0,0,0,0,1)
+dress = Outfit("Dress", "Clothes",2,5,5,'outfit',True,80,0,0,0,0,0,2)
+nice_dress = Outfit("Nice dress", "Clothes",1,5,5,'outfit',True,500,0,0,0,0,0,1)
 
 #outerwear
 no_outerwear = Outerwear("None", "Clothes",1,5,5,'outerwear',True,0,0,0,0,0,0,0)
-hoodie = Outerwear("Hoodie", "clothes",3,5,5,'outerwear',True,45,0,0,0,0,0,7)
-sweater = Outerwear("Sweater", "Clothes",2,5,5,'outerwear',True,70,0,0,0,0,0,5)
-fancy_sweater = Outerwear("Fancy sweater", "Clothes",2,5,5,'outerwear',True,100,0,0,0,0,0,5)
-jean_jacket = Outfit("Jean jacket", "Clothes",2,5,5,'outerwear',True,50,0,0,0,0,0,8)
-bomber_jacket = Outfit("Bomber jacket", "Clothes",2,5,5,'outerwear',True,65,0,0,0,0,0,7)
+hoodie = Outerwear("Hoodie", "clothes",3,5,5,'outerwear',True,45,0,0,0,0,0,5)
+sweater = Outerwear("Sweater", "Clothes",2,5,5,'outerwear',True,70,0,0,0,0,0,4)
+fancy_sweater = Outerwear("Fancy sweater", "Clothes",2,5,5,'outerwear',True,100,0,0,0,0,0,4)
+jean_jacket = Outfit("Jean jacket", "Clothes",2,5,5,'outerwear',True,50,0,0,0,0,0,3)
+bomber_jacket = Outfit("Bomber jacket", "Clothes",2,5,5,'outerwear',True,65,0,0,0,0,0,5)
 windbreaker = Outfit("Windbreaker", "Clothes",1,5,5,'outerwear',True,30,0,0,0,0,0,4)
 vest = Outfit("Vest", "Clothes",1,5,5,'outerwear',True,30,0,0,0,0,0,4)
 
-sports_jacket = Outerwear("Sports jacket", "Clothes",2,5,5,'outerwear',True,80,0,0,0,0,0,8)
-trenchcoat= Outerwear("Trench coat", "Clothes",3,4,5,'outerwear',True,100,0,0,0,0,0,10)
-cheap_suit= Outerwear("Cheap suit", "Clothes",2,4,5,'outerwear',True,130,0,0,0,0,0,6)
-leather_jacket = Outerwear("Leather jacket", "Clothes",5,5,5,'outerwear',True,150,0,0,0,0,0,9)
-army_uniform = Outerwear("Army jacket", "Clothes",4,5,5,'outerwear',True,100,0,0,0,0,0,6)
-nice_suit = Outerwear("Nice suit", "Clothes",2,5,5,'outerwear',True,500,0,0,0,0,0,5)
+sports_jacket = Outerwear("Sports jacket", "Clothes",2,5,5,'outerwear',True,80,0,0,0,0,0,5)
+trenchcoat= Outerwear("Trench coat", "Clothes",3,4,5,'outerwear',True,100,0,0,0,0,0,7)
+cheap_suit= Outerwear("Cheap suit", "Clothes",2,4,5,'outerwear',True,130,0,0,0,0,0,4)
+leather_jacket = Outerwear("Leather jacket", "Clothes",5,5,5,'outerwear',True,150,0,0,0,0,0,5)
+army_uniform = Outerwear("Army jacket", "Clothes",4,5,5,'outerwear',True,100,0,0,0,0,0,4)
+nice_suit = Outerwear("Nice suit", "Clothes",2,5,5,'outerwear',True,500,0,0,0,0,0,3)
 
 
 
@@ -2080,13 +2154,14 @@ class Time:
 start_time = Time(2069,03,21,1,0)
 
 class City:
-	def __init__(self,areas,name,time,player_organization,corporations,missions):
+	def __init__(self,areas,name,time,player_organization,corporations,missions,weather):
 		self.areas = areas
 		self.name = name
 		self.time = time
 		self.player_organization = player_organization
 		self.corporations = corporations
 		self.missions = missions
+		self.weather = weather
 
 class Area:
 	def __init__(self,locations,name,organizations,x,y,randos,price):
@@ -2273,6 +2348,9 @@ fountain = Junk('Fountain',700,'junk',False)
 hedge = Junk('Hedge',700,'junk',False)
 dog = Junk('Dog',700,'junk',False)
 bush = Junk('Bush',700,'junk',False)
+shrub = Junk('Shrub',700,'junk',False)
+log = Junk('Log',700,'junk',False)
+stream = Junk('Stream',700,'junk',False)
 
 
 
@@ -2299,9 +2377,96 @@ confidential_memo = Junk('Confidential memo',15000,'junk',True)
 area_id = 1
 location_id = 1
 
+class Weather:
+	def __init__(self,temperature,clouds,precipitation,precipitation_type,precipitation_amount):
+		self.temperature = temperature
+		self.clouds = clouds
+		self.precipitation = precipitation
+		self.precipitation_type = precipitation_type
+		self.precipitation_amount = precipitation_amount
+#weather
+def get_weather(time):
+	#temperature
+	month = time.get_month()
+	if month == "January":
+		base_temp = -25
+	elif month == "Febuary":
+		base_temp = -25
+        elif month == "March":
+                base_temp = -15
+        elif month == "April":
+                base_temp = -5
+	elif month == "May":
+		base_temp = 5
+        elif month == "June":
+                base_temp = 10
+        elif month == "July":
+                base_temp = 20
+        elif month == "August":
+                base_temp = 25
+        elif month == "September":
+                base_temp = 15
+        elif month == "October":
+                base_temp = 5
+        elif month == "November":
+                base_temp = -5
+        elif month == "December":
+                base_temp = -15
+	variance = 0
+	roll = random.randint(1,2)
+	if roll == 1:
+		var_roll = random.randint(1,7)
+		variance -= var_roll
+	elif roll == 2:
+		var_roll = random.randint(1,7)
+		variance = var_roll
+	temperature = base_temp + variance
 
+	#weather
+	
+	#clouds
+	cloud_roll = random.randint(1,5)
+	if cloud_roll == 1:
+		clouds = "Sunny"
+	elif cloud_roll == 2:
+		clouds = "A few clouds"
+	elif cloud_roll == 3:
+		clouds = "Overcast"
+	elif cloud_roll == 4:
+		clouds = "Cloudy"
+	elif cloud_roll  == 5:
+		clouds = "Dark clouds"
 
+	#precipitation
+	precipitation = False
+	precipitation_amount = 0
+	precipitation_roll = random.randint(1,6)
+	if precipitation_roll == 1 and cloud_roll >= 4:
+		base_amount = cloud_roll
+		precipitation_roll = random.randint(1,3)
+		precipitation_amount = base_amount + precipitation_roll
+		precipitation = True
+		if temperature >= 0:
+			if precipitation_amount <=4:
+				precipitation_type = "Light rain"
+			else:
+               		        precipitation_type = "Heavy rain"
 
+		elif temperature >= -5 and temperature <= -1:
+			if precipitation_amount <= 4:
+				precipitation_type = "Light freezing rain"
+			else:
+				precipitation_type = "Heavy freezing rain"
+		elif temperature <= -6:
+			if precipitation_amount <= 4:
+				precipitation_type = "Light snow"
+			else:
+				precipitation_type = "Heavy snow"
+	else:
+		precipitation = False
+		precipitation_type = 'None'
+	weather = Weather(temperature,clouds,precipitation,precipitation_type,precipitation_amount)
+	return weather
 #NPCs
 def create_npc(profession,affiliation,home):
 	#gender
@@ -2340,7 +2505,7 @@ def create_npc(profession,affiliation,home):
 			charisma = random.randint(5,15)
 		charisma, base_charisma = charisma,charisma
 		max_health = strength * 10	
-		health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100)
+		health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100,50,5)
 		health.current_stamina = random.randint(50,95)
 		npc_stats = Stats(strength, dexterity, intelligence, willpower, charisma, base_strength, base_dexterity, base_intelligence,base_willpower,base_charisma)
 		#injuries
@@ -2470,7 +2635,7 @@ def create_npc(profession,affiliation,home):
                 charisma = random.randint(5,15)
                 charisma, base_charisma = charisma,charisma
                 max_health = strength * 10      
-                health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100)
+                health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100,50,5)
                 health.current_stamina = random.randint(50,95)
                 npc_stats = Stats(strength, dexterity, intelligence, willpower, charisma, base_strength, base_dexterity, base_intelligence,base_willpower,base_charisma)
                 #injuries
@@ -2634,7 +2799,7 @@ def create_npc(profession,affiliation,home):
 		intelligence, base_intelligence = 10,10
 		charisma, base_charisma = 9,9
 		max_health = strength * 10	
-		health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100)
+		health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100,50,5)
 		health.current_stamina = random.randint(50,95)
 		npc_stats = Stats(strength, dexterity, intelligence, willpower, charisma, base_strength, base_dexterity, base_intelligence,base_willpower,base_charisma)
 		#injuries
@@ -2964,6 +3129,39 @@ slurpy = Medical('Slurpy', 4,1,'drink',True,3,60)
 
 drinks = [cola,energy_drink,slurpy]
 
+
+#random wasteland location
+def gen_wasteland(x,y):
+        item_count = 1
+        items = []
+        num_items = random.randint(4,11)
+
+        possible_items =  [counter,table,desktop_computer]
+
+        while num_items >= item_count:
+                item = random.choice(possible_items)
+                #print item.name
+                items.append(item)
+                #print item_count
+                item_count += 1
+        items.append(desktop_computer)
+
+
+        actors = NPC([],0,[],0)
+
+        regulars= []
+        num_regulars = random.randint(10,22)
+        count = 1
+	items = []
+	regulars = []
+	tree_count = 0
+	num_tree = random.randint(1,7)
+	while num_tree <= tree_count:
+		items.append(tree)
+
+        building = Location('Wasteland','Templeville','Wasteland','Wasteland',x,y,actors,items,False,[],True,[items],False,False,[],6,23,True,regulars,False,[],False,False,'No one',[],[],None,False,[],1,True,0,0,no_dress_code,False,None)
+        return building
+
 #abandoned apt building
 def gen_abandoned_apt_building(x,y):
 	actors = NPC([],0,[],0)
@@ -3036,6 +3234,15 @@ def gen_abandoned_apt_building(x,y):
 			print actor.fname
 			actor.home = room
         return building
+
+##wasteland location
+#def gen_random_wasteland(x,y):
+ #       actors = NPC([],0,[],0)
+#
+ #       building = Location("Abandoned Apt. Building",'Templeville','Cliff Heights','Abandoned Apt. Building',x,y,actors,[],False,[],True,[],False,True,
+#	        [],0,0,False,[],False,[],False,False,'No one',[],[],None,False,[],1,True,0,0,no_dress_code,False,None)
+
+ #       return building
 
 
 #abandoned buildings
@@ -3785,7 +3992,7 @@ def gen_office(x,y,corp,type,neighborhood_name):
 						professions = ['Data Miner','Office Worker']
 						profession = random.choice(professions)
 
-					elif type == "Office":
+					elif type == "Office Building":
 						profession = "Office Worker"
        		        	members = []
         	        	member = create_npc(profession,'none','None')
@@ -3838,7 +4045,7 @@ def gen_office(x,y,corp,type,neighborhood_name):
                                 room_count += 1
 
 		floor_count += 1
-        building_name = type + '(' + corp.name + ')' 
+        building_name = type 
         members = []
         member = create_npc('Building Manager','none','None')
 	member.affiliation = corp.name
@@ -4207,8 +4414,8 @@ def gen_neighborhood(type,neighborhood_name):
 
 	while count <= num_abandoned_buildings:
 		if first_building == True:
-			x = random.randint(1,16)
-			y = random.randint(1,16)
+			x = random.randint(1,32)
+			y = random.randint(1,32)
 			abandoned_building = gen_abandoned_building(True,locations,name,x,y)
 			locations.append(abandoned_building)
 			first_building = False
@@ -4218,8 +4425,8 @@ def gen_neighborhood(type,neighborhood_name):
 			checked = False
 			exists = False
 			while checked == False:
-				x = random.randint(1,16)
-				y = random.randint(1,16)
+				x = random.randint(1,32)
+				y = random.randint(1,32)
 				for location in locations:
 					if location.x == x and location.y == y:
 						exists = True
@@ -4258,8 +4465,8 @@ def gen_neighborhood(type,neighborhood_name):
 	def get_unused_location():
 	        checked = False
 	        exists = False
-        	x = random.randint(1,16)
-                y = random.randint(1,16)
+        	x = random.randint(1,32)
+                y = random.randint(1,32)
         	for location in locations:
 	                if location.x != x and location.y != y:
         	                #exists = False
@@ -4459,10 +4666,10 @@ def gen_neighborhood(type,neighborhood_name):
                         locations.append(troll_farm)
                         num_locations += 1
                         call_centre_count += 1
-                num_data_mine = 3
-                if neighborhood_name == 'Rose Heights' or neighborhood_name == 'McQueeney Square':
+                num_data_mine = 0
+                if neighborhood_name == 'Cliff Heights' or neighborhood_name == 'The Scabs':
                         num_data_mine = 7
-                data_mine_count = 1
+                data_mine_count = 4
                 while data_mine_count <= num_data_mine:
                         x,y = get_unused_location()
                         corp = random.choice(tech_corps)
@@ -4470,6 +4677,17 @@ def gen_neighborhood(type,neighborhood_name):
                         locations.append(troll_farm)
                         num_locations += 1
                         data_mine_count += 1
+                num_office = 4
+                if neighborhood_name == 'McQueeney Square':
+                        num_call_centre = 7
+                call_centre_count = 1
+                while call_centre_count <= num_call_centre:
+                        x,y = get_unused_location()
+                        corp = random.choice(tech_corps)
+                        troll_farm = gen_office(x,y,corp,'Office Building',neighborhood_name)
+                        locations.append(troll_farm)
+                        num_locations += 1
+                        call_centre_count += 1
 
 
 
@@ -4493,7 +4711,6 @@ def gen_neighborhood(type,neighborhood_name):
                                 apt_finished = True
                                 apt_count += 1
 				num_locations += 1
-
                         except:
                                 apt_finished = False
         #parks
@@ -4672,10 +4889,10 @@ def gen_neighborhood(type,neighborhood_name):
                                 	                        factions.append(corp)
 					faction_count += 1
 				location.broker = new_broker
-				location.broker.broker = Broker(new_broker,factions,min_fame,[],0,0,0)
+				location.broker.broker = Broker(new_broker,factions,min_fame,[],0,0,0,[])
 				location.has_broker = True
-	x = random.randint(1,16)
-	y = random.randint(1,16)
+	x = random.randint(1,32)
+	y = random.randint(1,32)
 #        organization = Organization(neighborhood_name,False,[],0,None,[],0,[],[],False,0,False)
 #	organizations.append(organization)
 	cliff_heights = Area(locations,neighborhood_name,organizations,x,y,randos,price)
@@ -4711,6 +4928,8 @@ def gen_new_city():
 	areas = [cliff_heights,bad_town,elephant_rock,the_scabs,rose_heights,mcqueeney_square]
 	name = "Templeville"
 	time = start_time
-	city = City(areas,name,time,player_organization,corps,[])
+	weather = get_weather(time)
+	city = City(areas,name,time,player_organization,corps,[],weather)
 	return city
+
 

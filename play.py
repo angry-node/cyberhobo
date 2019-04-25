@@ -343,8 +343,8 @@ def show_areas(party,world,start):
                 count += 1
         offset_x = 5
         offset_y = 30
-        rows = 16
-        columns = 16
+        rows = 32
+        columns = 32
         row_count = 1
         column_count = 1
 
@@ -403,8 +403,63 @@ def faction_attack(party,world,faction,attacker,my_location):
 		if key.c == ord('f'):
 	                decision = battle(party,attacker,my_location,world,True,party_actions)
 
+
+
 # t r a v e l
-def travel(party,world,start,my_area):
+
+def make_camp(party,world,party_actions):
+	libtcod.console_clear(0)
+	finished_camp = False
+	while finished_camp == False:
+		libtcod.console_print(0,1,1, 'You find a campsite.')
+                world.time.correct(party_actions)
+                hour = world.time.get_hour()
+                month = world.time.get_month()
+                am_pm = world.time.get_am_or_pm()
+                libtcod.console_print(0,40,1, month + " " + str(world.time.day) + ", " + str(world.time.year))
+                if world.time.minute <= 9:
+                        minute = '0' + str(world.time.minute)
+                else:
+                        minute = world.time.minute
+                libtcod.console_print(0,40,2, str(hour) + ':' + str(minute) + ' ' + am_pm)
+
+
+def travel_stop(party,world,party_actions):
+	libtcod.console_clear(0)
+	my_location = gen_wasteland(0,0)
+	print my_location.name
+	finished_stop  = False
+	while finished_stop == False:
+                libtcod.console_print(0,1,1, my_location.name)
+                world.time.correct(party_actions)
+                hour = world.time.get_hour()
+                month = world.time.get_month()
+                am_pm = world.time.get_am_or_pm()
+                libtcod.console_print(0,40,1, month + " " + str(world.time.day) + ", " + str(world.time.year))
+                if world.time.minute <= 9:
+                        minute = '0' + str(world.time.minute)
+                else:
+                        minute = world.time.minute
+                libtcod.console_print(0,40,2, str(hour) + ':' + str(minute) + ' ' + am_pm)
+
+                libtcod.console_print(0,40,1, month + " " + str(world.time.day) + ", " + str(world.time.year))
+
+
+
+		libtcod.console_print(0,1,10, '[c]ontinue, [m]ake camp, [p]arty, [r]est')
+		libtcod.console_flush()
+		key = libtcod.console_check_for_keypress()
+		if key.c == ord('c'):
+			finished_stop = True
+		elif key.c == ord('r'):
+			show_rest(party,world)
+			libtcod.console_clear(0)
+			finished_stop = False
+		elif key.c == ord('p'):
+			show_party(party,world,party_actions)
+			libtcod.console_clear(0)
+			finished_stop = False
+def travel(party,world,start,my_area,party_actions):
 	starting_area = my_area
 	start_location = find_location(party,world)
 	def show_locations():
@@ -431,12 +486,31 @@ def travel(party,world,start,my_area):
 				string = '[' + letter + '] ' + location.name + "*"
 				width = len(string)
 				libtcod.console_set_default_foreground(0, libtcod.green)
-				if count <= 43:
-					libtcod.console_print(0,1,line, '[' + letter + '] ' + location.name)
-				elif count >= 44 and count <= 64:
-					libtcod.console_print(0,30,line-21, '[' + letter + '] ' + location.name)
-				elif count >= 65:
-					libtcod.console_print(0,60,line-42, '[' + letter + '] ' + location.name)
+				if count <= 60:
+					#libtcod.console_print(0,1,line, '[' + letter + '] ' + location.name)
+                                        if type(location.owned_by) == str:
+	                                        libtcod.console_print(0,1,line, '[' + letter + '] ' + location.name)
+                                                libtcod.console_set_default_foreground(0, libtcod.gray)
+                                                libtcod.console_print(0,30,line, " (" + location.owned_by + ")")
+                                                libtcod.console_set_default_foreground(0, libtcod.white) 
+                                        else:
+                                                libtcod.console_print(0,1,line, '[' + letter + '] ' + location.name)
+                                                libtcod.console_set_default_foreground(0, libtcod.gray)
+                                                libtcod.console_print(0,30,line, " (" + location.owned_by.name + ")")
+                                                libtcod.console_set_default_foreground(0, libtcod.white) 
+
+				elif count >= 61:
+                                        if type(location.owned_by) == str:
+                                                libtcod.console_print(0,50,line, '[' + letter + '] ' + location.name)
+                                                libtcod.console_set_default_foreground(0, libtcod.gray)
+                                                libtcod.console_print(0,75,line, " (" + location.owned_by + ")")
+                                                libtcod.console_set_default_foreground(0, libtcod.white) 
+                                        else:
+                                                libtcod.console_print(0,50,line, '[' + letter + '] ' + location.name)
+                                                libtcod.console_set_default_foreground(0, libtcod.gray)
+                                                libtcod.console_print(0,75,line, " (" + location.owned_by.name + ")")
+                                                libtcod.console_set_default_foreground(0, libtcod.white) 
+					#libtcod.console_print(0,60,line-42, '[' + letter + '] ' + location.name)
 				libtcod.console_flush()
 	                    	libtcod.console_set_default_foreground(0, libtcod.white)
 			#elif len(location.rooms) >= 1:
@@ -462,21 +536,43 @@ def travel(party,world,start,my_area):
                         #        		elif count >= 62:
                         #        		        libtcod.console_print(0,60,line-42, '[' + letter + '] ' + location.name)
 			else:
-				if count <= 43:
-					libtcod.console_print(0,1,line, '[' + letter + '] ' + location.name)
-				elif count >= 44 and count <= 64:
-					libtcod.console_print(0,30,line-21, '[' + letter + '] ' + location.name)
-				elif count >= 65:
-                                        libtcod.console_print(0,60,line-42, '[' + letter + '] ' + location.name)
+				if location.owned_by != None:
+					if count <= 60:
+						if type(location.owned_by) == str:
+	                                                libtcod.console_print(0,1,line, '[' + letter + '] ' + location.name)
+							libtcod.console_set_default_foreground(0, libtcod.gray)
+                                                        libtcod.console_print(0,30,line, " (" + location.owned_by + ")")
+                                                        libtcod.console_set_default_foreground(0, libtcod.white) 
+
+						else:
+							libtcod.console_print(0,1,line, '[' + letter + '] ' + location.name)
+                                                        libtcod.console_set_default_foreground(0, libtcod.gray) 
+                                                        libtcod.console_print(0,30,line, " (" + location.owned_by.name + ")")
+                                                        libtcod.console_set_default_foreground(0, libtcod.white) 
+
+					elif count >= 61:
+						if type(location.owned_by) == str:
+                                                        libtcod.console_print(0,50,line-21, '[' + letter + '] ' + location.name)
+                                                        libtcod.console_set_default_foreground(0, libtcod.gray) 
+                                                        libtcod.console_print(0,75,line-21, " (" + location.owned_by + ")")
+                                                        libtcod.console_set_default_foreground(0, libtcod.white) 
+
+
+						else:
+							libtcod.console_print(0,50,line-21, '[' + letter + '] ' + location.name)
+                                                        libtcod.console_set_default_foreground(0, libtcod.gray) 
+                                                        libtcod.console_print(0,75,line-21, " (" + location.owned_by.name + ")")
+                                                        libtcod.console_set_default_foreground(0, libtcod.white) 
+
 
 			count += 1
 		return options,my_area
 	def show_map(options):
 		#libtcod.console_clear(0)
 		offset_x = 5
-		offset_y = 30
-		rows = 16
-		columns = 16
+		offset_y = 50
+		rows = 32
+		columns = 32
 		row_count = 1
 		column_count = 1
 		while column_count <= columns:
@@ -508,7 +604,7 @@ def travel(party,world,start,my_area):
 		new_area = my_area
                 show_map(options)
 		return options,start_area,start_area_x,start_area_y,new_area
-	def travel_menu(my_location,my_area,party,world):
+	def travel_menu(my_location,my_area,party,world,start_area):
 		my_location = find_location(party,world)
 		options,start_area,start_area_x,start_area_y,new_area = main_menu(my_area,party,world,my_location)
         	finished_action = False
@@ -582,7 +678,7 @@ def travel(party,world,start,my_area):
 	my_location = party.location
 	finished_selection = False
 	while finished_selection == False:
-		my_location,my_area,exit,start_area,start_area_x,start_area_y,new_area,new_location,finished_selection = travel_menu(my_location,my_area,party,world)
+		my_location,my_area,exit,start_area,start_area_x,start_area_y,new_area,new_location,finished_selection = travel_menu(my_location,my_area,party,world,starting_area)
 	if exit == True:
 		return my_location,True,my_area
 	else:
@@ -598,29 +694,60 @@ def travel(party,world,start,my_area):
                 y_distance = start.y - party.location.y
         elif start.y <= party.location.y:
                 y_distance = party.location.y - start.y
-	distance = x_distance + y_distance
+	map_distance = x_distance + y_distance
 	
-	#did we travel to another area
+	#will we travel to another area
 	area_distance = 0
-
-	if start_area != my_area:
-		if start_area_x >= party.area_x + 1:
-			area_x_distance = start_area_x - party.area_x
-                elif start_area_x <= party.area_x:
-                        area_x_distance = party.area_x - start_area_x
-                if start_area_y >= party.area_y + 1:
-                        area_y_distance = start_area_y - party.area_y
-                elif start_area_y <= party.area_y:
-                        area_y_distance = party.area_y - start_area_y
+        print 'FROM: ' + starting_area.name
+	print 'TO: ' + new_area.name
+	if starting_area != new_area:
+		if starting_area.x >= new_area.x + 1:
+			area_x_distance = starting_area.x - new_area.x
+                elif starting_area.x <= new_area.x:
+                        area_x_distance = new_area.x - starting_area.x
+                if starting_area.y >= new_area.y + 1:
+                        area_y_distance = starting_area.y - new_area.y
+                elif starting_area.y <= new_area.y:
+                        area_y_distance = new_area.y - starting_area.y
 		area_distance = area_x_distance + area_y_distance
+	else:
+		area_x_distance = 0
+		area_y_distance = 0
+	#
+	print 'area distance:'
+	print str(area_distance)
 	if area_distance >= 1:
-		distance = distance + (area_distance * 16)
+		distance = map_distance + (area_distance * 32)
+	else:
+		distance = map_distance
 	print distance
 	#print action
+	new_location_x = 0
+	new_location_y = 0
+        directions = ['x','y']
+
 	if action == True:
 		amount_travelled = 0
+		x_travelled = 0
+		y_travelled = 0
 		areas_travelled = 0
 		while amount_travelled <= distance:
+			#print 'b'
+                        #which direction to travel
+        	        #find_direction = False
+                        #while find_direction == False:
+                	 #       directions = ['x','y']
+                         #       direction = random.choice(directions)
+                         #       if direction == 'x':
+                         #	       if x_travelled <= x_distance:
+                          #      	       x_travelled += 1
+                           #                    find_direction = True
+                            #    elif direction == 'y':
+                             #   	if y_travelled <= y_distance:
+                              #          	y_travelled += 1
+                               #                 find_direction = True
+
+				
 			#check who cant walk
 			cant_walk = []
 			for member in party.members:
@@ -660,6 +787,8 @@ def travel(party,world,start,my_area):
 					for option in options:
 						libtcod.console_print(0,1,line_count, '[' + option[0] + '] ' + option[1].fname + ' ' + option[1].lname)
 						line_count += 1
+					line_count += 1
+					libtcod.console_print(0,1,line_count, "[s]top here.")
 					libtcod.console_flush()
 					choice_made = False
 					while choice_made == False:
@@ -668,6 +797,9 @@ def travel(party,world,start,my_area):
 							if key.c == ord(option[0]):
 								drag = [option[1],member]
 								dragging.append(drag)
+								choice_made = True
+							elif key.c == ord('s'):
+								travel_stop(party,world,party_actions)
 								choice_made = True
 			elif len(cant_walk) >= 1 and len(can_drag) == 0:
                 	        libtcod.console_clear(0)
@@ -678,7 +810,7 @@ def travel(party,world,start,my_area):
 	        	        while choice_made == False:
 					key = libtcod.console_check_for_keypress()
 					if key.c == ord('c'):
-						my_location = random.choice(my_area.locations)
+						travel_stop(party,world,party_actions)
 						turn_finished = True
 				                return my_location, turn_finished, my_area
 
@@ -758,6 +890,8 @@ def travel(party,world,start,my_area):
 					if len(dragging) >= 1:
 						for member in dragging:
 							member[1].health.current_stamina -= 1
+			world.weather = get_weather(world.time)
+			party.handle_cold(world)
 		#world.time.correct()
 			my_location = find_location(party,world)
 			#people
@@ -792,6 +926,13 @@ def travel(party,world,start,my_area):
 		#print my_location
 			libtcod.console_clear(0)
 			libtcod.console_print(0,1,1, 'Travelling.')
+                        libtcod.console_print(0,1,2, str(amount_travelled) + " / " + str(distance))
+                        libtcod.console_print(0,1,4, '[s]top')
+
+			key = libtcod.console_check_for_keypress()
+			if key.c == ord('s'):
+				travel_stop(party,world,party_actions)
+
 			libtcod.console_flush()
 			#save_game()
 			party.x = my_area.x
@@ -813,7 +954,7 @@ def travel(party,world,start,my_area):
 
 # T U R N
 
-def turn(party,world,turn_finished,location):
+def turn(party,world,turn_finished,location,party_actions):
 	#locate player and describe location
         my_location = find_location(party,world)
 	location = my_location
@@ -866,7 +1007,7 @@ def turn(party,world,turn_finished,location):
 		libtcod.console_flush()
                 key = libtcod.console_check_for_keypress()
                 if key.c == ord('t'):
-			location, finished, my_area = travel(party,world,False,my_area)
+			location, finished, my_area = travel(party,world,False,my_area,party_actions)
 			#my_area = find_area(party,world)
 			player_party = Party(True,player,party,location,area,city,my_area.x,my_area.y)
 			action = True
@@ -1050,7 +1191,7 @@ def create_party(player):
 			inventory = [bandages,morphine,speed]
 			strength, dexterity, intelligence, willpower, charisma = gen_player_stats(profession)
 			max_health = strength * 10
-			health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100)
+			health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100,50,5)
 			skills = gen_skills(profession)
 			skills_xp = skills
 			weapon = gen_player_weapons(profession)
@@ -1127,6 +1268,35 @@ def create_party(player):
 	player_party.area_y = my_area.y
 	party_actions = Party_Actions(0,0,0,0,0,0,0,0,0,0)
 	return player_party,world,party_actions
+
+def gen_mind(traits):
+	#mind
+        happiness = random.randint(40,100)
+        stress = random.randint(0,30)
+        sanity = random.randint(40,100)
+        horny = random.randint(0,40)
+        #addictions
+        nicotine_addiction = Addiction('Nicotine',0,0,4,[])
+
+        for trait in traits:
+        	if trait.name == 'Smoker':
+                	nicotine_addiction = Addiction('Nicotine',0,random.randint(1,4),4,[])
+
+        caffeine_addiction = Addiction('Caffeine',0,0,2,[])
+        cocaine_addiction = Addiction('Cocaine',0,0,7,[])
+        opiates_addiction = Addiction('Opiates',0,0,10,[])
+        speed_addiction = Addiction('Speed',0,0,7,[])
+        for trait in traits:
+        	if trait.name == 'Loves drugs':
+                	possible_drugs = [speed_addiction,opiates_addiction,cocaine_addiction]
+                        drug = random.choice(possible_drugs)
+                        drug.addiction_level = random.randint(2,5)
+
+
+	addictions = Addictions(cocaine_addiction,opiates_addiction,speed_addiction,caffeine_addiction,nicotine_addiction)
+        trauma = 0
+        mind = Mind(happiness,stress,sanity,horny,addictions,trauma)
+        return mind
 	
 
 def main_menu():
@@ -1168,193 +1338,116 @@ def main_menu():
 	while choose_profession == False:
 		libtcod.console_clear(0)
         	libtcod.console_print(0, 1, 1, "What is your profession?")
-        	libtcod.console_print(0, 1, 5, "(1)HUSTLER")
-                libtcod.console_print(0, 1, 6, "(2)CRIMEPUNK")
-                libtcod.console_print(0, 1, 7, "(3)HIPSTER")
-                libtcod.console_print(0, 1, 8, "(4)SCUMBAG")
-                libtcod.console_print(0, 1, 9, "(5)WASTOID")
-                libtcod.console_print(0, 1, 10, "(6)SCRIPT KIDDIE")
-                libtcod.console_print(0, 1, 11, "(7)SEX WORKER")
-                libtcod.console_print(0, 1, 12, "(8)LOST SOUL")	
-                libtcod.console_print(0, 1, 12, "(9)MEATBALL") 
+        	libtcod.console_print(0, 1, 5, "[a]HUSTLER")
+                libtcod.console_print(0, 1, 6, "[b]CRIMEPUNK")
+                libtcod.console_print(0, 1, 7, "[c]HIPSTER")
+                libtcod.console_print(0, 1, 8, "[d]SCUMBAG")
+                libtcod.console_print(0, 1, 9, "[e]WASTOID")
+                libtcod.console_print(0, 1, 10, "[f]SCRIPT KIDDIE")
+                libtcod.console_print(0, 1, 11, "[g]SEX WORKER")
+                libtcod.console_print(0, 1, 12, "[h]LOST SOUL")	
+                libtcod.console_print(0, 1, 13, "[i]MEATBALL") 
+                libtcod.console_print(0, 1, 14, "[j]SUVIVALIST") 
+                libtcod.console_print(0, 1, 15, "[k]DRUG DEALER") 
+                libtcod.console_print(0, 1, 16, "[l]HOBO") 
 
 
 		libtcod.console_flush()
                 key = libtcod.console_check_for_keypress()
-                if key.c == ord('1'):
+                if key.c == ord('a'):
                         profession = 'Hustler'
                         choose_profession = True
-                elif key.c == ord('2'):
+                elif key.c == ord('b'):
                         profession = 'Crimepunk'
                         choose_profession = True
-                elif key.c == ord('3'):
+                elif key.c == ord('c'):
                         profession = 'Hipster'
                         choose_profession = True
-                elif key.c == ord('4'):
+                elif key.c == ord('d'):
                         profession = 'Scumbag'
                         choose_profession = True
-                elif key.c == ord('5'):
+                elif key.c == ord('e'):
                         profession = 'Wastoid'
                         choose_profession = True
-                elif key.c == ord('6'):
+                elif key.c == ord('f'):
                         profession = 'Script Kiddie'
                         choose_profession = True
-                elif key.c == ord('7'):
+                elif key.c == ord('g'):
                         profession = 'Sex Worker'
                         choose_profession = True
-                elif key.c == ord('8'):
+                elif key.c == ord('h'):
                         profession = 'Lost Soul'
                         choose_profession = True
-		elif key.c == ord('9'):
+		elif key.c == ord('i'):
 			profession = 'Meatball'
 			choose_profession = True
+                elif key.c == ord('j'):
+                        profession = 'Survivalist'
+                        choose_profession = True
+                elif key.c == ord('k'):
+                        profession = 'Drug Dealer'
+                        choose_profession = True
+                elif key.c == ord('l'):
+                        profession = 'Hobo'
+                        choose_profession = True
+
 
 	if choose_gender == True and choose_profession == True:
 		libtcod.console_clear(0)
 		while confirm_roll == False:
-	                strength, dexterity, intelligence, willpower, charisma = gen_player_stats(profession)
+                	strength, dexterity, intelligence, willpower, charisma = gen_player_stats(profession)
+                        stats = Stats(strength, dexterity, intelligence, willpower, charisma, strength, dexterity, intelligence,willpower,charisma)
+                        max_health = stats.strength * 10
+                        health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100,50,5)
+                        combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False)
+
 			player_stats, skills, weapon, outfit, age, hp, traits, money,fname,lname,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor = gen_character(profession,gender)
-			while choice_made == False:
-				libtcod.console_print(0, 1, 1,fname + " " + lname) 
-                		libtcod.console_print(0, 1, 2, profession)
- 				libtcod.console_print(0, 1, 3, gender)
-	          		libtcod.console_print(0, 1, 6, "STR: " + str(strength))
-	                	libtcod.console_print(0, 1, 7, "DEX: " + str(dexterity))
-	                	libtcod.console_print(0, 1, 8, "INT: " + str(intelligence))
-	                	libtcod.console_print(0, 1, 9, "WIL: " + str(willpower))
-	                	libtcod.console_print(0, 1, 10, "CHA: " + str(charisma))
-        	        	libtcod.console_print(0, 1, 12, "[a]ccept")
-                                libtcod.console_print(0, 1, 13, "[r]e-roll")
+			affiliation = "Player Organization"
+			skills_xp = skills
+			drugs = []
+			home = None
+			#hunger,thirst,sleep= 0,0,100
+                                #player = Char(gender, age, profession,affiliation,health, stats,[], skills,skills_xp,weapon,outfit,None,traits,drugs,fname,lname,money,
+ 	                        #       'player',combat_status,home,mind,hunger,thirst,sleep,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor,None,None,False,None,False,None)
 
-				libtcod.console_flush()
 
-		                key = libtcod.console_check_for_keypress()
+			libtcod.console_print(0, 1, 1,fname + " " + lname) 
+               		libtcod.console_print(0, 1, 2, profession)
+			libtcod.console_print(0, 1, 3, gender)
+          		libtcod.console_print(0, 1, 6, "STR: " + str(strength))
+                	libtcod.console_print(0, 1, 7, "DEX: " + str(dexterity))
+                	libtcod.console_print(0, 1, 8, "INT: " + str(intelligence))
+                	libtcod.console_print(0, 1, 9, "WIL: " + str(willpower))
+                	libtcod.console_print(0, 1, 10, "CHA: " + str(charisma))
+       	        	libtcod.console_print(0, 1, 12, "[a]ccept")
+                        libtcod.console_print(0, 1, 13, "[r]e-roll")
+
+			libtcod.console_flush()
+			finished = False
+			while finished == False:
+	                	key = libtcod.console_check_for_keypress()
 				if key.c == ord("a"):
+					print 'confirm'
 					libtcod.console_clear(0)
-					choice_made, confirm_roll = True, True
+					finished, confirm_roll = True, True
+					#return True
+					#finished = 
 				elif key.c == ord("r"): 
 					libtcod.console_clear(0)
-			                strength, dexterity, intelligence, willpower, charisma = gen_player_stats(profession)
+		        	        strength, dexterity, intelligence, willpower, charisma = gen_player_stats(profession)
+					#player_stats, skills, weapon, outfit, age, hp, traits, money,fname,lname = gen_character(profession,gender)
+               				stats = Stats(strength, dexterity, intelligence, willpower, charisma, strength, dexterity, intelligence,willpower,charisma)
+               				#max_health = stats.strength * 10
+               				health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100,50,5)
+               				combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False)
 					player_stats, skills, weapon, outfit, age, hp, traits, money,fname,lname,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor = gen_character(profession,gender)
-	if confirm_roll == True and confirm_skills == False:
-		while confirm_skills == False:
-			libtcod.console_clear(0)
+	                                #mind = gen_mind(traits)
+		                                #player = Char(gender, age, profession,affiliation,health, stats,[], skills,skills_xp,weapon,outfit,None,traits,drugs,fname,lname,money,
+	                                        #'player',combat_status,home,mind,hunger,thirst,sleep,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor,None,None,False,None,False,None)
+                                        finished, confirm_roll = True, True
 
-#			def gen_character():
-#				player_stats = Stats(strength,dexterity,intelligence,willpower,charisma,strength,dexterity,intelligence,willpower,charisma)
-#				skills = gen_skills(profession)
-#				weapon = gen_player_weapons(profession)
-#				outfit = gen_player_outfit(profession, gender)
-#				age = random.randint(18,45)
-#				hp = strength + dexterity + willpower
-#				traits = gen_player_traits(profession)
-#				if profession == "Hipster":
-#					money = 500
-#				else: 
-#					money = 100
-#				return player_stats, skills, weapon, outfit, age, hp, traits, money
-#			player_stats, skills, weapon, outfit, age, hp, traits, money,fname,lname = gen_character(profession,gender)
-			while confirm_skills == False:
-
-
-	                       	libtcod.console_print(0, 1, 1,fname + " " + lname)
-                        	libtcod.console_print(0, 1, 2, profession)
-                        	libtcod.console_print(0, 1, 3, gender)
-                        	libtcod.console_print(0, 1, 4, "Age: " + str(age))
-			
-				libtcod.console_print(0, 20, 1, outfit.name)
-				libtcod.console_print(0, 20, 2, weapon.name)
-				libtcod.console_print(0, 20, 4, "$" + str(money))
-
-				#trait_count = 1
-				#for trait in traits:
-				#	buffer = 6
-				#	line = buffer + trait_count
-				#	libtcod.console_print(0,20,line, str(trait.name))
-				#	trait_count += 1
-				
-
-                        
-				libtcod.console_print(0, 1, 7, "STR: " + str(strength))
-                	        libtcod.console_print(0, 1, 8, "DEX: " + str(dexterity))
-                	        libtcod.console_print(0, 1, 9, "INT: " + str(intelligence))
-                	        libtcod.console_print(0, 1, 10, "WIL: " + str(willpower))
-                	        libtcod.console_print(0, 1, 11, "CHA: " + str(charisma))
-                                libtcod.console_print(0,1,15, "Blade:")
-                                libtcod.console_print(0,1,16, "Blunt:")
-				libtcod.console_print(0,1,17, "Brawl:")
-				libtcod.console_print(0,1,18, "Computer:")
-				libtcod.console_print(0,1,19, "Dodge:")
-				libtcod.console_print(0,1,20, "Disguise:")
-                                libtcod.console_print(0,1,21, "Driving:")
-				libtcod.console_print(0,1,22, "Etiquette:")
-				libtcod.console_print(0,1,23, "Explosive:")
-				libtcod.console_print(0,1,24, "First Aid:")
-				libtcod.console_print(0,1,25, "Investigate:")
-				libtcod.console_print(0,1,26, "Leadership")
-
-
-				libtcod.console_print(0,20,15, "Lie:")
-        	                libtcod.console_print(0,20,16, "Negotiate:")
-
-       		                libtcod.console_print(0,20,17, "Persuade:")
-                	        libtcod.console_print(0,20,18, "Pickpocket:")
-				libtcod.console_print(0,20,19, "Pistol:")
-                                libtcod.console_print(0,20,20, "Rifle:")
-
-                                libtcod.console_print(0,20,21, "Security:")
-	                        libtcod.console_print(0,20,22, "Seduction:")
-        	                libtcod.console_print(0,20,23, "Shotgun:")
-                	        libtcod.console_print(0,20,24, "Stealth:")
-                	        libtcod.console_print(0,20,25, "Streetwise:")
-                	        libtcod.console_print(0,20,26, "Throw:")
-                	        libtcod.console_print(0,20,27, "Torture:")
-
-                                libtcod.console_print(0,15,15, str(skills.blade))
-                                libtcod.console_print(0,15,16, str(skills.blunt))
-
-                	        libtcod.console_print(0,15,17, str(skills.brawl))
-                	        libtcod.console_print(0,15,18, str(skills.computers))
-                	        libtcod.console_print(0,15,19, str(skills.dodge))
-                	        libtcod.console_print(0,15,20, str(skills.disguise))
-                                libtcod.console_print(0,15,21, str(skills.driving))
-
-                	        libtcod.console_print(0,15,22, str(skills.etiquette))
-                	        libtcod.console_print(0,15,23, str(skills.explosives))
-                	        libtcod.console_print(0,15,24, str(skills.first_aid))
-                	        libtcod.console_print(0,15,25, str(skills.investigate))
-                	        libtcod.console_print(0,15,26,str(skills.leadership))
-
-				libtcod.console_print(0,35,15, str(skills.lying))
-                	        libtcod.console_print(0,35,16, str(skills.negotiate))
-
-                        	libtcod.console_print(0,35,17, str(skills.persuasion))
-                        	libtcod.console_print(0,35,18, str(skills.pickpocket))
-                                libtcod.console_print(0,35,19, str(skills.pistol))
-                                libtcod.console_print(0,35,20, str(skills.rifle))
-
-                                libtcod.console_print(0,35,21, str(skills.security))
-                        	libtcod.console_print(0,35,22, str(skills.seduction))
-                        	libtcod.console_print(0,35,23, str(skills.shotgun))
-                        	libtcod.console_print(0,35,24, str(skills.stealth))
-                        	libtcod.console_print(0,35,25,str(skills.streetwise))
-                        	libtcod.console_print(0,35,26, str(skills.throw))
-                        	libtcod.console_print(0,35,27, str(skills.torture))
-
-				libtcod.console_print(0,1,30, "[a]ccept")
-                        	libtcod.console_print(0,1,31, "[r]e-roll")
-
-				libtcod.console_flush()
-                        	key = libtcod.console_check_for_keypress()
-				if key.c == ord('r'):
-					libtcod.console_clear(0)
-					id = 1
-					player_stats, skills, weapon, outfit, age, hp, traits, money,fname,lname,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor = gen_character(profession,gender)
-					player = id, gender, profession, player_stats,[], skills,weapon,outfit,None,traits,fname,lname,money
-				elif key.c == ord('a'):
-					libtcod.console_clear(0)
-					confirm_skills = True
-	if confirm_skills == True and confirm_roll == True:
+			#confirm_roll = True
+	if confirm_roll == True:
 		
         	#lets go
 		libtcod.console_clear(0)
@@ -1364,37 +1457,15 @@ def main_menu():
 		drugs = []
 		#fame = 0
 
+#		stats = Stats(strength, dexterity, intelligence, willpower, charisma, strength, dexterity, intelligence,willpower,charisma)
+#		max_health = stats.strength * 10
+#		health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100)
+#		combat_status = Cobat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False)
+                player_stats, skills, weapon, outfit, age, hp, traits, money,fname,lname,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor = gen_character(profession,gender)
+                #max_health = stats.strength * 10
+                health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100,50,5)
+		mind = gen_mind(traits)
 		stats = Stats(strength, dexterity, intelligence, willpower, charisma, strength, dexterity, intelligence,willpower,charisma)
-		max_health = stats.strength * 10
-		health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100)
-		combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False)
-                #mind
-                happiness = random.randint(40,100)
-                stress = random.randint(0,30)
-                sanity = random.randint(40,100)
-                horny = random.randint(0,40)
-		#addictions
-                nicotine_addiction = Addiction('Nicotine',0,0,4,[])
-
-                for trait in traits:
-                        if trait.name == 'Smoker':
-                                nicotine_addiction = Addiction('Nicotine',0,random.randint(1,4),4,[])
-
-                caffeine_addiction = Addiction('Caffeine',0,0,2,[])
-                cocaine_addiction = Addiction('Cocaine',0,0,7,[])
-                opiates_addiction = Addiction('Opiates',0,0,10,[])
-                speed_addiction = Addiction('Speed',0,0,7,[])
-                for trait in traits:
-                        if trait.name == 'Loves drugs':
-                                possible_drugs = [speed_addiction,opiates_addiction,cocaine_addiction]
-                                drug = random.choice(possible_drugs)
-                                drug.addiction_level = random.randint(2,5)
-
-
-                addictions = Addictions(cocaine_addiction,opiates_addiction,speed_addiction,caffeine_addiction,nicotine_addiction)
-		trauma = 0
-                mind = Mind(happiness,stress,sanity,horny,addictions,trauma)
-
 		skills_xp = skills
 		home = 'None'
 		affiliation = 'Player Organization'
@@ -1403,10 +1474,34 @@ def main_menu():
 		possible_outerwear = [trenchcoat,leather_jacket,cheap_suit,sports_jacket]
 		outerwear = random.choice(possible_outerwear)
 		armor = no_armor
-                #traits = set(traits)
-                #traits = list(traits)
-                player = Char(gender, age, profession,affiliation,health, stats,[], skills,skills_xp,weapon,outfit,None,traits,drugs,fname,lname,money,'player',combat_status,home,mind,hunger,thirst,sleep,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor,None,None,False,None,False,None)
+                player = Char(gender, age, profession,affiliation,health, stats,[], skills,skills_xp,weapon,outfit,None,traits,drugs,fname,lname,money,
+			'player',combat_status,home,mind,hunger,thirst,sleep,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor,None,None,False,None,False,None)
+		target = player
+		finished = False
+		first_time = True
+		while finished == False:
+			libtcod.console_clear(0)
+			confirmed = show_character(target,None,False,None,None,True)
+			if first_time == True:
+				first_time == False
+			if confirmed == True:
+				finished = True
+			elif confirmed == False:
+				libtcod.console_clear(0)
+				#roll_stats()
+				strength, dexterity, intelligence, willpower, charisma = gen_player_stats(profession)
+                        	player_stats, skills, weapon, outfit, age, hp, traits, money,fname,lname,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor = gen_character(profession,gender)
+				mind = gen_mind(traits)
+				skills_xp = skills
+                		player = Char(gender, age, profession,affiliation,health, stats,[], skills,skills_xp,weapon,outfit,None,traits,drugs,fname,lname,money,
+                        		'player',combat_status,home,mind,hunger,thirst,sleep,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor,None,None,False,None,False,None)
+				
+                		target = player
+				finished= False
+	                        #confirmed = show_character(target,None,False,None,None,True)
+
 		#player_party, world = create_party(player)
+	
 		return player
 	        #play_turn(player_party,world,True)
 
@@ -1453,7 +1548,7 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 	if target.combat_status.knocked_down == False:
 		libtcod.console_print(0,1,line_count,attacker.fname + " " + attacker.lname + " attacks " + target.fname + " " + target.lname + " with a " + attacker.weapon.name + ".")
         elif target.combat_status.knocked_down == True:
-                libtcod.console_print(0,1,line_count,attacker.fname + " " + attacker.lname + " attacks " + target.fname + " " + target.lname + " with a " + attacker.weapon.name + " while they are defenceless.")
+                libtcod.console_print(0,1,line_count,attacker.fname + " " + attacker.lname + " attacks " + target.fname + " " + target.lname + " with a " + attacker.weapon.name + " while they are knocked down.")
 	#print target.fname + " " + target.lname
 	line_count += 1
 	strength_bonus = 0
@@ -1756,7 +1851,7 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
                         target.health.current_stamina -= (injury.cause_stamina_loss)
 		#cause trauma
 		if (damage_taken + bonus_damage) >= (target.health.max_health / 4):
-			target.mind.trauma += random.randint(2,8)
+			target.mind.trauma += random.randint(5,20)
 
 		#check if target knocked down
 		just_knocked_down = False
@@ -1892,7 +1987,8 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
                         #check if target is in location regulars
 			if target in my_location.regulars:
 				my_location.regulars.remove(target)
-
+			#cause trauma?
+			
                         #else:
 
 			#remove from team
@@ -3153,7 +3249,11 @@ def handle_jobs(party,world):
 												offices.append(new_location)
 										#found_office = True
 								office = random.choice(offices)
-								target_location = random.choice(office.rooms)
+								if office.rooms != None and len(office.rooms) >= 2:
+									target_location = random.choice(office.rooms)
+								else:
+									target_location = office
+								
 								#print target_location.name
 								if len(target_location.regulars) >= 2:
 									target = random.choice(target_location.regulars)
@@ -3453,6 +3553,7 @@ def rest(party,world,hours,guard):
 		#handle time
 		day = world.time.day
                 world.time.hour += 1
+		world.weather = get_weather(world.time)
 		world.time.correct(party_actions)
 		if day != world.time.day:
                 	my_area.clean_up() 
@@ -3482,6 +3583,8 @@ def rest(party,world,hours,guard):
 		#handle missions
 		world= handle_jobs(party,world)
 		handle_missions(party,world,party_actions)
+		#handle cold
+		party.handle_cold(world)
 		#sleeping
 		messages = []
 		for member in party.members:
@@ -4307,6 +4410,7 @@ def wait(party,world,hours):
                 day = world.time.day
                 world.time.hour += 1
                 world.time.correct(party_actions)
+		world.weather = get_weather(world.time)
                 if day != world.time.day:
                         my_area.clean_up() 
 
@@ -4716,7 +4820,7 @@ def show_character(target,world,corpse,my_location,player_party,creation):
 	                libtcod.console_set_default_foreground(0, libtcod.gray)
 
 
-	if player_party.leader == target:
+	if creation == False and player_party.leader == target:
 	        libtcod.console_set_default_foreground(0, libtcod.green)
         	libtcod.console_print(0, 10, 5, 'Leader')
                 libtcod.console_set_default_foreground(0, libtcod.white)
@@ -4771,9 +4875,40 @@ def show_character(target,world,corpse,my_location,player_party,creation):
 
 	if corpse == False:
 		libtcod.console_print(0, 1, 13, "Health:")
-		libtcod.console_print(0, 9, 13, str(target.health.current_health) + " / " + str(target.health.max_health))
-		libtcod.console_print(0, 20, 13, "Max Health:")
-		libtcod.console_print(0, 33, 13, str(target.health.base_max) + "")
+		libtcod.console_print(0, 10, 13, str(target.health.current_health) + " / " + str(target.health.max_health))
+		libtcod.console_print(0, 20, 13, "Max health:")
+		libtcod.console_print(0, 32, 13, str(target.health.base_max) + "")
+                libtcod.console_print(0, 40, 13, "Body temp:")
+                libtcod.console_print(0, 60, 13, str(target.health.body_temp))
+
+                libtcod.console_print(0, 40, 14, "Outfit warmth:")
+		outfit_warmth = target.check_clothing_warmth()
+                libtcod.console_print(0, 60, 14, str(outfit_warmth))
+
+		print "cold_rating: " + str(target.health.cold_rating)
+		if target.health.cold_rating >= 20:
+			libtcod.console_set_default_foreground(0, libtcod.light_red)
+		        libtcod.console_print(0, 40, 15, "Very warm")
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                elif target.health.cold_rating >= 10 and target.health.cold_rating <= 19:
+                        libtcod.console_set_default_foreground(0, libtcod.orange)
+                        libtcod.console_print(0, 40, 15, "Warm")
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                elif target.health.cold_rating <= 9 and target.health.cold_rating >= 5:
+                        libtcod.console_set_default_foreground(0, libtcod.green)
+                        libtcod.console_print(0, 40, 15, "Comfortable")
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+
+                elif target.health.cold_rating <= 4 and target.health.cold_rating >= -10:
+                        libtcod.console_set_default_foreground(0, libtcod.blue)
+                        libtcod.console_print(0, 40, 15, "Cold")
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+                elif target.health.cold_rating <= -11:
+                        libtcod.console_set_default_foreground(0, libtcod.light_blue)
+                        libtcod.console_print(0, 40, 15, "Freezing")
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+
+
 
 
         	libtcod.console_print(0, 1, 14, "Blood:")
@@ -4943,15 +5078,19 @@ def show_character(target,world,corpse,my_location,player_party,creation):
         	libtcod.console_print(0,1,45, 'TIED UP')
         	libtcod.console_set_default_foreground(0, libtcod.white)
 
-
-	libtcod.console_print(0,1,47, "[ESC]")
+	if creation == True:
+	        libtcod.console_print(0,1,47, "[a]ccept")
+                libtcod.console_print(0,25,47, "[r]e-roll")
+	if creation == False:
+		libtcod.console_print(0,1,49, "[ESC]")
 	if corpse == True:
 		libtcod.console_print(0,1,48, "[s]trip")
 	footsoldier = None
-	for footsoldier in world.player_organization.footsoldiers:
-		if footsoldier.npc == target:
-                	libtcod.console_print(0,01,47, "[o]rders")
-			my_footsoldier = footsoldier
+	if creation == False:
+		for footsoldier in world.player_organization.footsoldiers:
+			if footsoldier.npc == target:
+        	        	libtcod.console_print(0,01,47, "[o]rders")
+				my_footsoldier = footsoldier
 
 	libtcod.console_flush()
 
@@ -4962,11 +5101,11 @@ def show_character(target,world,corpse,my_location,player_party,creation):
 			#print 'b'
 			finished_viewing = True
 			#return finished_viewing
-		if key.c == ord('o') and my_footsoldier != None:
+		if key.c == ord('o') and my_footsoldier != None and creation == False:
 			finished_viewing = show_orders(my_footsoldier,world,player_party)
 			finished_viewing = True
 			#return finished_viewing
-		elif key.c == ord('s') and corpse == True:
+		elif key.c == ord('s') and corpse == True and creation == False:
 			if target.outfit.name != 'None':
 				my_location.items.append(target.outfit)
 				target.outfit = naked
@@ -4995,6 +5134,11 @@ def show_character(target,world,corpse,my_location,player_party,creation):
                                 my_location.items.append(target.armor)
                                 target.armor = no_armor
 			finished_viewing = True
+		elif key.c == ord('a') and creation == True:
+			return True
+                elif key.c == ord('r') and creation == True:
+                        return False
+
 	return target
 			
 def show_outfits(target,world):
@@ -7559,10 +7703,17 @@ def broker_refuse(char,target,player,world,location,party_actions):
         line_count = 1
         world = handle_jobs(player,world)
         libtcod.console_clear(0)
-	phrases = ["Get lost, noob.","Huh? Do I know you?","I do not deal with bums off the street."]
+	phrases = ['"Get lost, noob."','"Huh? Do I know you?"','"I do not deal with bums off the street."']
 	refuse = random.choice(phrases)
-        libtcod.console_print(0,1,line_count, refuse)
-
+        libtcod.console_print(0,1,1, refuse)
+        libtcod.console_print(0,1,3, '[ESC]')
+	libtcod.console_flush()
+	finished = False
+	while finished == False:
+		key = libtcod.console_check_for_keypress()
+		if key.vk == libtcod.KEY_ESCAPE:
+			finished = True
+			return finished
 def show_broker(char,target,player,world,location,party_actions):
 	line_count = 1
 	world = handle_jobs(player,world)
@@ -7632,12 +7783,12 @@ def conversation(char,target,player,world,location,party_actions):
 		line_count += 1
 
 	line_count += 2
-	libtcod.console_print(0,1,line_count, "[r]eturn")
+	libtcod.console_print(0,1,line_count, "[ESC]")
 	libtcod.console_flush()
 	choice_made = False
 	while choice_made == False:
 		key = libtcod.console_check_for_keypress()
-		if key.c == ord('r'):
+		if key.vk == libtcod.KEY_ESCAPE:
 			finished_speaking = True
 			return finished_speaking
                 elif key.c == ord('c') and len(player.members) <= 8:
@@ -7730,7 +7881,11 @@ def conversation(char,target,player,world,location,party_actions):
 			finished_speaking = True
 			return finished_speaking
 		elif key.c == ord('d') and location.has_broker == True:
-			finished_speaking = show_broker(char,target,player,world,location,party_actions)
+			if player.fame >= location.broker.broker.min_fame:
+				finished_speaking = show_broker(char,target,player,world,location,party_actions)
+			else:
+                                finished_speaking = broker_refuse(char,target,player,world,location,party_actions)
+
 			libtcod.console_clear(0)
 			finished_speaking = True
 			return finished_speaking
@@ -7891,7 +8046,7 @@ def loot(party,world,party_actions):
 							finished_loot,choice_made = True,True
 							return finished_loot,finished_loot
 						elif key.c == ord('l'):
-							travel(party,world,my_location,my_area)
+							travel(party,world,my_location,my_area,party_actions)
                                                         libtcod.console_clear(0)
                                                         finished_loot,choice_made = True,True
                                                         return finished_loot,finished_loot
@@ -8316,11 +8471,19 @@ def party_turn(player_party,world,party_actions):
 		my_location.area = my_area.name
 		my_location.actors.members = set(my_location.actors.members)
                 my_location.actors.members = list(my_location.actors.members)
+		#brokers and bodyguards
                 if my_location.has_broker == True and my_location.broker != None:
                         print 'broker is here'
                         print my_location.broker.fname + " " + my_location.broker.lname
                         my_location.actors.members.append(my_location.broker)
-
+			if my_location.broker.broker != None:
+				print my_location.broker.broker.guards
+				if len(my_location.broker.broker.guards) >= 1:
+					print 'guards here'
+					for guard in my_location.broker.broker.guards:
+						print guard.fname + " " + guard.lname
+						print guard
+						my_location.actors.members.append(guard)
 		for member in my_location.actors.members:
 			if member == None:
 				my_location.actors.members.remove(member)
@@ -8502,12 +8665,19 @@ def party_turn(player_party,world,party_actions):
 		month = world.time.get_month()
 		am_pm = world.time.get_am_or_pm()
 		libtcod.console_print(0,40,1, month + " " + str(world.time.day) + ", " + str(world.time.year))
+		#libtcod.console_set_default_foreground(0, libtcod.grey)
+                libtcod.console_print(0,40,4, str(world.weather.temperature) + " degrees")
+                libtcod.console_print(0,40,3, str(world.weather.clouds))
+		if world.weather.precipitation == True:
+			libtcod.console_print(0,40,5, str(world.weather.precipitation_type))
+		libtcod.console_set_default_foreground(0, libtcod.white)
+
 		if world.time.minute <= 9:
 			minute = '0' + str(world.time.minute)
 		else:
 			minute = world.time.minute
 		libtcod.console_print(0,40,2, str(hour) + ':' + str(minute) + ' ' + am_pm)
-		libtcod.console_print(0,40,3, "$" + str(player_party.money))
+		#libtcod.console_print(0,40,3, "$" + str(player_party.money))
 		#is this location owned
 		if my_location.owned_by != "No one":
                         libtcod.console_print(0,1,5, "LOCATION OWNER:")
@@ -8517,6 +8687,9 @@ def party_turn(player_party,world,party_actions):
 			my_location.rooms = my_location.parent_location.rooms
 		if len(my_location.rooms) >= 1:
 			libtcod.console_print(0,40,4, str(len(my_location.rooms)) + ' rooms[*]')
+		#handle cold
+		for member in player_party.members:
+			member.check_clothing_warmth()
 		#check if anyone died
 		messages = []
 		for member in player_party.members:
@@ -8529,6 +8702,15 @@ def party_turn(player_party,world,party_actions):
 				#my_location_items.append(member.outfit)
 				#member.outfit = naked
 				player_party.members.remove(member)
+			#check if cold
+			if member.health.body_temp <= -1 and member.health.body_temp >= -25:
+                                message = member.fname + ' ' + member.lname + " is cold."
+                                messages.append(message)
+                        elif member.health.body_temp <= -26:
+                                message = member.fname + ' ' + member.lname + " is freezing!"
+                                messages.append(message)
+
+
                         #check stamina
                         if member.health.current_stamina <= 40 and member.health.current_stamina >= 20:
                                 message = member.fname + ' ' + member.lname + " is tired."
@@ -8819,8 +9001,11 @@ def party_turn(player_party,world,party_actions):
 			libtcod.console_print(0,1,line_count, 'PEOPLE HERE:')
                         if my_location.broker != None and my_location.time_open <= world.time.hour:
                                 my_location.actors.members.append(my_location.broker)
-				print 'broker is here'
-				print my_location.broker.fname + " " + my_location.broker.lname
+				if len(my_location.broker.broker.guards) >= 1:
+					for guard in my_location.broker.broker.guards:
+						my_location.actors.members.append(guard)
+				#print 'broker is here'
+				#print my_location.broker.fname + " " + my_location.broker.lname
 			count = 1
 			for actor in my_location.actors.members:
 				if actor == None:
@@ -8935,7 +9120,7 @@ def party_turn(player_party,world,party_actions):
 		#travel
                 if key.c == ord('t'):
 			time = world.time.hour
-                        my_location, turn_finished, my_area = travel(player_party,world,my_location,my_area)
+                        my_location, turn_finished, my_area = travel(player_party,world,my_location,my_area,party_actions)
                         #handle drugs, injuries, etc
                         handle_party_drugs(player_party,world)
 			handle_party_mind
@@ -8944,7 +9129,7 @@ def party_turn(player_party,world,party_actions):
 			handle_missions(player_party,world,party_actions)
 			if time <= world.time.hour - 1:
 	                	handle_footsoldiers(player_party,world,party_actions)
-
+				player_party.handle_cold(world)
 			player_party.area = my_area.name
 			player_party.area_x = my_area.x
 			player_party.area_y = my_area.y
