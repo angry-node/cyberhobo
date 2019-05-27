@@ -5,7 +5,7 @@ from namegen import *
 from dialogue import *
 from world import *
 import shelve
-
+import time
 def save_game():
 	file = shelve.open('savegame', 'n')
         file['game'] = game
@@ -343,8 +343,8 @@ def show_areas(party,world,start):
                 count += 1
         offset_x = 5
         offset_y = 30
-        rows = 32
-        columns = 32
+        rows = 56
+        columns = 56
         row_count = 1
         column_count = 1
 
@@ -407,26 +407,290 @@ def faction_attack(party,world,faction,attacker,my_location):
 
 # t r a v e l
 
-def make_camp(party,world,party_actions):
+
+def set_up_tents(party,world,party_actions,campsite,my_location):
+        libtcod.console_clear(0)
+        libtcod.console_print(0,1,1,"TENTS:")
+	tent_count = 1
+	tents = []
+	for item in party.inventory:
+		if item.item_type == 'tent':
+			tents.append(item)
+	if len(tents) <= 0:
+	        libtcod.console_print(0,1,2,"You have no tents.")
+	option_count = 1
+	options = []
+	if len(tents) >= 1:
+		for tent in tents:
+			letter = num_to_letter(tent_count)
+			new_option = [letter,tent]
+			options.append(new_option)
+			tent_count += 1
+		for option in options:
+                	libtcod.console_print(0,1,1+option_count,"[" + option[0] + "] " + tent.name)
+			option_count += 1
+
+        libtcod.console_print(0,1,10,"[ESC]")
+	libtcod.console_flush()
+	finished = False
+	while finished == False:
+                key = libtcod.console_check_for_keypress()
+                if key.vk == libtcod.KEY_ESCAPE:
+                        libtcod.console_clear(0)
+                        return campsite
+		else:
+			if len(options) >= 1:
+				for option in options:
+					if key.c == ord(str(option[0])):
+						campsite.tents_set_up.append(option[1])
+						my_location.items.append(tent)
+						party.inventory.remove(option[1])
+						libtcod.console_clear(0)
+						return campsite
+
+
+
+def build_fire(party,world,party_actions,campsite,my_location):
+        libtcod.console_clear(0)
+	#find wood
+	campsite.has_fire = True
+	my_location.items.append(fire)
+        libtcod.console_print(0,1,1,"You build a fire here.")
+
+        libtcod.console_print(0,1,3,"[ESC]")
+	libtcod.console_flush()
+	finished = False
+	while finished == False:
+		key = libtcod.console_check_for_keypress()
+		if key.vk == libtcod.KEY_ESCAPE:
+			libtcod.console_clear(0)
+			finished = True
+
+
+def show_travel_msg(messages):
+	libtcod.console_clear(0)
+        libtcod.console_print(0,1,1,"MESSAGES:")
+
+	if len(messages) >= 1:
+        	msg_count = 1
+                for message in messages:
+                	libtcod.console_set_default_foreground(0, libtcod.white)
+                	if msg_count <= 20:
+                        	libtcod.console_set_default_foreground(0, message.color)
+                                libtcod.console_print(0,1,3 + msg_count, message.message)
+                                libtcod.console_set_default_foreground(0, libtcod.white)
+
+                        elif msg_count >= 21 and msg_count <= 40:
+                                libtcod.console_set_default_foreground(0, message.color)
+                                libtcod.console_print(0,35,3+msg_count-20, message.message)
+                                libtcod.console_set_default_foreground(0, libtcod.white)
+
+                        elif msg_count >= 41 and msg_count <= 60:
+                                libtcod.console_set_default_foreground(0, message.color)
+                                libtcod.console_print(0,70,3+msg_count-40, message.message)
+                                libtcod.console_set_default_foreground(0, libtcod.white)
+                        msg_count += 1
+	elif len(messages) <= 0:
+		msg_count = 1
+		libtcod.console_print(0,1,1,"No messages.")
+	libtcod.console_print(0,1,25,"[ESC]")
+	libtcod.console_flush()
+	finished = False
+	while finished == False:
+		key = libtcod.console_check_for_keypress()
+		if key.vk == libtcod.KEY_ESCAPE:
+			return True
+
+def travel_msg(party,world,party_actions,hour):
+	messages = []
+	#check stamina
+	for member in party.members:
+	        if member.health.current_stamina <= 40 and member.health.current_stamina >= 20:
+        	        new_message = member.fname + ' ' + member.lname + " is tired."
+			message = Message(new_message,world.time,libtcod.white)
+                        messages.append(message)
+                elif member.health.current_stamina <= 19 and member.health.current_stamina >= 1:
+                        new_message = member.fname + ' ' + member.lname + " is exhausted."
+                        message = Message(new_message,world.time,libtcod.grey)
+
+                        messages.append(message)
+                elif member.health.current_stamina <= 0 and member.combat_status.knocked_down == False:
+                        new_message = member.fname + ' ' + member.lname + " collapsed on the ground."
+                        member.combat_status.knocked_down = True
+                        message = Message(new_message,world.time,libtcod.yellow)
+
+                        messages.append(message)
+                if member.combat_status.knocked_down == True:
+                        new_message = member.fname + ' ' + member.lname + " is on the ground."
+                        message = Message(new_message,world.time,libtcod.dark_grey)
+
+                        messages.append(message)
+	#check cold
+                if member.health.body_temp <= 10 and member.health.body_temp >= -25:
+                	new_message = member.fname + ' ' + member.lname + " is cold."
+			message = Message(new_message,world.time,libtcod.blue)
+                        messages.append(message)
+                elif member.health.body_temp <= -26:
+                        new_message = member.fname + ' ' + member.lname + " is freezing!"
+			message = Message(new_message,world.time,libtcod.light_blue)
+                        messages.append(message)
+                elif member.health.body_temp >= 70 and member.health.body_temp <= 99:
+                        new_message = member.fname + ' ' + member.lname + " is hot"
+			message = Message(new_message,world.time,libtcod.yellow)
+                        messages.append(message)
+                elif member.health.body_temp >= 100:
+                	new_message = member.fname + ' ' + member.lname + " is very hot!"
+			message = Message(new_message,world.time,libtcod.orange)
+                   	messages.append(message)
+	        #check hungry
+	        def eat(target,inventory):
+	        	finished = False
+	                while finished == False:
+       		         	for item in inventory:
+        	                	if item.item_type == 'food' and target.hunger >= 30:
+        	                        	target.hunger -= item.nutrition
+        	                        	if target.hunger <= 0:
+        	                                	target.hunger = 0
+        	                                inventory.remove(item)
+        	                                new_message = member.fname + ' ' + member.lname + " ate " + item.name + "."
+						message = Message(new_message,world.time,libtcod.white)
+        	                                messages.append(message)
+        	                                finished = True
+        	                finished = True
+	        if member.hunger >= 30 and member.hunger <= 49:
+	        	new_message = member.fname + ' ' + member.lname + " is hungry."
+			message = Message(new_message,world.time,libtcod.white)
+	                messages.append(message)
+	                eat(member,player_party.inventory)
+	        elif member.hunger >= 60:
+		        new_message = member.fname + ' ' + member.lname + " very hungry."
+			message = Message(new_message,world.time,libtcod.orange)
+	                messages.append(message)
+	        	eat(member,player_party.inventory)
+	        #check thirst
+	        def drink(target,inventory):
+	                finished = False
+	                while finished == False:
+	        	        for item in inventory:
+	                	        if item.item_type == 'drink' and target.thirst >= 50:
+	                        	        target.thirst -= item.nutrition
+	                                        if target.thirst <= 0:
+	                                	        target.thirst = 0
+	                                        inventory.remove(item)
+	                                        new_message = member.fname + ' ' + member.lname + " drank " + item.name + "."
+						message = Message(new_message,world.time,libtcod.white)
+                                        finished = True
+                if member.thirst >= 50 and member.thirst <= 74:
+                	new_message = member.fname + ' ' + member.lname + " is thirsty."
+			message = Message(new_message,world.time,libtcod.white)
+                        messages.append(message)
+                        drink(member,player_party.inventory)
+
+                elif member.thirst >= 75:
+                        new_message = member.fname + ' ' + member.lname + " is very thirsty."
+			message = Message(new_message,world.time,libtcod.orange)
+                        messages.append(message)
+                        drink(member,player_party.inventory)
+        	#check if anyone unhappy
+        	if member.mind.happiness <= 20 and member.mind.happiness >= -19:
+        		new_message = member.fname + ' ' + member.lname + " is unhappy."
+			message = Message(new_message,world.time,libtcod.white)
+        	        messages.append(message)
+        	elif member.mind.happiness <= -20:
+        	        new_message = member.fname + ' ' + member.lname + " is miserable."
+			message = Message(new_message,world.time,libtcod.orange)
+        	        messages.append(message)
+        	#check if anyone bleeding
+        	if member.health.bleeding_rate >= 1 and member.health.bleeding_rate <= 4:
+		        new_message = member.fname + ' ' + member.lname + " is bleeding."
+			message = Message(new_message,world.time,libtcod.red)
+        	        messages.append(message)
+        	elif member.health.bleeding_rate >= 5:
+                	new_message = member.fname + ' ' + member.lname + " is bleeding badly."
+			message = Message(new_message,world.time,libtcod.dark_red)
+                	messages.append(message)
+                #check if anyone in pain
+
+                if member.health.current_pain >= 5 and member.health.current_pain <= 20:
+                	new_message = member.fname + ' ' + member.lname + " is in pain."
+			message = Message(new_message,world.time,libtcod.white)
+                        messages.append(message)
+                elif member.health.current_pain >= 21:
+                        new_message = member.fname + ' ' + member.lname + " is in horrible pain."
+			message = Message(new_message,world.time,libtcod.yellow)
+                        messages.append(message)
+                #check if anyone stressed
+                if member.mind.stress >= 30 and member.mind.stress <= 59:
+                     	new_message = member.fname + ' ' + member.lname + " is stressed."
+			message = Message(new_message,world.time,libtcod.white)
+                        messages.append(message)
+                elif member.mind.stress >= 60:
+                        new_message = member.fname + ' ' + member.lname + " is very stressed."
+			message = Message(new_message,world.time,libtcod.yellow)
+                        messages.append(message)
+                #check if anyone stressed
+                if member.mind.sanity <= 20 and member.mind.sanity >= 0:
+                        new_message = member.fname + ' ' + member.lname + " is acing strangely."
+			message = Message(new_message,world.time,libtcod.white)
+                        messages.append(message)
+                elif member.mind.sanity <= -1:
+                        new_message = member.fname + ' ' + member.lname + " is acting crazy."
+			message = Message(new_message,world.time,libtcod.pink)
+                        messages.append(message)
+
+
+
+	#finally return all the messages
+	return messages
+
+def make_camp(party,world,party_actions,campsite,my_location):
 	libtcod.console_clear(0)
 	finished_camp = False
 	while finished_camp == False:
-		libtcod.console_print(0,1,1, 'You find a campsite.')
-                world.time.correct(party_actions)
-                hour = world.time.get_hour()
-                month = world.time.get_month()
-                am_pm = world.time.get_am_or_pm()
-                libtcod.console_print(0,40,1, month + " " + str(world.time.day) + ", " + str(world.time.year))
-                if world.time.minute <= 9:
-                        minute = '0' + str(world.time.minute)
-                else:
-                        minute = world.time.minute
-                libtcod.console_print(0,40,2, str(hour) + ':' + str(minute) + ' ' + am_pm)
+		made_choice = False
+	        libtcod.console_print(0,1,1, 'CAMPSITE:')
+		if campsite.has_fire == False:
+		        libtcod.console_print(0,1,2, 'Campsite has no fire.')
+                elif campsite.has_fire == True:
+                        libtcod.console_print(0,1,2, 'Campsite has fire.')
+
+		if len(campsite.tents_set_up) == 0:
+			libtcod.console_print(0,1,3, 'No tents set up.')
+		elif len(campsite.tents_set_up) >= 1:
+                        libtcod.console_print(0,1,3, str(len(campsite.tents_set_up)) + ' tents set up.')
+
+		libtcod.console_print(0,1,6, 'OPTIONS:')
+                libtcod.console_print(0,1,7, '[a] set up tent')
+                libtcod.console_print(0,1,8, '[b] build a fire')
+
+                libtcod.console_print(0,1,10, '[ESC]')
+		libtcod.console_flush()
+		while made_choice == False:
+			key = libtcod.console_check_for_keypress()
+			if key.vk == libtcod.KEY_ESCAPE:
+				libtcod.console_clear(0)
+				return campsite
+                        elif key.c == ord('a'):
+                                set_up_tents(party,world,party_actions,campsite,my_location)
+                                libtcod.console_clear(0)
+                                made_choice = True
+
+			elif key.c == ord('b'):
+				build_fire(party,world,party_actions,campsite,my_location)
+				libtcod.console_clear(0)
+				made_choice = True
 
 
 def travel_stop(party,world,party_actions):
 	libtcod.console_clear(0)
 	my_location = gen_wasteland(0,0)
+	has_fire = False
+	tents_set_up = []
+	if stream in my_location.items:
+		has_water = True
+	else:
+		has_water = False
+	campsite = Campsite(my_location,has_fire,tents_set_up,has_water)
 	print my_location.name
 	finished_stop  = False
 	while finished_stop == False:
@@ -444,9 +708,87 @@ def travel_stop(party,world,party_actions):
 
                 libtcod.console_print(0,40,1, month + " " + str(world.time.day) + ", " + str(world.time.year))
 
+		if world.weather.temperature >= 1 and world.weather.temperature <= 19:
+                        libtcod.console_set_default_foreground(0, libtcod.yellow)
+                elif world.weather.temperature >= 20:
+                        libtcod.console_set_default_foreground(0, libtcod.orange)
+                elif world.weather.temperature <= 0 and world.weather.temperature >= -19:
+                        libtcod.console_set_default_foreground(0, libtcod.blue)
+                elif world.weather.temperature <= -20:
+                        libtcod.console_set_default_foreground(0, libtcod.dark_blue)
+                libtcod.console_print(0,40,4, str(world.weather.temperature) + "C")
+
+                libtcod.console_set_default_foreground(0, libtcod.white)
+                if world.weather.clouds == 'Sunny':
+                        libtcod.console_set_default_foreground(0, libtcod.yellow)
+                elif world.weather.clouds == 'Overcast':
+                        libtcod.console_set_default_foreground(0, libtcod.gray)
+                elif world.weather.clouds == 'Dark clouds':
+                        libtcod.console_set_default_foreground(0, libtcod.dark_gray)
+                elif world.weather.clouds == 'Light rain':
+                        libtcod.console_set_default_foreground(0, libtcod.light_blue)
+                elif world.weather.clouds == 'Heavy rain' or world.weather.clouds == "Heavy freezing rain":
+                        libtcod.console_set_default_foreground(0, libtcod.dark_blue)
+                elif world.weather.clouds == 'Light snow' or world.weather.clouds == "Light freezing rain" or world.weather.clouds == "Heavy snow":
+                        libtcod.console_set_default_foreground(0, libtcod.blue)
+
+                libtcod.console_print(0,40,3, str(world.weather.clouds))
+                if world.weather.precipitation == True:
+                        libtcod.console_print(0,40,5, str(world.weather.precipitation_type))
+                libtcod.console_set_default_foreground(0, libtcod.white)
+		print my_location.items
+                libtcod.console_print(0,1,7, "THINGS HERE:")
+		item_count = 1
+		for item in my_location.items:
+			if item == None:
+				my_location.items.remove(item)
+
+			else:
+	                        if item.name == "Fire":
+        	                        libtcod.console_set_default_foreground(0, libtcod.orange)
+        	                elif item.item_type == "tent":
+        	                        libtcod.console_set_default_foreground(0, libtcod.light_green)
+
+				if item_count <= 4:
+					libtcod.console_print(0,1,item_count+8, item.name)
+				elif item_count >= 5 and item_count <= 8:
+                                        libtcod.console_print(0,15,item_count+4, item.name)
+                                elif item_count >= 9 and item_count <= 12:
+                                        libtcod.console_print(0,30,item_count, item.name)
+                                elif item_count >= 13 and item_count <= 16:
+                                        libtcod.console_print(0,45,item_count-4, item.name)
+                                elif item_count >= 17 and item_count <= 20:
+                                        libtcod.console_print(0,60,item_count-8, item.name)
+                                elif item_count >= 21 and item_count <= 25:
+                                        libtcod.console_print(0,75,item_count-12, item.name)
+                        libtcod.console_set_default_foreground(0, libtcod.white)
 
 
-		libtcod.console_print(0,1,10, '[c]ontinue, [m]ake camp, [p]arty, [r]est')
+			item_count += 1
+
+		libtcod.console_print(0,1,14, "MESSAGES:")
+		messages = travel_msg(party,world,party_actions,world.time.hour)
+                if len(messages) >= 1:
+	                msg_count = 1
+                        for message in messages:
+        	                libtcod.console_set_default_foreground(0, libtcod.white)
+                                if msg_count <= 10:
+                	                libtcod.console_set_default_foreground(0, message.color)
+                                        libtcod.console_print(0,1,14+msg_count, message.message)
+                                        libtcod.console_set_default_foreground(0, libtcod.white)
+
+        	                elif msg_count >= 11 and msg_count <= 20:
+        	                        libtcod.console_set_default_foreground(0, message.color)
+                	                libtcod.console_print(0,35,4+msg_count, message.message)
+                                        libtcod.console_set_default_foreground(0, libtcod.white)
+
+                	        elif msg_count >= 21:
+	        	                libtcod.console_set_default_foreground(0, message.white)
+                	                libtcod.console_print(0,35,22, "[m]ore")
+                                        libtcod.console_set_default_foreground(0, libtcod.white)
+                                msg_count += 1
+
+		libtcod.console_print(0,1,50, '[c]ontinue, [s]et up camp, [p]arty, [r]est')
 		libtcod.console_flush()
 		key = libtcod.console_check_for_keypress()
 		if key.c == ord('c'):
@@ -459,14 +801,25 @@ def travel_stop(party,world,party_actions):
 			show_party(party,world,party_actions)
 			libtcod.console_clear(0)
 			finished_stop = False
+		elif key.c == ord('s'):
+			campsite = make_camp(party,world,party_actions,campsite,my_location)
+			libtcod.console_clear(0)
+			finished_stop = False
+                elif key.c == ord('m'):
+                        show_travel_msg(messages)
+                        libtcod.console_clear(0)
+                        finished_stop = False
+
 def travel(party,world,start,my_area,party_actions):
 	starting_area = my_area
 	start_location = find_location(party,world)
+	messages = []
+	first_time = True
 	def show_locations():
 		#libtcod.console_clear(0)
 	        libtcod.console_print(0,1,1, my_location.area)
                 libtcod.console_print(0,43,1, '[ESC]')
-                libtcod.console_print(0,1,3, '[/] city map.')
+                libtcod.console_print(0,1,3, '[/] world map.')
 
 		locations = []
 		for location in my_area.locations:
@@ -714,10 +1067,11 @@ def travel(party,world,start,my_area,party_actions):
 		area_x_distance = 0
 		area_y_distance = 0
 	#
+	speed = 1.0
 	print 'area distance:'
 	print str(area_distance)
 	if area_distance >= 1:
-		distance = map_distance + (area_distance * 32)
+		distance = map_distance + (area_distance - 1 * 32)
 	else:
 		distance = map_distance
 	print distance
@@ -726,26 +1080,58 @@ def travel(party,world,start,my_area,party_actions):
 	new_location_y = 0
         directions = ['x','y']
 
+	my_x = starting_area.x
+	my_y = starting_area.y
+
 	if action == True:
 		amount_travelled = 0
+		#speed = 1.0
 		x_travelled = 0
 		y_travelled = 0
 		areas_travelled = 0
+
+		#travel east
+		possible_directions = []
+		if starting_area.x >= new_area.x:
+			possible_directions.append("east")
+                elif starting_area.x <= new_area.x - 1:
+                        possible_directions.append("west")
+
+                if starting_area.y >= new_area.y:
+                        possible_directions.append("south")
+                elif starting_area.y <= new_area.y - 1:
+                        possible_directions.append("north")
+
+		#travel west
+
 		while amount_travelled <= distance:
 			#print 'b'
                         #which direction to travel
         	        #find_direction = False
                         #while find_direction == False:
-                	 #       directions = ['x','y']
-                         #       direction = random.choice(directions)
-                         #       if direction == 'x':
-                         #	       if x_travelled <= x_distance:
-                          #      	       x_travelled += 1
-                           #                    find_direction = True
-                            #    elif direction == 'y':
-                             #   	if y_travelled <= y_distance:
-                              #          	y_travelled += 1
-                               #                 find_direction = True
+			#	if len(possible_directions) >= 1:
+                        #        	direction = random.choice(possible_directions)
+			#	elif len(possible_directions) <= 0:
+			#		direction = None
+                        #        if direction == 'east':
+                        # 	       if x_travelled <= x_distance:
+                         #       	       x_travelled += 1
+                          #                     find_direction = True
+                           #     elif direction == 'west':
+                            #           if x_travelled >= x_distance - 1:
+                             #                  x_travelled += 1
+                              #                 find_direction = True
+
+                               # elif direction == 'south':
+                                #	if y_travelled <= y_distance:
+                                 #       	y_travelled += 1
+                                  #              find_direction = True
+                                #elif direction == 'north':
+                                 #       if y_travelled >= y_distance - 1:
+                                  #              y_travelled += 1
+                                   #             find_direction = True
+				#else:
+				#	find_direction = True
 
 				
 			#check who cant walk
@@ -797,9 +1183,11 @@ def travel(party,world,start,my_area,party_actions):
 							if key.c == ord(option[0]):
 								drag = [option[1],member]
 								dragging.append(drag)
+								first_time = True #restart messages
 								choice_made = True
 							elif key.c == ord('s'):
 								travel_stop(party,world,party_actions)
+								first_time = True
 								choice_made = True
 			elif len(cant_walk) >= 1 and len(can_drag) == 0:
                 	        libtcod.console_clear(0)
@@ -866,8 +1254,11 @@ def travel(party,world,start,my_area,party_actions):
 							for room in location.rooms:
 								if room.alarm_level >= 1:
 									room.alarm_level -= 1
+                        messages = travel_msg(party,world,party_actions,world.time.hour)
+
 			#handle hour changes
 			if world.time.hour >= hour + 1 or world.time.hour == 0:
+				#messages = travel_msg(party,world,party_actions,world.time.hour)
 				for member in party.members:
 					member.handle_mind()
 					member.hunger += random.randint(2,3)
@@ -890,8 +1281,14 @@ def travel(party,world,start,my_area,party_actions):
 					if len(dragging) >= 1:
 						for member in dragging:
 							member[1].health.current_stamina -= 1
-			world.weather = get_weather(world.time)
-			party.handle_cold(world)
+				world.weather = get_weather(world.time)
+				party.handle_cold(world,my_location)
+			elif first_time == True:
+				messages = travel_msg(party,world,party_actions,world.time.hour)
+				first_time = False
+			else:
+                                messages = travel_msg(party,world,party_actions,world.time.hour)
+				first_time = False
 		#world.time.correct()
 			my_location = find_location(party,world)
 			#people
@@ -927,11 +1324,100 @@ def travel(party,world,start,my_area,party_actions):
 			libtcod.console_clear(0)
 			libtcod.console_print(0,1,1, 'Travelling.')
                         libtcod.console_print(0,1,2, str(amount_travelled) + " / " + str(distance))
-                        libtcod.console_print(0,1,4, '[s]top')
+	                world.time.correct(party_actions)
+	                hour = world.time.get_hour()
+	                month = world.time.get_month()
+       		        am_pm = world.time.get_am_or_pm()
+                	libtcod.console_print(0,40,1, month + " " + str(world.time.day) + ", " + str(world.time.year))
+                	if world.time.minute <= 9:
+                	        minute = '0' + str(world.time.minute)
+                	else:
+                	        minute = world.time.minute
+                	libtcod.console_print(0,40,2, str(hour) + ':' + str(minute) + ' ' + am_pm)
 
+                	libtcod.console_print(0,40,1, month + " " + str(world.time.day) + ", " + str(world.time.year))
+			if amount_travelled <= map_distance:
+	                        libtcod.console_print(0,1,3, starting_area.name)
+			elif amount_travelled >= map_distance + 1 and amount_travelled <= distance - 32:
+                                libtcod.console_print(0,1,3, "Wasteland")
+                        elif amount_travelled >= map_distance + 1 and amount_travelled >= distance - 32 + 1:
+                                libtcod.console_print(0,1,3, new_area.name)
+			if world.weather.temperature >= 1 and world.weather.temperature <= 19:
+                	        libtcod.console_set_default_foreground(0, libtcod.yellow)
+                	elif world.weather.temperature >= 20:
+                	        libtcod.console_set_default_foreground(0, libtcod.orange)
+                	elif world.weather.temperature <= 0 and world.weather.temperature >= -19:
+                	        libtcod.console_set_default_foreground(0, libtcod.blue)
+                	elif world.weather.temperature <= -20:
+                	        libtcod.console_set_default_foreground(0, libtcod.dark_blue)
+                	libtcod.console_print(0,40,4, str(world.weather.temperature) + "C")
+	                libtcod.console_set_default_foreground(0, libtcod.white)
+	                if world.weather.clouds == 'Sunny':
+	                        libtcod.console_set_default_foreground(0, libtcod.yellow)
+       			elif world.weather.clouds == 'Overcast':
+                        	libtcod.console_set_default_foreground(0, libtcod.gray)
+                	elif world.weather.clouds == 'Dark clouds':
+                	        libtcod.console_set_default_foreground(0, libtcod.dark_gray)
+                	elif world.weather.clouds == 'Light rain':
+                	        libtcod.console_set_default_foreground(0, libtcod.light_blue)
+                	elif world.weather.clouds == 'Heavy rain' or world.weather.clouds == "Heavy freezing rain":
+                	        libtcod.console_set_default_foreground(0, libtcod.dark_blue)
+                	elif world.weather.clouds == 'Light snow' or world.weather.clouds == "Light freezing rain" or world.weather.clouds == "Heavy snow":
+                	        libtcod.console_set_default_foreground(0, libtcod.blue)
+
+                	libtcod.console_print(0,40,3, str(world.weather.clouds))
+                	if world.weather.precipitation == True:
+                	        libtcod.console_print(0,40,5, str(world.weather.precipitation_type))
+			#messages
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+
+			libtcod.console_print(0,1,9, "MESSAGES:")
+			if len(messages) >= 1:
+				msg_count = 1
+				for message in messages:
+					libtcod.console_set_default_foreground(0, libtcod.white)
+					if msg_count <= 10:
+						libtcod.console_set_default_foreground(0, message.color)
+			                        libtcod.console_print(0,1,10+msg_count, message.message)
+					elif msg_count >= 11 and msg_count <= 20:
+						libtcod.console_set_default_foreground(0, message.color)
+                       	                        libtcod.console_print(0,35,0+msg_count, message.message)
+                                        elif msg_count >= 21:
+                                                libtcod.console_print(0,35,22, "[m]ore")
+					libtcod.console_set_default_foreground(0, libtcod.white)
+					msg_count += 1
+
+                	libtcod.console_set_default_foreground(0, libtcod.white)
+                        libtcod.console_print(0,1,50, '[s]top here')
+                        libtcod.console_print(0,1,51, '# keys adjust speed')
 			key = libtcod.console_check_for_keypress()
 			if key.c == ord('s'):
 				travel_stop(party,world,party_actions)
+			elif key.c == ord('1'):
+				speed = 1.0
+       	                elif key.c == ord('2'):
+               	                speed = 0.8
+               	        elif key.c == ord('3'):
+               	                speed = 0.4
+               	        elif key.c == ord('4'):
+               	                speed = 0.2
+               	        elif key.c == ord('5'):
+               	                speed = 0.1
+               	        elif key.c == ord('6'):
+               	                speed = 0.08
+               	        elif key.c == ord('7'):
+               	                speed = 0.06
+               	        elif key.c == ord('8'):
+               	                speed = 0.04
+               	        elif key.c == ord('9'):
+               	                speed = 0.02
+               	        elif key.c == ord('0'):
+               	                speed = 0.008
+	                elif key.c == ord('m'):
+        	                show_travel_msg(messages)
+        	                libtcod.console_clear(0)
+        	                finished_stop = False
+
 
 			libtcod.console_flush()
 			#save_game()
@@ -941,6 +1427,7 @@ def travel(party,world,start,my_area,party_actions):
 			print amount_travelled
 			print distance
 			amount_travelled += 1
+			time.sleep(speed)
 		turn_finished = True
 		#print my_area.name
 		print my_location.name
@@ -978,24 +1465,43 @@ def turn(party,world,turn_finished,location,party_actions):
                 if item_count <= 10:
 			if item.name == "Blood":
 				libtcod.console_set_default_foreground(0, libtcod.dark_red)
+                        if item.name == "Radiator" or item.name == "Barrel fire" or item.name == "Space heater":
+                                libtcod.console_set_default_foreground(0, libtcod.dark_orange)
+
 			print_line = item_count + line_count
                         libtcod.console_print(0,1,print_line, item.name)
                         if item.name == "Blood":
                                 libtcod.console_set_default_foreground(0, libtcod.dark_white)
+                        if item.name == "Radiator" or item.name == "Barrel fire" or item.name == "Space heater":
+                                libtcod.console_set_default_foreground(0, libtcod.dark_white)
+
 		elif item_count >= 11 and item_count <= 20:
                         if item.name == "Blood":
                                 libtcod.console_set_default_foreground(0, libtcod.dark_red)
+                        if item.name == "Radiator" or item.name == "Barrel fire" or item.name == "Space heater":
+                                libtcod.console_set_default_foreground(0, libtcod.dark_orange)
+
+
                         print_line = item_count + line_count - 10
                         libtcod.console_print(0,20,print_line, item.name)
                         if item.name == "Blood":
                                 libtcod.console_set_default_foreground(0, libtcod.dark_white)
+                        if item.name == "Radiator" or item.name == "Barrel fire" or item.name == "Space heater":
+                                libtcod.console_set_default_foreground(0, libtcod.dark_white)
+
                 elif item_count >= 21 and item_count <= 32:
                         if item.name == "Blood":
                                 libtcod.console_set_default_foreground(0, libtcod.dark_red)
+                        if item.name == "Radiator" or item.name == "Barrel fire" or item.name == "Space heater":
+                                libtcod.console_set_default_foreground(0, libtcod.dark_orange)
+
                         print_line = item_count + line_count - 20
                         libtcod.console_print(0,40,print_line, item.name)
                         if item.name == "Blood":
                                 libtcod.console_set_default_foreground(0, libtcod.dark_white)
+                        if item.name == "Radiator" or item.name == "Barrel fire" or item.name == "Space heater":
+                                libtcod.console_set_default_foreground(0, libtcod.dark_white)
+
                 item_count += 1
 
         libtcod.console_flush()
@@ -3584,7 +4090,7 @@ def rest(party,world,hours,guard):
 		world= handle_jobs(party,world)
 		handle_missions(party,world,party_actions)
 		#handle cold
-		party.handle_cold(world)
+		party.handle_cold(world,my_location)
 		#sleeping
 		messages = []
 		for member in party.members:
@@ -4614,7 +5120,7 @@ def show_character(target,world,corpse,my_location,player_party,creation):
                         libtcod.console_set_default_foreground(0, libtcod.dark_brown)
                         libtcod.console_print(0, 44, 1, 'd')
                         libtcod.console_set_default_foreground(0, libtcod.white)
-                if target.headwear.wet >= 1:
+                if target.headwear.wet >= 5:
                         libtcod.console_set_default_foreground(0, libtcod.dark_blue)
                         libtcod.console_print(0, 45, 1, 'w')
                         libtcod.console_set_default_foreground(0, libtcod.white)
@@ -4639,7 +5145,7 @@ def show_character(target,world,corpse,my_location,player_party,creation):
                         libtcod.console_set_default_foreground(0, libtcod.dark_brown)
                         libtcod.console_print(0, 44, 2, 'd')
                         libtcod.console_set_default_foreground(0, libtcod.white)
-                if target.outfit.wet >= 1:
+                if target.outfit.wet >= 5:
                         libtcod.console_set_default_foreground(0, libtcod.dark_blue)
                         libtcod.console_print(0, 45, 2, 'w')
                         libtcod.console_set_default_foreground(0, libtcod.white)
@@ -4657,7 +5163,7 @@ def show_character(target,world,corpse,my_location,player_party,creation):
                         libtcod.console_set_default_foreground(0, libtcod.dark_brown)
                         libtcod.console_print(0, 44, 3, 'd')
                         libtcod.console_set_default_foreground(0, libtcod.white)
-                if target.legwear.wet >= 1:
+                if target.legwear.wet >= 5:
                         libtcod.console_set_default_foreground(0, libtcod.dark_blue)
                         libtcod.console_print(0, 45, 3, 'w')
                         libtcod.console_set_default_foreground(0, libtcod.white)
@@ -4679,7 +5185,7 @@ def show_character(target,world,corpse,my_location,player_party,creation):
                         libtcod.console_set_default_foreground(0, libtcod.dark_brown)
                         libtcod.console_print(0, 44, 4, 'd')
                         libtcod.console_set_default_foreground(0, libtcod.white)
-                if target.footwear.wet >= 1:
+                if target.footwear.wet >= 5:
                         libtcod.console_set_default_foreground(0, libtcod.dark_blue)
                         libtcod.console_print(0, 45, 4, 'w')
                         libtcod.console_set_default_foreground(0, libtcod.white)
@@ -4702,7 +5208,7 @@ def show_character(target,world,corpse,my_location,player_party,creation):
                         libtcod.console_set_default_foreground(0, libtcod.dark_brown)
                         libtcod.console_print(0, 44, 5, 'd')
                         libtcod.console_set_default_foreground(0, libtcod.white)
-                if target.outerwear.wet >= 1:
+                if target.outerwear.wet >= 5:
                         libtcod.console_set_default_foreground(0, libtcod.dark_blue)
                         libtcod.console_print(0, 45, 5, 'w')
                         libtcod.console_set_default_foreground(0, libtcod.white)
@@ -4727,7 +5233,7 @@ def show_character(target,world,corpse,my_location,player_party,creation):
                         libtcod.console_set_default_foreground(0, libtcod.dark_brown)
                         libtcod.console_print(0, 69, 2, 'd')
                         libtcod.console_set_default_foreground(0, libtcod.white)
-                if target.facewear.wet >= 1:
+                if target.facewear.wet >= 5:
                         libtcod.console_set_default_foreground(0, libtcod.dark_blue)
                         libtcod.console_print(0, 70, 2, 'w')
                         libtcod.console_set_default_foreground(0, libtcod.white)
@@ -4751,7 +5257,7 @@ def show_character(target,world,corpse,my_location,player_party,creation):
                         libtcod.console_set_default_foreground(0, libtcod.dark_brown)
                         libtcod.console_print(0, 69, 3, 'd')
                         libtcod.console_set_default_foreground(0, libtcod.white)
-                if target.eyewear.wet >= 1:
+                if target.eyewear.wet >= 5:
                         libtcod.console_set_default_foreground(0, libtcod.dark_blue)
                         libtcod.console_print(0, 70, 3, 'w')
                         libtcod.console_set_default_foreground(0, libtcod.white)
@@ -4774,7 +5280,7 @@ def show_character(target,world,corpse,my_location,player_party,creation):
                         libtcod.console_set_default_foreground(0, libtcod.dark_brown)
                         libtcod.console_print(0, 69, 4, 'd')
                         libtcod.console_set_default_foreground(0, libtcod.white)
-                if target.handwear.wet >= 1:
+                if target.handwear.wet >= 5:
                         libtcod.console_set_default_foreground(0, libtcod.dark_blue)
                         libtcod.console_print(0, 70, 4, 'w')
                         libtcod.console_set_default_foreground(0, libtcod.white)
@@ -4797,7 +5303,7 @@ def show_character(target,world,corpse,my_location,player_party,creation):
                         libtcod.console_set_default_foreground(0, libtcod.dark_brown)
                         libtcod.console_print(0, 69, 5, 'd')
                         libtcod.console_set_default_foreground(0, libtcod.white)
-                if target.armor.wet >= 1:
+                if target.armor.wet >= 5:
                         libtcod.console_set_default_foreground(0, libtcod.dark_blue)
                         libtcod.console_print(0, 70, 5, 'w')
                         libtcod.console_set_default_foreground(0, libtcod.white)
@@ -5036,8 +5542,9 @@ def show_character(target,world,corpse,my_location,player_party,creation):
         libtcod.console_print(0,40,37, "Shotgun:")
         libtcod.console_print(0,40,38, "Stealth:")
         libtcod.console_print(0,40,39, "Streetwise:")
-        libtcod.console_print(0,40,40, "Throw:")
-        libtcod.console_print(0,40,41, "Torture:")
+        libtcod.console_print(0,40,40, "Survival:")
+        libtcod.console_print(0,40,41, "Throw:")
+        libtcod.console_print(0,40,42, "Torture:")
 
 
         libtcod.console_print(0,15,35, str(target.skills.blade))
@@ -5065,8 +5572,9 @@ def show_character(target,world,corpse,my_location,player_party,creation):
         libtcod.console_print(0,55,37, str(target.skills.shotgun))
         libtcod.console_print(0,55,38, str(target.skills.stealth))
         libtcod.console_print(0,55,39,str(target.skills.streetwise))
-        libtcod.console_print(0,55,40, str(target.skills.throw))
-        libtcod.console_print(0,55,41, str(target.skills.torture))
+        libtcod.console_print(0,55,40,str(target.skills.survival))
+        libtcod.console_print(0,55,41, str(target.skills.throw))
+        libtcod.console_print(0,55,42, str(target.skills.torture))
 
 	if type(my_location) is str:
         	libtcod.console_print(0,40,13, "Location:" + my_location.name)
@@ -5162,7 +5670,7 @@ def show_outfits(target,world):
 
                         count += 1
                 for item in target.inventory:
-                        if item.item_type == 'outfit' or item.item_type == 'headwear' or item.item_type == 'facewear' or item.item_type == 'eyewear' or item.item_type == 'handwear' or item.item_type == 'legwear' or item.item_type == 'footwear' or item.item_type == 'outerwear' or item.item_type == 'armor':
+                        if item.item_type == 'outfit' or item.item_type == 'headwear' or item.item_type == 'facewear' or item.item_type == 'eyewear' or item.item_type == 'handwear' or item.item_type == 'legwear' or item.item_type == 'footwear' or item.item_type == 'outerwear' or item.item_type == 'armor' or item.item_type == 'tent':
                                 letter = num_to_letter(count)
                                 option = [letter, item]
                                 options_list2.append(option)
@@ -7970,7 +8478,7 @@ def loot(party,world,party_actions):
 			items_to_loot.append(item)
 		elif item.item_type == 'weapon' or item.item_type == 'outfit' or item.item_type == 'medical' or item.item_type == 'limb':
 			items_to_loot.append(item)
-		elif item.name != 'None' and item.item_type != 'container' and item.can_loot == True:
+		elif item.name != 'None' and item.item_type != 'container' or item.item_type == 'tent' and item.can_loot == True:
 			items_to_loot.append(item)
 		
 	libtcod.console_clear(0)
@@ -8427,6 +8935,8 @@ def party_turn(player_party,world,party_actions):
 	check_evicted(player_party,world)
 #describe the location
 	my_location = find_location(player_party,world)
+        #handle cold
+       	player_party.handle_morale(world,my_location)
 	#check reputation
 	for area in world.areas:
 		for organization in area.organizations:
@@ -8499,7 +9009,7 @@ def party_turn(player_party,world,party_actions):
 							
 						#elif member == member2:
 						#	my_location.regulars.remove(member2)
-		#make sure thee isn't a corpse and a living person
+		#make sure there isn't a corpse and a living person in the same place
 		for corpse in my_location.corpses:
 			for member in my_location.actors.members:
 				if corpse.fname == member.fname and corpse.lname == member.lname:
@@ -8618,13 +9128,21 @@ def party_turn(player_party,world,party_actions):
 			open = False
 		employees = []
 		if open == True:
-			libtcod.console_print(0,1,4, 'OPEN')
+                        libtcod.console_set_default_foreground(0, libtcod.green)
+			libtcod.console_print(0,12,4, 'OPEN')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+
+			my_location.is_indoors = True
 			employees = my_location.regulars
 			employees = set(employees)
 			employees = list(employees)
 			my_location.actors.members = employees
 		elif open == False and my_location.is_store == True:
-                        libtcod.console_print(0,1,4, 'CLOSED')
+                        libtcod.console_set_default_foreground(0, libtcod.dark_grey)
+                        libtcod.console_print(0,12,4, 'CLOSED')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+
+			my_location.is_indoors = False
 			my_location.actors.members = []
 	                #employees = []
         	        if my_location.is_store == True and open == False:
@@ -8634,6 +9152,23 @@ def party_turn(player_party,world,party_actions):
 						if member != None:
                                 			if member.profession == 'Security Guard':
                                 			        employees.append(member)
+		#are we indoors
+		if my_location.is_indoors == True:
+                        libtcod.console_set_default_foreground(0, libtcod.light_green)
+                        libtcod.console_print(0,1,4, 'INDOORS')
+                        libtcod.console_set_default_foreground(0, libtcod.white)
+
+			if open == True:
+				if heater not in my_location.items:
+					my_location.items.append(heater)
+			
+		else:
+			libtcod.console_set_default_foreground(0, libtcod.dark_grey)
+                        libtcod.console_print(0,1,4, 'OUTDOORS')
+			libtcod.console_set_default_foreground(0, libtcod.white)
+			if heater in my_location.items:
+				my_location.items.remove(heater)
+
 #		if my_location.has_broker == True and my_location.broker != None:
 #	                print 'broker is here'
  #                       print my_location.broker.fname + " " + my_location.broker.lname
@@ -8666,8 +9201,33 @@ def party_turn(player_party,world,party_actions):
 		am_pm = world.time.get_am_or_pm()
 		libtcod.console_print(0,40,1, month + " " + str(world.time.day) + ", " + str(world.time.year))
 		#libtcod.console_set_default_foreground(0, libtcod.grey)
-                libtcod.console_print(0,40,4, str(world.weather.temperature) + " degrees")
+		if world.weather.temperature >= 1 and world.weather.temperature <= 19:
+			libtcod.console_set_default_foreground(0, libtcod.yellow)
+		elif world.weather.temperature >= 20:
+			libtcod.console_set_default_foreground(0, libtcod.orange)
+		elif world.weather.temperature <= 0 and world.weather.temperature >= -19:
+			libtcod.console_set_default_foreground(0, libtcod.blue)
+		elif world.weather.temperature <= -20:
+			libtcod.console_set_default_foreground(0, libtcod.dark_blue)
+                libtcod.console_print(0,40,4, str(world.weather.temperature) + "C")
+		
+		libtcod.console_set_default_foreground(0, libtcod.white)
+		if world.weather.clouds == 'Sunny':
+			libtcod.console_set_default_foreground(0, libtcod.yellow)
+                elif world.weather.clouds == 'Overcast':
+                        libtcod.console_set_default_foreground(0, libtcod.gray)
+                elif world.weather.clouds == 'Dark clouds':
+                        libtcod.console_set_default_foreground(0, libtcod.dark_gray)
+                elif world.weather.clouds == 'Light rain':
+                        libtcod.console_set_default_foreground(0, libtcod.light_blue)
+                elif world.weather.clouds == 'Heavy rain' or world.weather.clouds == "Heavy freezing rain":
+                        libtcod.console_set_default_foreground(0, libtcod.dark_blue)
+                elif world.weather.clouds == 'Light snow' or world.weather.clouds == "Light freezing rain" or world.weather.clouds == "Heavy snow":
+                        libtcod.console_set_default_foreground(0, libtcod.blue)
+
                 libtcod.console_print(0,40,3, str(world.weather.clouds))
+                libtcod.console_set_default_foreground(0, libtcod.white)
+
 		if world.weather.precipitation == True:
 			libtcod.console_print(0,40,5, str(world.weather.precipitation_type))
 		libtcod.console_set_default_foreground(0, libtcod.white)
@@ -8679,17 +9239,16 @@ def party_turn(player_party,world,party_actions):
 		libtcod.console_print(0,40,2, str(hour) + ':' + str(minute) + ' ' + am_pm)
 		#libtcod.console_print(0,40,3, "$" + str(player_party.money))
 		#is this location owned
-		if my_location.owned_by != "No one":
-                        libtcod.console_print(0,1,5, "LOCATION OWNER:")
-			libtcod.console_print(0,18,5, my_location.owned_by)
+		if my_location.owned_by != "No one" and my_location.owned_by != None:
+	                #libtcod.console_set_default_foreground(0, libtcod.yellow)
+                        libtcod.console_print(0,1,5, "OWNER:")
+	                libtcod.console_set_default_foreground(0, libtcod.white)
+			libtcod.console_print(0,8,5, my_location.owned_by)
 		#rooms
 		if my_location.parent_location != None:
 			my_location.rooms = my_location.parent_location.rooms
 		if len(my_location.rooms) >= 1:
-			libtcod.console_print(0,40,4, str(len(my_location.rooms)) + ' rooms[*]')
-		#handle cold
-		for member in player_party.members:
-			member.check_clothing_warmth()
+			libtcod.console_print(0,40,7, str(len(my_location.rooms)) + ' rooms[*]')
 		#check if anyone died
 		messages = []
 		for member in player_party.members:
@@ -8703,11 +9262,17 @@ def party_turn(player_party,world,party_actions):
 				#member.outfit = naked
 				player_party.members.remove(member)
 			#check if cold
-			if member.health.body_temp <= -1 and member.health.body_temp >= -25:
+			if member.health.body_temp <= 10 and member.health.body_temp >= -25:
                                 message = member.fname + ' ' + member.lname + " is cold."
                                 messages.append(message)
                         elif member.health.body_temp <= -26:
                                 message = member.fname + ' ' + member.lname + " is freezing!"
+                                messages.append(message)
+                        elif member.health.body_temp >= 70 and member.health.body_temp <= 99:
+                                message = member.fname + ' ' + member.lname + " is hot"
+                                messages.append(message)
+                        elif member.health.body_temp >= 100:
+                                message = member.fname + ' ' + member.lname + " is very hot!"
                                 messages.append(message)
 
 
@@ -8861,9 +9426,12 @@ def party_turn(player_party,world,party_actions):
 				#line_count = item_count + line_count
 				if item.item_type == 'weapon' or item.item_type == 'outfit' or item.item_type == 'junk':
 					if item.name == "Blood":
-						libtcod.console_set_default_foreground(0, libtcod.dark_red)
+                                                libtcod.console_set_default_foreground(0, libtcod.dark_red)
+
+					if item.name == "Barrel fire" or item.name == "Space heater" or item.name == 'Radiator':
+						libtcod.console_set_default_foreground(0, libtcod.orange)
 					libtcod.console_print(0,1,line_count, item.name)
-                                        if item.name == "Blood":
+                                        if item.name == "Blood" or item.name == "Barrel fire" or item.name == "Space heater" or item.name == 'Radiator':
                                                 libtcod.console_set_default_foreground(0, libtcod.white)
 
 					item_count += 1
@@ -8896,9 +9464,12 @@ def party_turn(player_party,world,party_actions):
                                 if item.item_type == 'weapon' or item.item_type == 'outfit' or item.item_type == 'junk':
                                         if item.name == "Blood":
                                                 libtcod.console_set_default_foreground(0, libtcod.dark_red)
+                                        if item.name == "Barrel fire" or item.name == "Space heater" or item.name == 'Radiator':
+                                                libtcod.console_set_default_foreground(0, libtcod.orange)
                                         libtcod.console_print(0,20,line_count-6, item.name)
-                                        if item.name == "Blood":
-                                                libtcod.console_set_default_foreground(0, libtcod.white)
+                                        if item.name == "Blood" or item.name == "Barrel fire" or item.name == "Space heater" or item.name == 'Radiator':
+                                                libtcod.console_set_default_foreground(0,libtcod.white) 
+					
 
                                         item_count += 1
                                         line_count += 1
@@ -8929,10 +9500,12 @@ def party_turn(player_party,world,party_actions):
                                 if item.item_type == 'weapon' or item.item_type == 'outfit' or item.item_type == 'junk':
                                         if item.name == "Blood":
                                                 libtcod.console_set_default_foreground(0, libtcod.dark_red)
-
+                                        if item.name == "Barrel fire" or item.name == "Space heater" or item.name == 'Radiator':
+                                                libtcod.console_set_default_foreground(0, libtcod.orange)
                                         libtcod.console_print(0,40,line_count-12, item.name)
-                                        if item.name == "Blood":
+                                        if item.name == "Blood" or item.name == "Barrel fire" or item.name == "Space heater" or item.name == 'Radiator':
                                                 libtcod.console_set_default_foreground(0, libtcod.white)
+
 
                                         item_count += 1
                                         line_count += 1
@@ -8965,9 +9538,10 @@ def party_turn(player_party,world,party_actions):
                                 if item.item_type == 'weapon' or item.item_type == 'outfit' or item.item_type == 'junk':
                                         if item.name == "Blood":
                                                 libtcod.console_set_default_foreground(0, libtcod.dark_red)
-
+                                        if item.name == "Barrel fire" or item.name == "Space heater" or item.name == 'Radiator':
+                                                libtcod.console_set_default_foreground(0, libtcod.orange)
                                         libtcod.console_print(0,60,line_count-18, item.name)
-                                        if item.name == "Blood":
+                                        if item.name == "Blood" or item.name == "Barrel fire" or item.name == "Space heater" or item.name == 'Radiator':
                                                 libtcod.console_set_default_foreground(0, libtcod.white)
 
                                         item_count += 1
@@ -8996,7 +9570,7 @@ def party_turn(player_party,world,party_actions):
 			else:
 				possible_regulars = []
 			count = 1
-		line_count = 16
+		line_count = 18
 		if len(my_location.actors.members) >= 1 or len(my_location.corpses) >= 1:
 			libtcod.console_print(0,1,line_count, 'PEOPLE HERE:')
                         if my_location.broker != None and my_location.time_open <= world.time.hour:
@@ -9129,7 +9703,8 @@ def party_turn(player_party,world,party_actions):
 			handle_missions(player_party,world,party_actions)
 			if time <= world.time.hour - 1:
 	                	handle_footsoldiers(player_party,world,party_actions)
-				player_party.handle_cold(world)
+				#player_party.handle_cold(world,my_location)
+				player_party.handle_morale(world,my_location)
 			player_party.area = my_area.name
 			player_party.area_x = my_area.x
 			player_party.area_y = my_area.y
