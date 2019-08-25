@@ -783,7 +783,7 @@ def travel_stop(party,world,party_actions):
                                         libtcod.console_set_default_foreground(0, libtcod.white)
 
                 	        elif msg_count >= 21:
-	        	                libtcod.console_set_default_foreground(0, message.white)
+	        	                libtcod.console_set_default_foreground(0, message.color)
                 	                libtcod.console_print(0,35,22, "[m]ore")
                                         libtcod.console_set_default_foreground(0, libtcod.white)
                                 msg_count += 1
@@ -1071,7 +1071,7 @@ def travel(party,world,start,my_area,party_actions):
 	print 'area distance:'
 	print str(area_distance)
 	if area_distance >= 1:
-		distance = map_distance + (area_distance - 1 * 32)
+		distance = map_distance + ((area_distance - 1) * 32)
 	else:
 		distance = map_distance
 	print distance
@@ -1709,12 +1709,13 @@ def create_party(player):
 			drugs = []
 			traits = gen_player_traits(gender)
 			affiliation = 'Player Organization'
-			combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False)
+			combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,0,0,0,0,0,0)
 	                #mind
 	                happiness = random.randint(40,100)
 	                stress = random.randint(0,25)
 	                sanity = random.randint(40,100)
 	                horny = random.randint(0,35)
+			morale = random.randint(1,60)
 			#addictions
 	                nicotine_addiction = Addiction('Nicotine',0,0,4,[])
 
@@ -1735,7 +1736,7 @@ def create_party(player):
 
 	                addictions = Addictions(cocaine_addiction,opiates_addiction,speed_addiction,caffeine_addiction,nicotine_addiction)
 			trauma = 0
-	                mind = Mind(happiness,stress,sanity,horny,addictions,trauma)
+	                mind = Mind(happiness,stress,sanity,horny,addictions,trauma,morale)
 
 			hunger,thirst,sleep = 0,0,100
 
@@ -1781,6 +1782,7 @@ def gen_mind(traits):
         stress = random.randint(0,30)
         sanity = random.randint(40,100)
         horny = random.randint(0,40)
+	morale = random.randint(1,60)
         #addictions
         nicotine_addiction = Addiction('Nicotine',0,0,4,[])
 
@@ -1801,7 +1803,7 @@ def gen_mind(traits):
 
 	addictions = Addictions(cocaine_addiction,opiates_addiction,speed_addiction,caffeine_addiction,nicotine_addiction)
         trauma = 0
-        mind = Mind(happiness,stress,sanity,horny,addictions,trauma)
+        mind = Mind(happiness,stress,sanity,horny,addictions,trauma,morale)
         return mind
 	
 
@@ -1905,7 +1907,7 @@ def main_menu():
                         stats = Stats(strength, dexterity, intelligence, willpower, charisma, strength, dexterity, intelligence,willpower,charisma)
                         max_health = stats.strength * 10
                         health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100,50,5)
-                        combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False)
+                        combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,0,0,0,0,0,0)
 
 			player_stats, skills, weapon, outfit, age, hp, traits, money,fname,lname,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor = gen_character(profession,gender)
 			affiliation = "Player Organization"
@@ -1945,7 +1947,7 @@ def main_menu():
                				stats = Stats(strength, dexterity, intelligence, willpower, charisma, strength, dexterity, intelligence,willpower,charisma)
                				#max_health = stats.strength * 10
                				health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100,50,5)
-               				combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False)
+               				combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,0,0,0,0,0,0)
 					player_stats, skills, weapon, outfit, age, hp, traits, money,fname,lname,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor = gen_character(profession,gender)
 	                                #mind = gen_mind(traits)
 		                                #player = Char(gender, age, profession,affiliation,health, stats,[], skills,skills_xp,weapon,outfit,None,traits,drugs,fname,lname,money,
@@ -2027,6 +2029,7 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 	libtcod.console_clear(0)
 	line_count = 1
 	just_set_on_fire = False
+	got_concussion = False
 	target_chosen = False
 	possible_targets = []
 	target_name = target.fname + " " + target.lname
@@ -2041,20 +2044,29 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 	no_ammo = False
 	if attacker.weapon.needs_ammo == True and attacker.weapon.ammo != None:
 		#do we have ammo
-		if attacker.weapon.ammo.current_rounds >= 1:
-			attacker.weapon.ammo.current_rounds -= 1
-		elif attacker.weapon.current_rounds <= 0:
-			my_weapon = attacker.weapon
-			attacker.weapon = attacker.weapon.melee
-			no_ammo = True
-	elif attacker.weapon.needs_ammo == True and attacker.weapon.ammo == None:
-			my_weapon = attacker.weapon
-			attacker.weapon = attacker.weapon.melee
-			no_ammo = True
+		if attacker.weapon.ammo.current_rounds != None:
+			if attacker.weapon.ammo.current_rounds >= 1:
+				attacker.weapon.ammo.current_rounds -= 1
+			elif attacker.weapon.ammo.current_rounds <= 0:
+				my_weapon = attacker.weapon
+				party.inventory.append(my_weapon)
+				attacker.weapon = attacker.weapon.melee
+				no_ammo = True
+	elif attacker.weapon.needs_ammo != None:
+		if attacker.weapon.needs_ammo == True and attacker.weapon.ammo == None:
+				my_weapon = attacker.weapon
+				party.inventory.append(my_weapon)
+				attacker.weapon = attacker.weapon.melee
+				no_ammo = True
 	if target.combat_status.knocked_down == False:
 		libtcod.console_print(0,1,line_count,attacker.fname + " " + attacker.lname + " attacks " + target.fname + " " + target.lname + " with a " + attacker.weapon.name + ".")
         elif target.combat_status.knocked_down == True:
-                libtcod.console_print(0,1,line_count,attacker.fname + " " + attacker.lname + " attacks " + target.fname + " " + target.lname + " with a " + attacker.weapon.name + " while they are knocked down.")
+		if my_location.is_indoors == False:
+                	libtcod.console_print(0,1,line_count,attacker.fname + " " + attacker.lname + " attacks " + target.fname + " " + target.lname + " with a " + attacker.weapon.name + " while they are on the ground.")
+                elif my_location.is_indoors == True:
+                        libtcod.console_print(0,1,line_count,attacker.fname + " " + attacker.lname + " attacks " + target.fname + " " + target.lname + " with a " + attacker.weapon.name + " while they are on the floor.")
+
+
 	#print target.fname + " " + target.lname
 	line_count += 1
 	strength_bonus = 0
@@ -2073,7 +2085,7 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
                 attacker_skill = attacker.skills.blunt
                 strength_bonus = attacker.stats.strength / 5
 
-        elif attacker.weapon.weapon_type == "pistol":
+        elif attacker.weapon.weapon_type == "pistol" or attacker.weapon.name == "Bear mace":
                 attacker_skill = attacker.skills.pistol
         elif attacker.weapon.weapon_type == "shotgun":
                 attacker_skill = attacker.skills.shotgun
@@ -2104,6 +2116,19 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 	attack_roll = random.randint(1,10) + attacker_skill
 	#defend roll
 	defend_roll = random.randint(1,10) + target.skills.dodge
+	#check if attacker or target are blind
+	if attacker.combat_status.blind == True:
+		attack_roll = attack_roll / 5
+        if target.combat_status.blind == True:
+                defend_roll = attack_roll / 5
+	#check for concussions
+        if attacker.combat_status.concussion == True:
+                attack_roll = attack_roll / 2
+        if target.combat_status.concussion == True:
+                defend_roll = attack_roll / 2
+
+
+
 	defense = target.outfit.defense + target.headwear.defense + target.facewear.defense + target.handwear.defense + target.legwear.defense + target.footwear.defense + target.outerwear.defense + target.armor.defense
 	defend_roll = defend_roll / 2
 	defense_min = defense / 2
@@ -2117,7 +2142,18 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 		
 	#if attack hits
 	if defend_roll <=attack_roll and damage_taken <= 0:
-                libtcod.console_print(0,1,line_count,target.fname + " " + target.lname + " was unharmed.")
+		if attacker.weapon.name == "Bear mace":
+	                libtcod.console_print(0,1,line_count,target.fname + " " + target.lname + " was blinded!")
+                        target.combat_status.blind = True
+			target.combat_status.max_blind = random.randint(40,60)
+			found = False
+			for injury in target.injury:
+				if injury.name == "blind":
+					found = True
+			if found == False:
+				target.injuries.append(bear_maced)
+		else:
+                	libtcod.console_print(0,1,line_count,target.fname + " " + target.lname + " was unharmed.")
                 line_count += 1
 
 	elif defend_roll <= attack_roll and damage_taken >= 1:
@@ -2188,6 +2224,7 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 
 
 		elif attacker.weapon.name == "Baseball Bat" or attacker.weapon.name == "Crowbar" or attacker.weapon.name == "Shovel" and damage_taken >= 1:
+			#got_concussion = False
 			attack_types = ["bruise","fracture",'maimed']
 			attack_type = random.choice(attack_types)
 			if attack_type == "bruise":
@@ -2198,6 +2235,30 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 				injury = random.choice(manglings)
 			elif attack_type == 'maimed':
 				injury = random.choice(maimings)
+			if injury.location == "head" or injury.location == 'face':
+				if damage_taken >= 10 and damage_taken <= 19:
+					found = False
+					for injury in target.injuries:
+						if injury.name == "mild concussion":
+							found = True
+					if found == False:
+						target.injuries.append(mild_concussion)
+					target.combat_status.concussion = True
+					target.combat_status.max_concussion += 120
+                        	elif damage_taken >= 20:
+					found = False
+					for injury in target.injuries:
+						if injury.name == "minor concussion":
+							target.injuries.remove(injury)
+							target.injuries.append(severe_concussion)
+							found = True
+						elif injury.name == "severe concussion":
+							found = True
+					if found == False:
+						got_concussion = True
+                                		target.injuries.append(severe_concussion)
+					target.combat_status.concussion = True
+					target.combat_status.max_concussion += 240
 		elif attacker.weapon.name == "9mm Pistol":
 			injury = random.choice(shot_9mm)
 		elif attacker.weapon.name == "12g Shotgun":
@@ -2262,6 +2323,11 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
                         	injury = random.choice(minor_cuts)
 			elif damage_taken >= 31:
 				injury = random.choice(major_cuts)
+
+	        #if attacker.weapon.name == "Bear mace":
+	        #        my_location.items.append(attacker.weapon)
+        	#        attacker.weapon = punch
+
 		#damage clothing
 		if injury.location == 'head' or injury.location == 'neck' or injury.location == 'jaw' or injury.location == 'face':
 			if target.headwear != None:
@@ -2431,6 +2497,14 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 		if target.combat_status.on_fire == True:
                         libtcod.console_print(0,1,line_count,target.fname + " " + target.lname + " is on fire.")
                         line_count += 1
+                if target.combat_status.blind == True:
+                        libtcod.console_print(0,1,line_count,target.fname + " " + target.lname + " is blind.")
+                        line_count += 1
+                if got_concussion == True:
+                        libtcod.console_print(0,1,line_count,target.fname + " " + target.lname + " got a concussion.")
+                        line_count += 1
+
+
 		#is target dead?
 		
 		for injury in target.injuries:
@@ -2524,7 +2598,9 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
                 	libtcod.console_print(0,1,line_count,attacker.fname + " " + attacker.lname + "'s dodge skill is now "+ str(target.skills.dodge) + ".")
 			line_count += 1
 
-
+        if attacker.weapon.name == "Bear mace":
+                my_location.items.append(attacker.weapon)
+                attacker.weapon = punch
 	line_count += 2	
 	libtcod.console_print(0,1,line_count,"[c]ontinue]")
 	libtcod.console_flush()	
@@ -2539,7 +2615,7 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 	return move_finished, attack_finished
 
 
-def player_battle_attack(attacker,player,enemy,controller,my_location,world,show_fight,party_actions):
+def player_battle_attack(attacker,player,enemy,controller,my_location,world,show_fight,party_actions,target):
 	#move_finished, attack_finished = False, False
 	libtcod.console_clear(0)
 	#if len(player.members) == 0 or len(enemy.members) == 0:
@@ -2642,12 +2718,19 @@ def player_battle_attack(attacker,player,enemy,controller,my_location,world,show
                                 move_finished = True
                                 return attack_finished,move_finished
 
-        elif attacker.combat_status.knocked_down == False and attacker.health.current_health >= 1 and attacker.health.current_stamina >= 1 and attacker.combat_status.on_fire == True:
+        elif attacker.combat_status.knocked_down == False  and attacker.health.current_health >= 1 and attacker.health.current_stamina >= 1 and attacker.combat_status.on_fire == True:
 		chance_put_out_flames = random.randint(1,2)
 		if chance_put_out_flames == 1:
                         libtcod.console_print(0,1,1, attacker.fname + " " + attacker.lname + " is no longer on fire")
 			attacker.on_fire = False
 		else:
+                        libtcod.console_print(0,1,1, attacker.fname + " " + attacker.lname + " is still on fire!")
+        elif attacker.combat_status.knocked_down == True  and attacker.health.current_health >= 1 and attacker.health.current_stamina >= 1 and attacker.combat_status.on_fire == True:
+                chance_put_out_flames = random.randint(1,2)
+                if chance_put_out_flames == 1:
+                        libtcod.console_print(0,1,1, attacker.fname + " " + attacker.lname + " is no longer on fire")
+                        attacker.on_fire = False
+                else:
                         libtcod.console_print(0,1,1, attacker.fname + " " + attacker.lname + " is still on fire!")
 
 
@@ -2821,17 +2904,37 @@ def player_battle_turn(member,player,enemy,my_location,world,True,party_actions)
 				line_count += 2
                         	libtcod.console_set_default_foreground(0, libtcod.orange) 
                                 libtcod.console_print(0,1,line_count,'ON FIRE')
-                                libtcod.console_set_default_foreground(0, libtcod.white) 
+                                libtcod.console_set_default_foreground(0, libtcod.white)
+                        if member.combat_status.blind == True:
+                                line_count += 2
+                                libtcod.console_set_default_foreground(0, libtcod.blue) 
+                                libtcod.console_print(0,1,line_count,'BLIND')
+                                libtcod.console_set_default_foreground(0, libtcod.white)  
+                        if member.combat_status.concussion == True:
+                                line_count += 2
+                                libtcod.console_set_default_foreground(0, libtcod.brown) 
+                                libtcod.console_print(0,1,line_count,'CONCUSSION')
+                                libtcod.console_set_default_foreground(0, libtcod.white)  
 
 
 				
         		line_count += 2
 			if member.combat_status.knocked_down == False and member.combat_status.on_fire == False:
 				libtcod.console_print(0,1,line_count,'[a]ttack')
+                                libtcod.console_print(0,30,line_count,'[t]argeted attack')
+
+				line_count +=1
 			elif member.combat_status.knocked_down == True:
 				libtcod.console_print(0,1,line_count,'[g]et up!')
+				line_count += 1
 			elif member.combat_status.knocked_down == False and member.combat_status.on_fire == True:
 				libtcod.console_print(0,1,line_count,'[p]ut out the flames!')
+				line_count += 1
+			line_count += 1
+                        libtcod.console_print(0,1,line_count,'[s]kip turn')
+			line_count += 1
+		
+
 			libtcod.console_flush()
 	
 			key = libtcod.console_check_for_keypress()
@@ -2847,16 +2950,20 @@ def player_battle_turn(member,player,enemy,my_location,world,True,party_actions)
                                 libtcod.console_clear(0)
                                 attack_finished = False
                                 move_finished = True
+			elif key.c == ord('s'):
+				libtcod.console_clear(0)
+				attack_finished = True
+				move_finished = True
 
 		elif member.controlled_by == "enemy":
 			controller = "enemy"
 			move_finished = True
 	if member.controlled_by == "player":		
 		while move_finished == True and attack_finished == False:                        	
-			move_finished = player_battle_attack(member,player,enemy,member.controlled_by,my_location,world,True,party_actions)
+			move_finished = player_battle_attack(member,player,enemy,member.controlled_by,my_location,world,True,party_actions,None)
 	elif member.controlled_by == "enemy":
 		while move_finished == True and attack_finished == False:                               
-                        move_finished = player_battle_attack(member,enemy,player,member.controlled_by,my_location,world,True,party_actions)
+                        move_finished = player_battle_attack(member,enemy,player,member.controlled_by,my_location,world,True,party_actions,None)
 
                         #print 'fight!'
 	return attack_finished
@@ -4160,7 +4267,7 @@ def rest(party,world,hours,guard):
                         if key.c == ord('c'):
                         	show_actions = False
 				return messages
-		save_game()
+		#save_game()
 		return messages
 def robbery(player_party,world,faction,party_actions):
 	libtcod.console_clear(0)
@@ -4927,7 +5034,7 @@ def wait(party,world,hours):
                         libtcod.console_clear(0)
                         libtcod.console_print(0,1,1, 'Waiting.')
                         libtcod.console_flush()
-                        save_game()
+                        #save_game()
                         waiting = False
 
 
@@ -5483,17 +5590,21 @@ def show_character(target,world,corpse,my_location,player_party,creation):
 #                libtcod.console_set_default_foreground(0, libtcod.white)
 
         for injury in target.injuries:
-                libtcod.console_set_default_foreground(0, libtcod.red)
+                libtcod.console_set_default_foreground(0, injury.color)
 
-                if injury_count <= 7:
+                if injury_count <= 5:
                         libtcod.console_print(0, 1, injury_count + 27, injury.name + "(" + injury.location + ")")
                         injury_count += 1 
-                elif injury_count >= 8 and injury_count <= 14:
+                elif injury_count >= 6 and injury_count <= 10:
                         libtcod.console_print(0, 30, injury_count + 22, injury.name + "(" + injury.location + ")")
                         injury_count += 1
-                elif injury_count >= 15 and injury_count <= 21:
+                elif injury_count >= 11 and injury_count <= 15:
                         libtcod.console_print(0, 60, injury_count + 22, injury.name + "(" + injury.location + ")")
                         injury_count += 1
+                elif injury_count >= 16 and injury_count <= 20:
+                        libtcod.console_print(0, 90, injury_count + 22, injury.name + "(" + injury.location + ")")
+                        injury_count += 1
+
                 libtcod.console_set_default_foreground(0, libtcod.white)
 
 	for drug in target.drugs:
@@ -5614,32 +5725,32 @@ def show_character(target,world,corpse,my_location,player_party,creation):
 			finished_viewing = True
 			#return finished_viewing
 		elif key.c == ord('s') and corpse == True and creation == False:
-			if target.outfit.name != 'None':
+			if target.outfit.name != 'None' and target.outfit != None:
 				my_location.items.append(target.outfit)
 				target.outfit = naked
-			if target.headwear != 'None':
-                                my_location.items.append(target.headwear)
+			if target.headwear.name != 'None' and target.headwear != None:
+                                player_party.inventory.append(target.headwear)
                                 target.headwear = no_headwear
-                        if target.eyewear != 'None':
-                                my_location.items.append(target.eyewear)
+                        if target.eyewear.name != 'None' and target.eyewear != None:
+                                player_party.inventory.append(target.eyewear)
                                 target.eyewear = no_eyewear
-                        if target.facewear != 'None':
-                                my_location.items.append(target.facewear)
+                        if target.facewear.name != 'None' and target.facewear != None:
+                                player_party.inventory.append(target.facewear)
                                 target.facewear = no_facewear
-                        if target.handwear != 'None':
-                                my_location.items.append(target.handwear)
+                        if target.handwear.name != 'None' and target.handwear != None:
+                                player_party.inventory.append(target.handwear)
                                 target.handwear = no_handwear
-                        if target.legwear != 'None':
-                                my_location.items.append(target.legwear)
+                        if target.legwear.name != 'None' and target.legwear != None:
+                                player_party.inventory.append(target.legwear)
                                 target.legwear = no_legwear
-                        if target.footwear != 'None':
-                                my_location.items.append(target.footwear)
+                        if target.footwear.name != 'None' and target.footwear != None:
+                                player_party.inventory.append(target.footwear)
                                 target.footwear = no_footwear
-                        if target.outerwear != 'None':
-                                my_location.items.append(target.outerwear)
+                        if target.outerwear.name != 'None' and target.outerwear != None:
+                                player_party.inventory.append(target.outerwear)
                                 target.outerwear = no_outerwear
-                        if target.armor != 'None':
-                                my_location.items.append(target.armor)
+                        if target.armor.name != 'None' and target.armor != None:
+                                player_party.inventory.append(target.armor)
                                 target.armor = no_armor
 			finished_viewing = True
 		elif key.c == ord('a') and creation == True:
@@ -7165,7 +7276,7 @@ def buy(player,location):
 		item_count += 1
 		line_count += 1
 	line_count += 1
-	libtcod.console_print(0,1,line_count, "[r]eturn")
+	libtcod.console_print(0,1,line_count, "[ESC]")
 	libtcod.console_flush()
 	finished_buying = False
 	while finished_buying == False:
@@ -7215,7 +7326,7 @@ def buy(player,location):
 						if key.c == ord('c'):
 							finished_buying = True
 							return finished_buying
-                if key.c == ord('r'):
+                if key.vk == libtcod.KEY_ESCAPE:
                         #choice_made = True
                         finished_buying = True
                         return finished_buying	
@@ -8363,7 +8474,7 @@ def conversation(char,target,player,world,location,party_actions):
                                 	libtcod.console_print(0,1,1, target.fname + " " + target.lname + " says:")
                                 	dialogue = random.choice(standard_npc_responses)
                                 	libtcod.console_print(0,1,2, dialogue + ".")
-                                	libtcod.console_print(0,1,4, "[r]eturn")
+                                	libtcod.console_print(0,1,4, "[ESC]")
 				elif len(dealers) >= 2:
 					dealer = random.choice(dealers)
                                         libtcod.console_print(0,1,1, dealer.fname + " " + dealer.lname + "(" + dealer.profession + ") lives at " + dealer.home.parent_location.name + " in " + dealer.home.parent_location.area + ".")
@@ -8503,15 +8614,15 @@ def loot(party,world,party_actions):
 			libtcod.console_print(0,1, print_line + option_count, "[" + option[0] + "]" + option[1].name + "'s " + option[1].location)
 			option_count += 1
 
-	#option_count += 1
-	libtcod.console_print(0,1, print_line + option_count, "[r]eturn")
+	option_count += 1
+	libtcod.console_print(0,1, print_line + option_count, "[ESC]")
 	libtcod.console_flush()
 	choice_made = False
 	while choice_made == False:
 		key = libtcod.console_check_for_keypress()
 		#choice_made = True
 		for option in options:
-	               	if key.c == ord("r"):
+	               	if key.vk == libtcod.KEY_ESCAPE:
 	                       	finished_loot,choice_made = True,True
 	                       	libtcod.console_clear(0)
 	                       	return finished_loot,finished_loot
@@ -9243,7 +9354,12 @@ def party_turn(player_party,world,party_actions):
 	                #libtcod.console_set_default_foreground(0, libtcod.yellow)
                         libtcod.console_print(0,1,5, "OWNER:")
 	                libtcod.console_set_default_foreground(0, libtcod.white)
-			libtcod.console_print(0,8,5, my_location.owned_by)
+			if my_location.owned_by != None:
+				if type(my_location.owned_by) is str:
+					libtcod.console_print(0,8,5, my_location.owned_by)
+				if type(my_location.owned_by) is not str:
+                                        libtcod.console_print(0,8,5, my_location.owned_by.name)
+
 		#rooms
 		if my_location.parent_location != None:
 			my_location.rooms = my_location.parent_location.rooms

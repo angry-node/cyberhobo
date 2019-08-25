@@ -1,4 +1,8 @@
 import random
+import libtcodpy as libtcod
+
+
+
 global location_id
 global item_id
 
@@ -175,7 +179,7 @@ class Party:
 		
 	def handle_morale(self,world,location):
 		self.handle_cold(world,location)
-		print 'big success'
+#		print 'big success'
 class Party_Actions:
 	def __init__(self,days_survived,kills,stealing,robbery,drug_dealing,kidnapping,torture,citizens_killed,faction_members_killed,missions_completed):
 		self.days_survived = days_survived
@@ -394,6 +398,30 @@ class Char:
 		self.mind.stress = base_stress
 		self.mind.happiness = base_happiness
 		self.mind.sanity = base_sanity
+		#handle blind
+		blind_found = False
+		for injury in self.injuries:
+			if injury.name == "blind":
+				injury.time_had += 60
+				if injury.time_had >= injury.time_to_heal:
+					injuries.remove(injury)
+					self.combat_status.blind = False
+					blind_found = True
+		if blind_found == False and self.combat_status.blind == True:
+			self.combat_status.blind = False
+		#handle concussion
+                concussion_found = False
+                for injury in self.injuries:
+                        if injury.name == "mild concussion" or injury.name == "severe concussion":
+                                injury.time_had += 60
+                                if injury.time_had >= injury.time_to_heal:
+                                        injuries.remove(injury)
+                                        self.combat_status.concussion = False
+                                        concussion_found = True
+                if concussion_found == False and self.combat_status.concussion == True:
+                        self.combat_status.concussion = False
+
+			
 	
 	def handle_drugs(self):
 		for drug in self.drugs:
@@ -541,13 +569,14 @@ class Health:
 		self.cold_rating = cold_rating
 
 class Mind:
-	def __init__(self,happiness,stress,sanity,horny,addictions,trauma):
+	def __init__(self,happiness,stress,sanity,horny,addictions,trauma,morale):
 		self.happiness = happiness
 		self.stress = stress
 		self.sanity = sanity
 		self.horny = horny
 		self.addictions = addictions
 		self.trauma = trauma
+		self.morale = morale
 
 class Addictions:
 	def __init__(self,cocaine,opiates,speed,caffeine,nicotine):
@@ -714,6 +743,20 @@ gcw_global = Corporation('GCW Global',['Security'],[],[],0,0,0,0,0,0,0,0,0,0,0,0
 
 real_estate_corps = [united_solidarity,chh,gcw_global]
 
+#food
+quikmart = Corporation('Quik-e Mart',['Food'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)
+starfucks = Corporation('Starfucks',['Food'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)
+pizza_corp = Corporation('Pizza Corp',['Food'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)
+mcshits = Corporation('McShits',['Food'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)
+
+food_corps = [quikmart,starfucks,pizza_corp,mcshits]
+
+#weapons
+technoco = Corporation('Technoco',['weapons'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)
+united_tactical = Corporation('United Tactical',['weapons'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)
+weapons_corps = [technoco,united_tactical]
+
+
 #health corps
 
 #health_corps = [goodgle,united_solidarity]
@@ -724,6 +767,11 @@ for corp in real_estate_corps:
 	corps.append(corp)
 for corp in tech_corps:
 	corps.append(corp)
+for corp in food_corps:
+        corps.append(corp)
+for corp in weapons_corps:
+        corps.append(corp)
+
 class Loan:
 	def __init__(self,owed_to,loan_amount,amount_owed,time_due,min_rep):
 		self.owed_to = owed_to
@@ -871,9 +919,17 @@ class Skill_Mod:
                 self.skill = skill
                 self.mod = mod
 
+
+class Temporary_Status:
+	def __init__(self,type,is_true,num_turns,max_turns):
+		self.type = type
+		is_true = is_true
+		num_turns = num_turns
+		max_turns = max_turns
+
 class Combat_Status:
 	def __init__(self, knocked_down,stunned,defending,blind,unconscious,on_fire,concussion,gone_insane,turns_stunned,max_stunned,turns_blind,max_blind,
-			turns_on_fire,max_on_fire,tied_up,gagged):
+			turns_on_fire,max_on_fire,tied_up,gagged,turns_unconscious,turns_concussion,turns_insane,max_unconscious,max_concussion,max_insane):
 		self.knocked_down = knocked_down
 		self.stunned = stunned
 		self.defending = defending
@@ -893,6 +949,15 @@ class Combat_Status:
 
 		self.tied_up = tied_up
 		self.gagged = gagged
+		
+		self.turns_unconscious = turns_unconscious
+		self.turns_concussion = turns_concussion
+		self.turns_insane = turns_insane
+
+		self.max_unconscious = max_unconscious
+		self.max_concussion = max_concussion
+		self.max_insane = max_insane
+		
 #health mods
 class Health_Mod:
         def __init__(self, name, mod):
@@ -924,7 +989,7 @@ def health_mod(target,health_mod,value):
 
 class Injury:
 	def __init__(self, name, location,description, stat_mods, skill_mods, health_mods,can_heal,time_had,time_to_heal,damage_bonus,cost_to_heal,
-	cause_bleeding,cause_pain,cause_stamina_loss):
+	cause_bleeding,cause_pain,cause_stamina_loss,color):
 		self.name = name
 		self.location = location
 		self.description = description
@@ -942,65 +1007,74 @@ class Injury:
 		self.cause_pain = cause_pain
 		self.cause_stamina_loss = cause_stamina_loss
 
+		self.color = color
+#bear_mace
+
+bear_maced = Injury("blind","eyes", "'s eyes",[],[],lower_max_health,True,0,60,0,100,0,35,0,libtcod.yellow)
+mild_concussion = Injury("mild concussion","head", "'s head",[],[],lower_max_health,True,0,120,0,100,0,35,0,libtcod.yellow)
+severe_concussion = Injury("severe concussion","head", "'s head",[],[],lower_max_health,True,240,60,0,100,0,35,0,libtcod.yellow)
+
+
 #bruises
 
-bruised_groin = Injury("bruise","groin", "'s groin was bruised",[],[],lower_max_health,True,0,48,10,100,0,35,25)
-bruised_torso = Injury("bruise","torso", "'s torso was bruised",[],[],lower_max_health,True,0,48,4,100,0,20,25)
-bruised_neck = Injury("bruise","neck", "'s neck was bruised",[],[],lower_max_health,True,0,48,10,100,0,25,25)
-bruised_face = Injury("bruise","face", "'s face was bruised",[],[],lower_max_health,True,0,48,10,100,0,15,15)
-bruised_left_arm = Injury("bruise","left arm", "'s left arm was bruised",[],[],lower_max_health,True,0,48,4,100,0,15,10)
-bruised_right_arm = Injury("bruise","right arm", "'s right arm was bruised",[],[],lower_max_health,True,0,48,4,100,0,15,10)
-bruised_left_leg = Injury("bruise","left leg", "'s left leg was bruised",[],[],lower_max_health,True,0,48,4,100,0,15,10)
-bruised_right_leg = Injury("bruise","right leg", "'s right leg was bruised",[],[],lower_max_health,True,0,48,4,100,0,15,10)
+
+bruised_groin = Injury("bruise","groin", "'s groin was bruised",[],[],lower_max_health,True,0,48,10,100,0,35,25,libtcod.grey)
+bruised_torso = Injury("bruise","torso", "'s torso was bruised",[],[],lower_max_health,True,0,48,4,100,0,20,25,libtcod.grey)
+bruised_neck = Injury("bruise","neck", "'s neck was bruised",[],[],lower_max_health,True,0,48,10,100,0,25,25,libtcod.grey)
+bruised_face = Injury("bruise","face", "'s face was bruised",[],[],lower_max_health,True,0,48,10,100,0,15,15,libtcod.grey)
+bruised_left_arm = Injury("bruise","left arm", "'s left arm was bruised",[],[],lower_max_health,True,0,48,4,100,0,15,10,libtcod.grey)
+bruised_right_arm = Injury("bruise","right arm", "'s right arm was bruised",[],[],lower_max_health,True,0,48,4,100,0,15,10,libtcod.grey)
+bruised_left_leg = Injury("bruise","left leg", "'s left leg was bruised",[],[],lower_max_health,True,0,48,4,100,0,15,10,libtcod.grey)
+bruised_right_leg = Injury("bruise","right leg", "'s right leg was bruised",[],[],lower_max_health,True,0,48,4,100,0,15,10,libtcod.grey)
 
 bruises = [bruised_groin,bruised_torso,bruised_neck,bruised_face,bruised_left_arm,bruised_right_arm,bruised_left_leg,bruised_right_leg]
 
 #maimed
 
-maimed_groin = Injury("maimed","groin", "'s groin was maimed",[],[],lower_max_health,True,0,48,20,100,5,60,35)
-maimed_torso = Injury("maimed","torso", "'s torso was maimed",[],[],lower_max_health,True,0,48,8,100,5,40,50)
-maimed_neck = Injury("maimed","neck", "'s neck was maimed",[],[],lower_max_health,True,0,48,10,100,16,40,50)
-maimed_face = Injury("maimed","face", "'s face was maimed",[],[],lower_max_health,True,0,48,10,100,10,45,55)
-maimed_left_arm = Injury("maimed","left arm", "'s left arm was maimed",[],[],lower_max_health,True,0,48,8,100,5,40,50)
-maimed_right_arm = Injury("maimed","right arm", "'s right arm was maimed",[],[],lower_max_health,True,0,48,8,100,5,40,50)
-maimed_left_leg = Injury("maimed","left leg", "'s left leg was maimed",[],[],lower_max_health,True,0,48,8,100,5,30,50)
-maimed_right_leg = Injury("maimed","right leg", "'s right leg was maimed",[],[],lower_max_health,True,0,48,8,100,5,30,50)
+maimed_groin = Injury("maimed","groin", "'s groin was maimed",[],[],lower_max_health,True,0,48,20,100,5,60,35,libtcod.red)
+maimed_torso = Injury("maimed","torso", "'s torso was maimed",[],[],lower_max_health,True,0,48,8,100,5,40,50,libtcod.red)
+maimed_neck = Injury("maimed","neck", "'s neck was maimed",[],[],lower_max_health,True,0,48,10,100,16,40,50,libtcod.red)
+maimed_face = Injury("maimed","face", "'s face was maimed",[],[],lower_max_health,True,0,48,10,100,10,45,55,libtcod.red)
+maimed_left_arm = Injury("maimed","left arm", "'s left arm was maimed",[],[],lower_max_health,True,0,48,8,100,5,40,50,libtcod.red)
+maimed_right_arm = Injury("maimed","right arm", "'s right arm was maimed",[],[],lower_max_health,True,0,48,8,100,5,40,50,libtcod.red)
+maimed_left_leg = Injury("maimed","left leg", "'s left leg was maimed",[],[],lower_max_health,True,0,48,8,100,5,30,50,libtcod.red)
+maimed_right_leg = Injury("maimed","right leg", "'s right leg was maimed",[],[],lower_max_health,True,0,48,8,100,5,30,50,libtcod.red)
 
 maimings = [maimed_groin,maimed_torso,maimed_neck,maimed_face,maimed_left_arm,maimed_right_arm,maimed_left_leg,maimed_right_leg]
 
 
 #mangled
 
-mangled_groin = Injury("mangled","groin", "'s groin was mangled",[],[],lower_max_health,True,0,48,15,100,3,60,35)
-mangled_torso = Injury("mangled","torso", "'s torso was mangled",[],[],lower_max_health,True,0,48,9,100,3,40,50)
-mangled_neck = Injury("mangled","neck", "'s neck was mangled",[],[],lower_max_health,True,0,48,10,100,15,40,50)
-mangled_face = Injury("mangled","face", "'s face was mangled",[],[],lower_max_health,True,0,48,10,100,6,45,55)
-mangled_left_arm = Injury("mangled","left arm", "'s left arm was mangled",[],[],lower_max_health,True,0,48,6,100,3,40,50)
-mangled_right_arm = Injury("mangled","right arm", "'s right arm was mangled",[],[],lower_max_health,True,0,48,6,100,3,40,50)
-mangled_left_leg = Injury("mangled","left leg", "'s left leg was mangled",[],[],lower_max_health,True,0,48,6,100,3,30,50)
-mangled_right_leg = Injury("mangled","right leg", "'s right leg was mangled",[],[],lower_max_health,True,0,48,6,100,3,30,50)
+mangled_groin = Injury("mangled","groin", "'s groin was mangled",[],[],lower_max_health,True,0,48,15,100,3,60,35,libtcod.red)
+mangled_torso = Injury("mangled","torso", "'s torso was mangled",[],[],lower_max_health,True,0,48,9,100,3,40,50,libtcod.red)
+mangled_neck = Injury("mangled","neck", "'s neck was mangled",[],[],lower_max_health,True,0,48,10,100,15,40,50,libtcod.red)
+mangled_face = Injury("mangled","face", "'s face was mangled",[],[],lower_max_health,True,0,48,10,100,6,45,55,libtcod.red)
+mangled_left_arm = Injury("mangled","left arm", "'s left arm was mangled",[],[],lower_max_health,True,0,48,6,100,3,40,50,libtcod.red)
+mangled_right_arm = Injury("mangled","right arm", "'s right arm was mangled",[],[],lower_max_health,True,0,48,6,100,3,40,50,libtcod.red)
+mangled_left_leg = Injury("mangled","left leg", "'s left leg was mangled",[],[],lower_max_health,True,0,48,6,100,3,30,50,libtcod.red)
+mangled_right_leg = Injury("mangled","right leg", "'s right leg was mangled",[],[],lower_max_health,True,0,48,6,100,3,30,50,libtcod.red)
 
 manglings = [mangled_groin,mangled_torso,mangled_neck,mangled_face,mangled_left_arm,mangled_right_arm,mangled_left_leg,mangled_right_leg]
 
 #fractures
 
-fractured_skull = Injury("fracture","skull", "'s skull was fractured",[],[],lower_max_health,True,0,48,120,2000,0,45,40)
-broken_jaw = Injury("broken","jaw", "'s jaw was broken",[],[],lower_max_health,True,0,48,20,800,0,25,30)
+fractured_skull = Injury("fracture","skull", "'s skull was fractured",[],[],lower_max_health,True,0,48,120,2000,0,45,40,libtcod.red)
+broken_jaw = Injury("broken","jaw", "'s jaw was broken",[],[],lower_max_health,True,0,48,20,800,0,25,30,libtcod.red)
 
-broken_ribs = Injury("broken","ribs", "'s ribs were broken",[],[],lower_max_health,True,0,48,20,800,0,25,30)
-broken_neck = Injury("broken","neck", "'s neck was broken",[],[],lower_max_health,True,0,48,120,2000,0,45,40)
-broken_right_collarbone = Injury("broken","right collarbone", "'s right collarbone was broken",[],[],lower_max_health,True,0,48,35,500,0,30,10)
-broken_left_collarbone = Injury("broken","left collarbone", "'s left collarbone was broken",[],[],lower_max_health,True,0,48,35,500,0,30,10)
-broken_left_arm = Injury("broken","left arm", "'s left arm was broken",[],[],lower_max_health,True,0,48,16,600,0,20,10)
-broken_right_arm = Injury("broken","right arm", "'s right arm was broken",[],[],lower_max_health,True,0,48,16,600,0,20,10)
-broken_left_leg = Injury("broken","left leg", "'s left leg was broken",[],[],lower_max_health,True,0,48,16,600,0,20,10)
-broken_right_leg = Injury("broken","right leg", "'s right leg was broken",[],[],lower_max_health,True,0,48,16,600,0,20,10)
+broken_ribs = Injury("broken","ribs", "'s ribs were broken",[],[],lower_max_health,True,0,48,20,800,0,25,30,libtcod.dark_yellow)
+broken_neck = Injury("broken","neck", "'s neck was broken",[],[],lower_max_health,True,0,48,120,2000,0,45,40,libtcod.dark_yellow)
+broken_right_collarbone = Injury("broken","right collarbone", "'s right collarbone was broken",[],[],lower_max_health,True,0,48,35,500,0,30,10,libtcod.dark_yellow)
+broken_left_collarbone = Injury("broken","left collarbone", "'s left collarbone was broken",[],[],lower_max_health,True,0,48,35,500,0,30,10,libtcod.dark_yellow)
+broken_left_arm = Injury("broken","left arm", "'s left arm was broken",[],[],lower_max_health,True,0,48,16,600,0,20,10,libtcod.dark_yellow)
+broken_right_arm = Injury("broken","right arm", "'s right arm was broken",[],[],lower_max_health,True,0,48,16,600,0,20,10,libtcod.dark_yellow)
+broken_left_leg = Injury("broken","left leg", "'s left leg was broken",[],[],lower_max_health,True,0,48,16,600,0,20,10,libtcod.dark_yellow)
+broken_right_leg = Injury("broken","right leg", "'s right leg was broken",[],[],lower_max_health,True,0,48,16,600,0,20,10,libtcod.dark_yellow)
 
 
-fractured_left_arm = Injury("fracture","left arm", "'s left arm was fractured",[],[],lower_max_health,True,0,48,16,600,0,20,10)
-fractured_right_arm = Injury("fracture","right arm", "'s right arm was fractured",[],[],lower_max_health,True,0,48,16,600,0,20,10)
-fractured_left_leg = Injury("fracture","left leg", "'s left leg was fractured",[],[],lower_max_health,True,0,48,16,600,0,20,10)
-fractured_right_leg = Injury("fracture","right leg", "'s right leg was fractured",[],[],lower_max_health,True,0,48,16,600,0,20,10)
+fractured_left_arm = Injury("fracture","left arm", "'s left arm was fractured",[],[],lower_max_health,True,0,48,16,600,0,20,10,libtcod.dark_yellow)
+fractured_right_arm = Injury("fracture","right arm", "'s right arm was fractured",[],[],lower_max_health,True,0,48,16,600,0,20,10,libtcod.dark_yellow)
+fractured_left_leg = Injury("fracture","left leg", "'s left leg was fractured",[],[],lower_max_health,True,0,48,16,600,0,20,10,libtcod.dark_yellow)
+fractured_right_leg = Injury("fracture","right leg", "'s right leg was fractured",[],[],lower_max_health,True,0,48,16,600,0,20,10,libtcod.dark_yellow)
 
 fractures = [fractured_skull,broken_ribs,broken_neck,broken_right_collarbone,broken_left_collarbone,fractured_left_arm,
 	fractured_right_arm, fractured_left_leg, fractured_right_leg,broken_left_arm,broken_right_arm,broken_left_leg,
@@ -1008,41 +1082,41 @@ fractures = [fractured_skull,broken_ribs,broken_neck,broken_right_collarbone,bro
 
 #minor cuts
 
-minor_cut_head = Injury("cut","head","'s head was cut",[],[],lower_max_health,False,0,48,8,400,2,10,5)
-minor_cut_torso = Injury("cut","torso","'s torso was cut",[],[],lower_max_health,False,0,48,8,400,2,10,5)
-minor_cut_neck = Injury("cut","neck","'s neck was cut",[],[],lower_max_health,False,0,48,16,900,3,10,5)
-minor_cut_face = Injury("cut","face","'s face was cut",[],[],lower_max_health,False,0,48,12,400,2,10,5)
-minor_cut_left_arm = Injury("cut","left arm","'s left arm was cut",[],[],lower_max_health,False,0,48,8,400,2,10,5)
-minor_cut_right_arm = Injury("cut","right arm","'s right arm was cut",[],[],lower_max_health,False,0,48,8,400,2,10,5)
-minor_cut_left_leg = Injury("cut","left leg","'s left leg was cut",[],[],lower_max_health,False,0,48,8,400,2,10,5)
-minor_cut_right_leg = Injury("cut","right_leg","'s right leg was cut",[],[],lower_max_health,False,0,48,8,400,2,10,5)
+minor_cut_head = Injury("cut","head","'s head was cut",[],[],lower_max_health,False,0,48,8,400,2,10,5,libtcod.light_red)
+minor_cut_torso = Injury("cut","torso","'s torso was cut",[],[],lower_max_health,False,0,48,8,400,2,10,5,libtcod.light_red)
+minor_cut_neck = Injury("cut","neck","'s neck was cut",[],[],lower_max_health,False,0,48,16,900,3,10,5,libtcod.light_red)
+minor_cut_face = Injury("cut","face","'s face was cut",[],[],lower_max_health,False,0,48,12,400,2,10,5,libtcod.light_red)
+minor_cut_left_arm = Injury("cut","left arm","'s left arm was cut",[],[],lower_max_health,False,0,48,8,400,2,10,5,libtcod.light_red)
+minor_cut_right_arm = Injury("cut","right arm","'s right arm was cut",[],[],lower_max_health,False,0,48,8,400,2,10,5,libtcod.light_red)
+minor_cut_left_leg = Injury("cut","left leg","'s left leg was cut",[],[],lower_max_health,False,0,48,8,400,2,10,5,libtcod.light_red)
+minor_cut_right_leg = Injury("cut","right_leg","'s right leg was cut",[],[],lower_max_health,False,0,48,8,400,2,10,5,libtcod.light_red)
 
 minor_cuts = [minor_cut_head,minor_cut_torso,minor_cut_neck,minor_cut_face,minor_cut_left_arm,minor_cut_right_arm,minor_cut_left_leg,minor_cut_right_leg]
 
 
 #major cuts
 
-major_cut_head = Injury("cut","head","'s head was badly cut",[],[],lower_max_health,False,0,48,16,400,4,20,25)
-major_cut_torso = Injury("cut","torso","'s torso was badly cut",[],[],lower_max_health,False,0,48,16,400,4,20,25)
-major_cut_neck = Injury("cut","neck","'s throat was badly cut",[],[],lower_max_health,False,0,48,32,900,4,20,25)
-major_cut_face = Injury("cut","face","'s face was badly cut",[],[],lower_max_health,False,0,48,24,400,4,20,25)
-major_cut_left_arm = Injury("cut","left arm","'s left arm was badly cut",[],[],lower_max_health,False,0,48,16,400,4,20,25)
-major_cut_right_arm = Injury("cut","right arm","'s right arm was badly cut",[],[],lower_max_health,False,0,48,16,400,4,20,25)
-major_cut_left_leg = Injury("cut","left leg","'s left leg was badly cut",[],[],lower_max_health,False,0,48,16,400,4,20,25)
-major_cut_right_leg = Injury("cut","right leg","'s right leg was badly cut",[],[],lower_max_health,False,0,48,16,400,4,20,25)
+major_cut_head = Injury("cut","head","'s head was badly cut",[],[],lower_max_health,False,0,48,16,400,4,20,25,libtcod.red)
+major_cut_torso = Injury("cut","torso","'s torso was badly cut",[],[],lower_max_health,False,0,48,16,400,4,20,25,libtcod.red)
+major_cut_neck = Injury("cut","neck","'s throat was badly cut",[],[],lower_max_health,False,0,48,32,900,4,20,25,libtcod.red)
+major_cut_face = Injury("cut","face","'s face was badly cut",[],[],lower_max_health,False,0,48,24,400,4,20,25,libtcod.red)
+major_cut_left_arm = Injury("cut","left arm","'s left arm was badly cut",[],[],lower_max_health,False,0,48,16,400,4,20,25,libtcod.red)
+major_cut_right_arm = Injury("cut","right arm","'s right arm was badly cut",[],[],lower_max_health,False,0,48,16,400,4,20,25,libtcod.red)
+major_cut_left_leg = Injury("cut","left leg","'s left leg was badly cut",[],[],lower_max_health,False,0,48,16,400,4,20,25,libtcod.red)
+major_cut_right_leg = Injury("cut","right leg","'s right leg was badly cut",[],[],lower_max_health,False,0,48,16,400,4,20,25,libtcod.red)
 
 major_cuts = [major_cut_head,major_cut_torso,major_cut_neck,major_cut_face,major_cut_left_arm,major_cut_right_arm,major_cut_left_leg,major_cut_right_leg]
 
 #slashes
 
-slash_head = Injury("slash","head","'s head was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25)
-slash_torso = Injury("slash","torso","'s torso was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25)
-slash_neck = Injury("slash","neck","'s throat was slashed",[],[],lower_max_health,False,0,48,32,900,4,20,25)
-slash_face = Injury("slash","face","'s face was slashed",[],[],lower_max_health,False,0,48,24,400,4,20,25)
-slash_left_arm = Injury("slash","left arm","'s left arm was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25)
-slash_right_arm = Injury("slash","right arm","'s right arm was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25)
-slash_left_leg = Injury("slash","left leg","'s left leg was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25)
-slash_right_leg = Injury("slash","right leg","'s right leg was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25)
+slash_head = Injury("slash","head","'s head was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25,libtcod.red)
+slash_torso = Injury("slash","torso","'s torso was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25,libtcod.red)
+slash_neck = Injury("slash","neck","'s throat was slashed",[],[],lower_max_health,False,0,48,32,900,4,20,25,libtcod.red)
+slash_face = Injury("slash","face","'s face was slashed",[],[],lower_max_health,False,0,48,24,400,4,20,25,libtcod.red)
+slash_left_arm = Injury("slash","left arm","'s left arm was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25,libtcod.red)
+slash_right_arm = Injury("slash","right arm","'s right arm was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25,libtcod.red)
+slash_left_leg = Injury("slash","left leg","'s left leg was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25,libtcod.red)
+slash_right_leg = Injury("slash","right leg","'s right leg was slashed",[],[],lower_max_health,False,0,48,16,400,4,20,25,libtcod.red)
 
 slashes = [slash_head,slash_torso,slash_neck,slash_face,slash_left_arm,slash_right_arm,slash_left_leg,slash_right_leg]
 
@@ -1051,35 +1125,35 @@ slashes = [slash_head,slash_torso,slash_neck,slash_face,slash_left_arm,slash_rig
 
 #severed limbs
 
-severed_head = Injury("severed","head","'s head was severed",[],[],lower_max_health,False,0,48,16,400,10,200,100)
-severed_left_arm = Injury("severed","left arm","'s left arm was severed",[],[],lower_max_health,False,0,48,16,4000,6,30,50)
-severed_right_arm = Injury("severed","right arm","'s right arm was severed!",[],[],lower_max_health,False,0,48,16,4000,6,30,50)
-severed_left_leg = Injury("severed","left leg","'s left leg was severed",[],[],lower_max_health,False,0,48,16,4000,6,20,50)
-severed_right_leg = Injury("severed","right leg","'s right leg was severed",[],[],lower_max_health,False,0,48,16,4000,6,30,50)
+severed_head = Injury("severed","head","'s head was severed",[],[],lower_max_health,False,0,48,16,400,10,200,100,libtcod.dark_red)
+severed_left_arm = Injury("severed","left arm","'s left arm was severed",[],[],lower_max_health,False,0,48,16,4000,6,30,50,libtcod.dark_red)
+severed_right_arm = Injury("severed","right arm","'s right arm was severed!",[],[],lower_max_health,False,0,48,16,4000,6,30,50,libtcod.dark_red)
+severed_left_leg = Injury("severed","left leg","'s left leg was severed",[],[],lower_max_health,False,0,48,16,4000,6,20,50,libtcod.dark_red)
+severed_right_leg = Injury("severed","right leg","'s right leg was severed",[],[],lower_max_health,False,0,48,16,4000,6,30,50,libtcod.dark_red)
 
 severed_limbs = [severed_head,severed_left_arm,severed_right_arm,severed_left_leg,severed_right_leg]
 
 
 #blown off limbs
 
-blown_off_head = Injury("blown off","head","'s head was blown off",[],[],lower_max_health,False,0,48,16,400,10,200,100)
-blown_off_left_arm = Injury("blown_off","left arm","'s left arm was blown off",[],[],lower_max_health,False,0,48,16,4000,6,30,50)
-blown_off_right_arm = Injury("blown off","right arm","'s right arm was blown off",[],[],lower_max_health,False,0,48,16,4000,6,30,50)
-blown_off_left_leg = Injury("blown off","left leg","'s left leg was blown off",[],[],lower_max_health,False,0,48,16,4000,6,20,50)
-blown_off_right_leg = Injury("blown off","right leg","'s right leg was blown off",[],[],lower_max_health,False,0,48,16,4000,6,30,50)
+blown_off_head = Injury("blown off","head","'s head was blown off",[],[],lower_max_health,False,0,48,16,400,10,200,100,libtcod.dark_red)
+blown_off_left_arm = Injury("blown_off","left arm","'s left arm was blown off",[],[],lower_max_health,False,0,48,16,4000,6,30,50,libtcod.dark_red)
+blown_off_right_arm = Injury("blown off","right arm","'s right arm was blown off",[],[],lower_max_health,False,0,48,16,4000,6,30,50,libtcod.dark_red)
+blown_off_left_leg = Injury("blown off","left leg","'s left leg was blown off",[],[],lower_max_health,False,0,48,16,4000,6,20,50,libtcod.dark_red)
+blown_off_right_leg = Injury("blown off","right leg","'s right leg was blown off",[],[],lower_max_health,False,0,48,16,4000,6,30,50,libtcod.dark_red)
 
 blown_off_limbs = [blown_off_head,blown_off_left_arm,blown_off_right_arm,blown_off_left_leg,blown_off_right_leg]
 
 
 #stab
 
-stab_torso = Injury("stab wound","torso"," was stabbed in the torso",[],[],lower_max_health,False,0,48,15,1000,10,30,30)
-stab_neck = Injury("stab wound","neck"," was stabbed in the neck",[],[],lower_max_health,False,0,48,90,1000,10,45,60)
-stab_face = Injury("stab wound","face", "was stabbed in the face",[],[],lower_max_health,False,0,48,30,1000,10,45,30)
-stab_left_arm = Injury("stab wound","left arm"," was stabbed in the left arm",[],[],lower_max_health,False,0,48,15,1000,10,30,30)
-stab_right_arm = Injury("stab wound","right arm"," was stabbed in the right arm",[],[],lower_max_health,False,0,48,15,1000,10,30,30)
-stab_left_leg = Injury("stab wound","left leg","was stabbed in the left leg",[],[],lower_max_health,False,0,48,15,1000,10,30,30)
-stab_right_leg = Injury("stab wound","right leg"," was stabbed in the right leg",[],[],lower_max_health,False,0,48,15,1000,10,30,30)
+stab_torso = Injury("stab wound","torso"," was stabbed in the torso",[],[],lower_max_health,False,0,48,15,1000,10,30,30,libtcod.dark_red)
+stab_neck = Injury("stab wound","neck"," was stabbed in the neck",[],[],lower_max_health,False,0,48,90,1000,10,45,60,libtcod.dark_red)
+stab_face = Injury("stab wound","face", "was stabbed in the face",[],[],lower_max_health,False,0,48,30,1000,10,45,30,libtcod.dark_red)
+stab_left_arm = Injury("stab wound","left arm"," was stabbed in the left arm",[],[],lower_max_health,False,0,48,15,1000,10,30,30,libtcod.dark_red)
+stab_right_arm = Injury("stab wound","right arm"," was stabbed in the right arm",[],[],lower_max_health,False,0,48,15,1000,10,30,30,libtcod.dark_red)
+stab_left_leg = Injury("stab wound","left leg","was stabbed in the left leg",[],[],lower_max_health,False,0,48,15,1000,10,30,30,libtcod.dark_red)
+stab_right_leg = Injury("stab wound","right leg"," was stabbed in the right leg",[],[],lower_max_health,False,0,48,15,1000,10,30,30,libtcod.dark_red)
 
 stab_wounds = [stab_torso,stab_neck,stab_face,stab_left_arm,stab_right_arm,stab_left_leg,stab_right_leg]
 
@@ -1087,14 +1161,14 @@ stab_wounds = [stab_torso,stab_neck,stab_face,stab_left_arm,stab_right_arm,stab_
 
 
 #9mm
-head_9mm = Injury("gunshot wound","head"," was shot in the head",[],[],lower_max_health,False,0,48,60,1200,6,50,40)
-torso_9mm = Injury("gunshot wound","torso"," was shot in the torso",[],[],lower_max_health,False,0,48,35,1200,6,40,20)
-neck_9mm = Injury("gunshot shot","neck"," was shot in the neck",[],[],lower_max_health,False,0,48,60,3000,6,45,30)
-face_9mm = Injury("gunshot wound","face"," was shot in the face",[],[],lower_max_health,False,0,48,60,3200,6,45,30)
-left_arm_9mm = Injury("gunshot wound","left arm"," was shot in the left arm",[],[],lower_max_health,False,0,48,30,800,3,30,20)
-right_arm_9mm = Injury("gunshot wound","right arm"," was shot in the right arm,",[],[],lower_max_health,False,0,48,30,800,3,30,20)
-left_leg_9mm = Injury("gunshot wound","left leg"," was shot in the left leg",[],[],lower_max_health,False,0,48,30,800,3,30,20)
-right_leg_9mm = Injury("gunshot wound","right leg"," was shot in the right leg",[],[],lower_max_health,False,0,48,30,800,3,30,20)
+head_9mm = Injury("gunshot wound","head"," was shot in the head",[],[],lower_max_health,False,0,48,60,1200,6,50,40,libtcod.dark_red)
+torso_9mm = Injury("gunshot wound","torso"," was shot in the torso",[],[],lower_max_health,False,0,48,35,1200,6,40,20,libtcod.dark_red)
+neck_9mm = Injury("gunshot shot","neck"," was shot in the neck",[],[],lower_max_health,False,0,48,60,3000,6,45,30,libtcod.dark_red)
+face_9mm = Injury("gunshot wound","face"," was shot in the face",[],[],lower_max_health,False,0,48,60,3200,6,45,30,libtcod.dark_red)
+left_arm_9mm = Injury("gunshot wound","left arm"," was shot in the left arm",[],[],lower_max_health,False,0,48,30,800,3,30,20,libtcod.dark_red)
+right_arm_9mm = Injury("gunshot wound","right arm"," was shot in the right arm,",[],[],lower_max_health,False,0,48,30,800,3,30,20,libtcod.dark_red)
+left_leg_9mm = Injury("gunshot wound","left leg"," was shot in the left leg",[],[],lower_max_health,False,0,48,30,800,3,30,20,libtcod.dark_red)
+right_leg_9mm = Injury("gunshot wound","right leg"," was shot in the right leg",[],[],lower_max_health,False,0,48,30,800,3,30,20,libtcod.dark_red)
 
 shot_9mm = [head_9mm,torso_9mm,neck_9mm,face_9mm,left_arm_9mm,right_arm_9mm,left_leg_9mm,right_leg_9mm]
 
@@ -1102,33 +1176,33 @@ shot_9mm = [head_9mm,torso_9mm,neck_9mm,face_9mm,left_arm_9mm,right_arm_9mm,left
 
 #12 gauge shotgun
 
-torso_12g = Injury("shotgun wound","torso"," was shot in the torso",[],[],lower_max_health,False,0,48,40,1100,6,45,40)
-face_12g = Injury("shotgun wound","face"," was shot in the face",[],[],lower_max_health,False,0,48,80,4000,8,45,45)
-left_arm_12g = Injury("shotgun wound","left arm"," was shot in the left arm",[],[],lower_max_health,False,0,48,40,1100,5,30,20)
-right_arm_12g = Injury("shotgun wound","right arm"," was shot in the right arm",[],[],lower_max_health,False,0,48,40,1100,5,30,20)
-left_leg_12g = Injury("shotgun wound","left leg"," was shot in the left leg",[],[],lower_max_health,False,0,48,40,1100,5,30,20)
-right_leg_12g = Injury("shotgun wound","right leg"," was shot in the right leg",[],[],lower_max_health,False,0,48,40,1100,5,30,20)
+torso_12g = Injury("shotgun wound","torso"," was shot in the torso",[],[],lower_max_health,False,0,48,40,1100,6,45,40,libtcod.dark_red)
+face_12g = Injury("shotgun wound","face"," was shot in the face",[],[],lower_max_health,False,0,48,80,4000,8,45,45,libtcod.dark_red)
+left_arm_12g = Injury("shotgun wound","left arm"," was shot in the left arm",[],[],lower_max_health,False,0,48,40,1100,5,30,20,libtcod.dark_red)
+right_arm_12g = Injury("shotgun wound","right arm"," was shot in the right arm",[],[],lower_max_health,False,0,48,40,1100,5,30,20,libtcod.dark_red)
+left_leg_12g = Injury("shotgun wound","left leg"," was shot in the left leg",[],[],lower_max_health,False,0,48,40,1100,5,30,20,libtcod.dark_red)
+right_leg_12g = Injury("shotgun wound","right leg"," was shot in the right leg",[],[],lower_max_health,False,0,48,40,1100,5,30,20,libtcod.dark_red)
 
 shot_12g = [torso_12g,face_12g,left_arm_12g,right_arm_12g,left_leg_12g,right_leg_12g]
 
 #ak47
 
-ak47_torso = Injury("gunshot wound","torso"," was shot in the torso",[],[],lower_max_health,False,0,0,55,700,6,50,50)
-ak47_face = Injury("gunshot wound","face"," was shot in the face",[],[],lower_max_health,False,0,0,75,2700,6,50,50)
-ak47_left_arm = Injury("gunshot wound","left arm"," was shot in the left arm",[],[],lower_max_health,False,0,0,45,700,4,35,20)
-ak47_right_arm = Injury("gunshot wound","right arm"," was shot in the right arm",[],[],lower_max_health,False,0,0,45,700,4,35,20)
-ak47_left_leg = Injury("gunshot wound","left leg"," was shot in the left leg",[],[],lower_max_health,False,0,0,45,700,4,35,20)
-ak47_right_leg = Injury("gunshot wound","right leg"," was shot in the right leg",[],[],lower_max_health,False,0,0,45,700,4,35,20)
+ak47_torso = Injury("gunshot wound","torso"," was shot in the torso",[],[],lower_max_health,False,0,0,55,700,6,50,50,libtcod.dark_red)
+ak47_face = Injury("gunshot wound","face"," was shot in the face",[],[],lower_max_health,False,0,0,75,2700,6,50,50,libtcod.dark_red)
+ak47_left_arm = Injury("gunshot wound","left arm"," was shot in the left arm",[],[],lower_max_health,False,0,0,45,700,4,35,20,libtcod.dark_red)
+ak47_right_arm = Injury("gunshot wound","right arm"," was shot in the right arm",[],[],lower_max_health,False,0,0,45,700,4,35,20,libtcod.dark_red)
+ak47_left_leg = Injury("gunshot wound","left leg"," was shot in the left leg",[],[],lower_max_health,False,0,0,45,700,4,35,20,libtcod.dark_red)
+ak47_right_leg = Injury("gunshot wound","right leg"," was shot in the right leg",[],[],lower_max_health,False,0,0,45,700,4,35,20,libtcod.dark_red)
 
 shot_ak47 = [ak47_torso,ak47_face,ak47_left_arm,ak47_right_arm,ak47_left_leg,ak47_right_leg]
 
 #burns
-burn_torso = Injury("burn","torso"," 's torso was burned",[],[],lower_max_health,False,0,0,30,500,0,20,20)
-burn_face = Injury("burn","face"," 's face was burned",[],[],lower_max_health,False,0,0,30,500,0,20,20)
-burn_right_arm = Injury("burn","right arm"," 's torso was burned",[],[],lower_max_health,False,0,0,30,500,0,20,20)
-burn_left_arm = Injury("burn","left arm"," 's torso was burned",[],[],lower_max_health,False,0,0,30,500,0,20,20)
-burn_right_leg = Injury("burn","right leg"," 's right leg was burned",[],[],lower_max_health,False,0,0,30,500,0,20,20)
-burn_left_leg = Injury("burn","left leg"," 's left leg was burned",[],[],lower_max_health,False,0,0,30,500,0,20,20)
+burn_torso = Injury("burn","torso"," 's torso was burned",[],[],lower_max_health,False,0,0,30,500,0,20,20,libtcod.dark_orange)
+burn_face = Injury("burn","face"," 's face was burned",[],[],lower_max_health,False,0,0,30,500,0,20,20,libtcod.dark_orange)
+burn_right_arm = Injury("burn","right arm"," 's torso was burned",[],[],lower_max_health,False,0,0,30,500,0,20,20,libtcod.dark_orange)
+burn_left_arm = Injury("burn","left arm"," 's torso was burned",[],[],lower_max_health,False,0,0,30,500,0,20,20,libtcod.dark_orange)
+burn_right_leg = Injury("burn","right leg"," 's right leg was burned",[],[],lower_max_health,False,0,0,30,500,0,20,20,libtcod.dark_orange)
+burn_left_leg = Injury("burn","left leg"," 's left leg was burned",[],[],lower_max_health,False,0,0,30,500,0,20,20,libtcod.dark_orange)
 
 burns = [burn_torso,burn_face,burn_right_arm,burn_left_arm,burn_right_leg,burn_left_leg]
 
@@ -1219,8 +1293,8 @@ punch = Weapon("Punch",'brawl', 10,5,5,'weapon',True,0,False,None,False,None,Fal
 brass_knuckles = Weapon("Brass knuckles",'brawl', 20,5,5,'weapon',True,80,False,None,False,None,False,[],'none',None)
 
 #blunt
-crowbar = Weapon("Crowbar",'blunt', 15,5,5,'weapon',True,0,False,None,False,None,False,[],'none',None)
-shovel = Weapon("Shovel",'blunt', 10,5,5,'weapon',True,0,False,None,False,None,False,[],'none',None)
+crowbar = Weapon("Crowbar",'blunt', 15,5,5,'weapon',True,30,False,None,False,None,False,[],'none',None)
+shovel = Weapon("Shovel",'blunt', 10,5,5,'weapon',True,35,False,None,False,None,False,[],'none',None)
 baseball_bat = Weapon("Baseball Bat", "blunt",20,5,5,'weapon',True,25,False,None,False,None,False,[],'none',None)
 
 #blades
@@ -1243,6 +1317,11 @@ ak47 = Weapon("AK-47", "rifle",35,5,5,'weapon',True,2500,True,ak47_ammo,True,ak4
 #throwing weapons
 molotov = Weapon("Molotov", "throw",15,5,5,'weapon',True,15,True,molotov_ammo,True,punch,False,[],'none',"Molotov")
 shuriken = Weapon("Shuriken", "throw",15,5,5,'weapon',True,95,True,shuriken_ammo,True,punch,False,[],'none',"Shuriken")
+
+#tools
+bear_mace = Weapon("Bear mace", "tool",0,5,5,'weapon',True,60,False,None,True,punch,False,[],'none',"Bear mace")
+flashbang = Weapon("Flashbang", "tool",0,5,5,'weapon',True,140,False,None,True,punch,False,[],'none',"Flashbang")
+
 
 class Attack:
 	def __init__self(self, type, weapon, attack_mod, injury_inficted):
@@ -1463,6 +1542,7 @@ balaclava = Facewear("Balaclava", "Balaclava",1,5,5,'facewear',True,15,0,0,0,0,0
 clown_mask = Facewear("Clown mask", "Clown mask",2,5,5,'facewear',True,80,0,0,0,0,0,0,1)
 anonymous_mask = Facewear("Anonymous mask", "Anonymous mask",2,5,5,'facewear',True,80,0,0,0,0,0,0,1)
 
+skull_mask = Facewear("Skull mask", "Skull mask",1,5,5,'facewear',True,15,0,0,0,0,0,3,3)
 
 
 #hands
@@ -2322,7 +2402,7 @@ class Time:
 		elif self.hour == 23:
 			return 11
 
-start_time = Time(2069,8,1,1,0)
+start_time = Time(2069,8,1,12,0)
 
 class City:
 	def __init__(self,areas,name,time,player_organization,corporations,missions,weather):
@@ -2335,7 +2415,7 @@ class City:
 		self.weather = weather
 
 class Area:
-	def __init__(self,locations,name,organizations,x,y,randos,price,region):
+	def __init__(self,locations,name,organizations,x,y,randos,price,region,is_hidden):
 		self.locations = locations
 		self.name = name
 		self.organizations = organizations
@@ -2344,6 +2424,7 @@ class Area:
 		self.randos = randos
 		self.price = price
 		self.region = region
+		self.is_hidden = is_hidden
 	def clean_up(self):
 		possible_locations = []
 		for location in self.locations:
@@ -2567,12 +2648,14 @@ laptop_computer = Junk('Laptop computer',500,'junk',True)
 tablet = Junk('Tablet computer',350,'junk',True)
 smartphone = Junk('Smartphone',350,'junk',True)
 server = Junk('Server',2000,'junk',False)
+microcontroller = Junk('Microcontroller',30,'junk',False)
 
 #files
 client_list = Junk('Client list',20000,'junk',True)
 company_plans = Junk('Company plans',50000,'junk',True)
 meeting_minutes = Junk('Meeting minutes',5000,'junk',True)
 confidential_memo = Junk('Confidential memo',15000,'junk',True)
+payroll = Junk('Payroll',5000,'junk',True)
 
 
 area_id = 1
@@ -2798,12 +2881,13 @@ def create_npc(profession,affiliation,home):
 		#money
 		money = random.randint(50,200)
 		#combat status
-		combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False)
+		combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,0,0,0,0,0,0)
 		#mind
 		happiness = random.randint(40,100)
 		stress = random.randint(0,20)
 		sanity = random.randint(40,100)
 		horny = random.randint(0,50)
+		morale = random.randint(1,60)
 		#addictions
                 nicotine_addiction = Addiction('Nicotine',0,0,4,[])
 
@@ -2823,7 +2907,7 @@ def create_npc(profession,affiliation,home):
 
 		addictions = Addictions(cocaine_addiction,opiates_addiction,speed_addiction,caffeine_addiction,nicotine_addiction)
 		trauma = 0
-		mind = Mind(happiness,stress,sanity,horny,addictions,trauma)
+		mind = Mind(happiness,stress,sanity,horny,addictions,trauma,morale)
 
 		hunger,thirst,sleep = random.randint(3,20),random.randint(6,40),random.randint(50,95)
 
@@ -2930,12 +3014,13 @@ def create_npc(profession,affiliation,home):
                 #money
                 money = random.randint(50,200)
                 #combat status
-                combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False)
+                combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,0,0,0,0,0,0)
                 #mind
                 happiness = random.randint(40,100)
                 stress = random.randint(0,20)
                 sanity = random.randint(40,100)
                 horny = random.randint(0,50)
+		morale = random.randint(1,60)
                 #addictions
                 nicotine_addiction = Addiction('Nicotine',0,0,4,[])
 
@@ -2955,7 +3040,7 @@ def create_npc(profession,affiliation,home):
 
                 addictions = Addictions(cocaine_addiction,opiates_addiction,speed_addiction,caffeine_addiction,nicotine_addiction)
                 trauma = 0
-                mind = Mind(happiness,stress,sanity,horny,addictions,trauma)
+                mind = Mind(happiness,stress,sanity,horny,addictions,trauma,morale)
 
                 hunger,thirst,sleep = random.randint(3,20),random.randint(6,40),random.randint(50,95)
 
@@ -2998,7 +3083,10 @@ def create_npc(profession,affiliation,home):
                         footwear = dress_shoes
                         outerwear  = nice_suit
                         weapon = punch
-                
+                #bear mace chance
+		roll = random.randint(1,6)
+		if roll == 6:
+			weapon = bear_mace
                 #traits = set(traits)
                 #traits = list(traits)
                 #finally make the npc
@@ -3006,7 +3094,7 @@ def create_npc(profession,affiliation,home):
 
                 return npc
 
-	elif profession == "Gamer Assassin" or profession == "Flower Child" or  profession == "Pissboi Leader" or profession == "Pissboi Enforcer" or profession == 'Crankenstein' or profession == "Crankenstein Enforcer" or profession == "Crankenstein Leader" or profession == "Drunkard"  or profession == "Crackhead" or profession == "Drunkard" or profession == "Script Kiddie" or profession == "Crackhead" or profession == "Clerk" or profession == "Nudist" or profession == "Hobo" or  profession == "Rocker" or profession == "Marxist" or profession == 'Rude Boy' or profession == 'Grimesmacker' or profession == 'Cannibal' or profession == 'Slaver' or profession == 'Slave' or profession == 'Cat Person' or profession == 'Booze Knight' or profession == 'Anarchist'or profession == 'Mercenary' or profession == 'Occultist' or profession == 'Scavenger' or profession == 'Survivalist' or profession == "Drug Dealer":
+	elif profession == "Gamer Assassin" or profession == "Flower Child" or  profession == "Pissboi Leader" or profession == "Pissboi Enforcer" or profession == 'Crankenstein' or profession == "Crankenstein Enforcer" or profession == "Crankenstein Leader" or profession == "Drunkard"  or profession == "Crackhead" or profession == "Drunkard" or profession == "Script Kiddie" or profession == "Crackhead" or profession == "Clerk" or profession == "Nudist" or profession == "Hobo" or  profession == "Rocker" or profession == "Marxist" or profession == 'Rude Boy' or profession == 'Grimesmacker' or profession == 'Cannibal' or profession == 'Slaver' or profession == 'Slave' or profession == 'Cat Person' or profession == 'Booze Knight' or profession == 'Anarchist'or profession == 'Mercenary' or profession == 'Occultist' or profession == 'Scavenger' or profession == 'Survivalist' or profession == "Drug Dealer" or profession == "Commando" or profession == "Skullhead":
 		strength, base_strength = 9,9
 		dexterity, base_dexterity = 8,8
 		willpower, base_willpower = 9,9
@@ -3038,7 +3126,7 @@ def create_npc(profession,affiliation,home):
         	investigate = random.randint(0,3)
 		if profession == "Crankenstein Leader" or profession == "Pissboi Leader":
 			leadership = 9
-		elif profession == "Marxist":
+		elif profession == "Marxist" or profession == "Commando" or profession == "Skullhead":
 			leadership = random.randint(3,5)
 			rifle = random.randint(3,5)
 			weapon = ak47
@@ -3111,7 +3199,7 @@ def create_npc(profession,affiliation,home):
                 outfit,headwear,facewear,eyewear,handwear,legwear,footwear,outerwear,armor = gen_player_outfit(profession,gender)
 
 		if profession == "Crankenstein" or profession == "Crankenstein Leader" or profession == "Crankenstein Enforcer":
-			head_options = [toque,baseball_cap,army_hat,cowboy_hat,no_headwear]
+			head_options = [toque,baseball_cap,no_headwear]
 			headwear = random.choice(head_options)
 			armor = body_armor
 			facewear = no_facewear
@@ -3130,11 +3218,17 @@ def create_npc(profession,affiliation,home):
                         footwear = cowboy_boots
                         legwear = jeans
                         handwear = fingerless_gloves
-		elif profession == "Marxist":
+		elif profession == "Marxist" or profession == "Commando" or profession == "Skullhead":
 			outerwear = army_uniform
 			outfit = tanktop
-			headwear = red_beret
-			facewear = balaclava
+			if profession == "Marxist":
+				headwear = red_beret
+			else:
+				headwear = army_hat
+			if profession == "Skullhead":
+				facewear = skull_mask
+			else:
+				facewear = balaclava
 			eyewear = no_eyewear
 			legwear = camo_pants
 			handwear = black_gloves
@@ -3218,13 +3312,14 @@ def create_npc(profession,affiliation,home):
         	lname = random.choice(surnames)
 		#money
 		money = random.randint(100,400)
-                combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False)
+                combat_status = Combat_Status(False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,0,0,0,0,0,0)
 
                 #mind
                 happiness = random.randint(40,100)
                 stress = random.randint(0,50)
                 sanity = random.randint(40,100)
                 horny = random.randint(0,50)
+		morale = random.randint(1,50)
 		#addictions
                 nicotine_addiction = Addiction('Nicotine',0,0,4,[])
 
@@ -3245,7 +3340,7 @@ def create_npc(profession,affiliation,home):
 
                 addictions = Addictions(cocaine_addiction,opiates_addiction,speed_addiction,caffeine_addiction,nicotine_addiction)
 		trauma = 0
-                mind = Mind(happiness,stress,sanity,horny,addictions,trauma)
+                mind = Mind(happiness,stress,sanity,horny,addictions,trauma,morale)
 		
 		hunger,thirst,sleep = random.randint(3,20),random.randint(6,40),random.randint(50,95)
 
@@ -3336,6 +3431,9 @@ peanuts = Medical('Peanuts', 3,1,'food',True,3,5)
 candy = Medical('Candy', 3,1,'food',True,3,8)
 corn_dog = Medical('Corn dog', 5,1,'food',True,3,10)
 donut = Medical('Donut', 2,1,'food',True,3,5)
+
+#weird food
+human_jerky = Medical('Human jerky', 8,1,'food',True,3,40)
 
 #drinks
 cola = Medical('Cola', 2,1,'drink',True,3,50)
@@ -3532,7 +3630,9 @@ def gen_pawn_shop(x,y):
 	actors = NPC([],0,[],0)
 	name = gen_pawn_name()
 	building = Location(name,'Templeville','Cliff Heights',name,x,y,actors,[counter,trash],False,[],True,
-	[pistol_9mm,shotgun_12g,ak47,uzi,machete,pistol_9mm_ammo,shotgun_12g_ammo,uzi_ammo,ak47_ammo,body_armor,combat_boots,bicycle_helmet,army_helmet,clown_mask,leather_gloves,tent1,tent2],True,False,[],8,19,False,[],False,[],False,False,'No one',[],[],None,False,[],1,True,0,0,no_dress_code,False,None,False)
+	[pistol_9mm,shotgun_12g,ak47,uzi,machete,pistol_9mm_ammo,shotgun_12g_ammo,uzi_ammo,ak47_ammo,body_armor,bear_mace,combat_boots,bicycle_helmet,army_helmet,clown_mask,leather_gloves,tent1,tent2,laptop_computer,microcontroller],True,False,[],8,19,False,[],False,[],False,False,'No one',[],[],None,False,[],1,True,0,0,no_dress_code,False,None,False)
+	owner = random.choice(weapons_corps)
+	building.owned_by = owner.name
 	return building	
 #thrift shop
 def gen_thrift_store(x,y):
@@ -3540,6 +3640,7 @@ def gen_thrift_store(x,y):
 
 	building = Location("Thrift Store",'Templeville','Cliff Heights','Thrift Store',x,y,actors,[counter,chair],False,[],True,[brass_knuckles,molotov,knife,baseball_bat,crowbar,shuriken,tshirt,tanktop,
 	sweater,hoodie,jean_jacket,vest,bomber_jacket,cheap_suit,nice_suit,dress_shirt,hawaiian_shirt,work_shirt,plaid_shirt,trenchcoat,leather_jacket,army_uniform,nice_dress,shorts,jeans,track_pants,black_pants,camo_pants,sweat_pants,short_skirt,long_skirt,leggings,khakis,light_boots,running_shoes,dress_shoes,cowboy_boots,high_heels,sandals,baseball_cap,headband,dad_hat,toque,cowboy_hat,army_hat,fedora,balaclava,fingerless_gloves,black_gloves,sunglasses,sleeping_bag,rope,lighter],False,False,[],13,23,False,[],False,[],False,False,'No one',[],[],None,False,[],1,True,0,0,no_dress_code,False,None,False)
+	building.owned_by = united_solidarity.name
         return building
 #bar
 def gen_bar(x,y,name):
@@ -3583,6 +3684,15 @@ tattoos = Service("tattoos",0,"tattoos")
 haircuts = Service("haircuts",0,"haircuts")
 #laundry
 laundromat = Service("laundry",0,"laundry")
+
+def gen_general_store(x,y):
+        actors = NPC([],0,[],0)
+
+        building = Location("General store",'Templeville','Camp','Doctor',x,y,actors,[counter],False,[],True,[cola,energy_drink,peanuts,human_jerky,sleeping_bag,knife,rope,tent1,shovel],False,True,
+        [],13,23,False,[],False,[],False,False,'No one',[],[],None,False,[],1,True,0,0,no_dress_code,False,None,False)
+        return building
+
+
 def gen_laundromat(x,y):
         actors = NPC([],0,[],0)
 
@@ -3691,6 +3801,7 @@ def gen_coffee_shop(x,y):
                 #regulars = NPC(regulars,money,inventory,fame)
 
         building = Location('Coffee Shop','Templeville','Cliff Heights','Coffee Shop',x,y,actors,items,False,[],True,[crack],False,False,[],6,23,True,regulars,False,[],False,False,'No one',[],[],None,False,[],1,True,0,0,no_dress_code,False,None,True)
+	building.owned_by = starfucks
         return building
 
 def gen_mcshits(x,y):
@@ -3732,6 +3843,7 @@ def gen_mcshits(x,y):
                 #regulars = NPC(regulars,money,inventory,fame)
 
         building = Location('McShits','Templeville','Cliff Heights','McShits',x,y,actors,items,False,[],True,[hamburger,fries,cola],False,False,[],6,23,True,regulars,False,[],False,False,'No one',[],[],None,False,[],1,True,0,0,no_dress_code,False,None,True)
+	building.owned_by = mcshits
         return building
 
 def gen_pizza_place(x,y):
@@ -3773,10 +3885,12 @@ def gen_pizza_place(x,y):
                 #regulars = NPC(regulars,money,inventory,fame)
 
         building = Location('World Famous Pizza','Templeville','Cliff Heights','World Famous Pizza',x,y,actors,items,False,[],True,[pizza,fries,cola],False,False,[],6,23,True,regulars,False,[],False,False,'No one',[],[],None,False,[],1,True,0,0,no_dress_code,False,None,True)
-        return building
+        building.owned_by = pizza_corp
+	return building
 
 #convenience store
 def gen_convenience_store(x,y):
+	corp = quikmart
         item_count = 1
         items = []
         num_items = random.randint(4,11)
@@ -3815,6 +3929,7 @@ def gen_convenience_store(x,y):
                 #regulars = NPC(regulars,money,inventory,fame)
 
         building = Location('Convenience store','Templeville','Cliff Heights','Convenience store',x,y,actors,items,False,[],True,[cola,energy_drink,chocolate_bar,candy,chips,peanuts,beef_jerky,corn_dog],False,False,[],6,23,True,regulars,False,[],False,False,'No one',[],[],None,False,[],1,True,0,0,no_dress_code,False,None,True)
+	building.owned_by = corp.name
         return building
 
 
@@ -3905,7 +4020,7 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
         #        count += 1
         #        regulars = NPC(regulars,money,inventory,fame)
 	if name == "Crankensteins":
-		power = 7
+		power = 15
 	        while count <= num_regulars:
 	                professions = ["Crankenstein"]
 	                profession = random.choice(professions)
@@ -3917,7 +4032,7 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
 	                count += 1
 			items_sold = [speed_7g,speed_14g,speed_28g,uzi,ak47]
         elif name == "Pissbois":
-		power = 7
+		power = 15
                 while count <= num_regulars:
                         professions = ["Pissboi"]
                         profession = random.choice(professions)
@@ -3929,7 +4044,7 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
                         money = 5
                         count += 1
         elif name == "Gamer Assassins":
-		power = 5
+		power = 15
                 while count <= num_regulars:
                         professions = ["Gamer Assassin"]
                         profession = random.choice(professions)
@@ -3942,7 +4057,7 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
                         money = 5
                         count += 1
         elif name == "Flower Collective":
-		power = 4
+		power = 18
                 while count <= num_regulars:
                         professions = ["Flower Child"]
                         profession = random.choice(professions)
@@ -3955,7 +4070,7 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
                         money = 5
                         count += 1
 	elif name == "Clerks":
-		power = 5
+		power = 15
 		while count <= num_regulars:
                         professions = ["Clerk"]
                         profession = random.choice(professions)
@@ -3968,7 +4083,7 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
                         money = 500
                         count += 1
         elif name == "Nudists":
-		power = 3
+		power = 13
 		while count <= num_regulars:
                         professions = ["Nudist"]
                         profession = random.choice(professions)
@@ -3980,7 +4095,7 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
                         money = 5
                         count += 1
         elif name == "Red Faction":
-		power = 7
+		power = 17
                 while count <= num_regulars:
                         professions = ["Marxist"]
                         profession = random.choice(professions)
@@ -3994,7 +4109,7 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
                         count += 1
 			#power = 15
         elif name == "Rude Boys":
-                power = 7
+                power = 19
                 while count <= num_regulars:
                         professions = ["Rude Boy"]
                         profession = random.choice(professions)
@@ -4009,7 +4124,7 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
                         #power = 15
 
         elif name == "Grimesmackers":
-		power = 6
+		power = 19
                 while count <= num_regulars:
                         professions = ["Grimesmacker"]
                         profession = random.choice(professions)
@@ -4021,7 +4136,7 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
                         money = 5
                         count += 1
         elif name == "Cannibals":
-		power = 5
+		power = 4
                 while count <= num_regulars:
                         professions = ["Cannibal"]
                         profession = random.choice(professions)
@@ -4034,7 +4149,7 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
                         money = 5
                         count += 1
         elif name == "Slavers":
-		power = 8
+		power = 18
                 while count <= num_regulars:
                         professions = ["Slaver",'Slave']
                         profession = random.choice(professions)
@@ -4047,7 +4162,7 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
                         money = 5
                         count += 1
         elif name == "Cat People":
-		power = 2
+		power = 15
                 while count <= num_regulars:
                         professions = ["Cat Person"]
                         profession = random.choice(professions)
@@ -4060,7 +4175,7 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
                         money = 5
 			count += 1
         elif name == "Booze Knights":
-                power = 1
+                power = 18
                 while count <= num_regulars:
                         professions = ["Booze Knight"]
                         profession = random.choice(professions)
@@ -4074,9 +4189,22 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
                         count += 1
 
         elif name == "Anarchists":
-		power = 6
+		power = 19
                 while count <= num_regulars:
                         professions = ["Anarchist"]
+                        profession = random.choice(professions)
+                        regular = create_npc(profession,name,'None')
+                        regulars.append(regular)
+                        inventory = []
+                        items_sold = [molotov]
+
+                        fame = 20
+                        money = 5
+                        count += 1
+        elif name == "Sex Cult":
+		power = 6
+                while count <= num_regulars:
+                        professions = ["Occultist","Hipster","Slave"]
                         profession = random.choice(professions)
                         regular = create_npc(profession,name,'None')
                         regulars.append(regular)
@@ -4084,24 +4212,11 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
                         items_sold = []
 
                         fame = 20
-                        money = 5
-                        count += 1
-        elif name == "Sex Cult":
-		power = 3
-                while count <= num_regulars:
-                        professions = ["Occultist","Hipster","Slave"]
-                        profession = random.choice(professions)
-                        regular = create_npc(profession,name,'None')
-                        regulars.append(regular)
-                        inventory = []
-                        items_sold = [cocaine_14g,cocaine_28g,heroin_14g,heroin_28g,speed_14g,speed_28g,weed_112g]
-
-                        fame = 20
 		
                         money = 5
                         count += 1
         elif name == "Patriot Nazis":
-		power = 7
+		power = 20
                 while count <= num_regulars:
                         professions = ["Survivalist","Biker","Scumbag"]
                         profession = random.choice(professions)
@@ -4113,8 +4228,40 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
 
                         fame = 20
                         money = 5
-			#power = 12
+			power = 5
                         count += 1
+                        count += 1
+        elif name == "Hell's Satans":
+                power = 10
+                while count <= num_regulars:
+                        professions = ["Biker"]
+                        profession = random.choice(professions)
+                        regular = create_npc(profession,name,'None')
+                        regulars.append(regular)
+                        items_sold = [cocaine_14g,cocaine_28g,heroin_14g,heroin_28g,speed_28g,speed_14g,weed_112g]
+
+                       # items_sold = []
+
+                        fame = 20
+                        money = 5
+                        power = 5
+                        count += 1
+        elif name == "Skullheads":
+                power = 4
+                while count <= num_regulars:
+                        professions = ["Skullhead"]
+                        profession = random.choice(professions)
+                        regular = create_npc(profession,name,'None')
+                        regulars.append(regular)
+                        items_sold = []
+
+                       # items_sold = []
+
+                        fame = 20
+                        money = 5
+                        #power = 12
+                        count += 1
+
 	if power == None:
 		power = random.randint(4,7)
 	#amount_sold = random.randint(2,power)
@@ -4154,17 +4301,23 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
 
 	locations_owned = [building]
 	locations.append(building)
-	count = 1
-	while count <= power:
-		try:
-			location = random.choice(locations)
-			if location.owned_by == "No one":
-   				location.owned_by = name
-       			        locations_owned.append(location)
-       			        count += 1
+	location_count = 1
+	finished_assigning = False
+	if len(locations_owned) <= power:
+		while location_count <= power:
+			try:
+				location = random.choice(locations)
+				if location.owned_by == "No one":
+					location.owned_by = name
+      					locations_owned.append(location)
+       					location_count += 1
+					location_valid = True
+				else:
+					location_count += 1
+			except:
+				location_count += 1
 				location_valid = True
-		except:
-			location_valid = True
+		
 
 	print 'locations assigned'
 	territory = []
@@ -4198,7 +4351,7 @@ def gen_office(x,y,corp,type,neighborhood_name):
 				chance_manager = random.randint(1,7)
 				if chance_manager == 1:
 					profession = 'Manager'
-					possible_hidden_items = [client_list,company_plans,meeting_minutes,confidential_memo]
+					possible_hidden_items = [client_list,company_plans,meeting_minutes,confidential_memo,payroll,cocaine_3g]
 					hidden_item = random.choice(possible_hidden_items)
 				else:
 					if type == 'Troll Farm':
@@ -4375,7 +4528,9 @@ def gen_apt_building(x,y,neighborhood_name):
 				elif is_vacant != 1:
 					roll = random.randint(1,6)
 					if roll == 1:
-               					professions = ["Hustler","Meatball","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul","Drug Dealer"]
+               					professions = ["Hustler","Meatball","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul","Drug Dealer","Biker"]
+						for worker in workers:
+							professions.append(worker)
 					else:
 						professions = workers
         	       			profession = random.choice(professions)
@@ -4507,10 +4662,17 @@ def gen_shack(x,y):
 	members = []
 	while occupant_count <= num_occupants:
 		items = []
-   		professions = ["Hustler","Meatball","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul"]
+   		professions = ["Hustler","Meatball","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul","Biker","Survivalist"]
         	profession = random.choice(professions)
 		#members = []
-           	member = create_npc(profession,'none','None')
+		verified = False
+		while verified == False:
+			try:
+           			member = create_npc(profession,'none','None')
+           			verified = True
+           		except:
+           			verified = False
+           			
                 #owned_by = member.fname + " " + member.lname
 
            	members.append(member)
@@ -4557,6 +4719,7 @@ def gen_shack(x,y):
                 for actor in actors.members:
                         print actor.fname
                         actor.home = room
+	#building.owned_by = owned_by
 	#for room in building.rooms:
 	#	room.rooms = building.rooms
 	
@@ -4585,6 +4748,8 @@ def gen_park(x,y,name):
         count = 1
         while count <= num_regulars:
                 professions = ["Hustler","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul","Rocker",'Cannibal','Slaver','Marxist','Rude Boy','Grimesmacker','Scavenger','Occultist','Survivalist','Mercenary']
+		for worker in workers:
+			professions.append(worker)
                 profession = random.choice(professions)
                 regular = create_npc(profession,'none','None')
                 regulars.append(regular)
@@ -4795,8 +4960,10 @@ def gen_neighborhood(type,neighborhood_name,flag):
         	print 'barber'
 		num_locations += 1
         #crackhouses
-	if neighborhood_name != 'Cliff Heights' and neighborhood_name != 'Rose Heights' and neighborhood_name != "Camp":
+	if neighborhood_name != 'Cliff Heights' and neighborhood_name != 'Rose Heights':
 		num_crackhouses = random.randint(1,4)
+		if neighborhood_name == "Camp":
+			num_crackhouses = random.randint(1,2)
 		count = 1
 		while count <= num_crackhouses:
 		        x, y = get_unused_location()
@@ -4967,9 +5134,9 @@ def gen_neighborhood(type,neighborhood_name,flag):
 	#gang hq
 	#organizations = []
 	if neighborhood_name == 'Cliff Heights':
-		gang_names = ["Crankensteins", "Pissbois"]
+		gang_names = ["Crankensteins", "Pissbois","Hell's Satans"]
 	elif neighborhood_name == 'Bad Town':
-		gang_names = ['Red Faction','Slavers','Cannibals']
+		gang_names = ['Red Faction','Slavers']
 	elif neighborhood_name == 'Elephant Rock':
 		gang_names = ['Anarchists','Sex Cult']
 	elif neighborhood_name == 'The Scabs':
@@ -5080,6 +5247,8 @@ def gen_neighborhood(type,neighborhood_name,flag):
 				room.owned_by = location.owned_by
 	print 'assigned rooms'
 	type_randos = ["Hustler","Meatball","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul",'Crankenstein','Flower Child','Rocker','Clerk',"Mercenary",'Occultist','Scavenger','Survivalist']
+	for worker in workers:
+		type_randos.append(worker)
 	num_randos = random.randint(40,60)
 	rando_count = 1
 	randos = []
@@ -5116,18 +5285,19 @@ def gen_neighborhood(type,neighborhood_name,flag):
 				factions = []
 				while faction_count <= num_connections:
 					#gangs = location.factions
-					gang_or_corp = random.randint(1,2)
-					print str(gang_or_corp)
-					if gang_or_corp == 1:
-						corp = random.choice(tech_corps)
-						if len(factions) >= 1:
-							if corp not in factions:
-								factions.append(corp)
-                                	elif gang_or_corp == 2:
-                                	        corp = random.choice(real_estate_corps)
-                                	        if len(factions) >= 1:
-                                	                if corp not in factions:
-                                	                        factions.append(corp)
+					possible_corps = []
+					for corp in tech_corps:
+						possible_corps.append(corp)
+                                        for corp in real_estate_corps:
+                                                possible_corps.append(corp)
+                                        for corp in weapons_corps:
+                                                possible_corps.append(corp)
+                                        for corp in food_corps:
+                                                possible_corps.append(corp)
+                              	        corp = random.choice(possible_corps)
+                               	        if len(factions) >= 1:
+                               	                if corp not in factions:
+                               	                        factions.append(corp)
 					faction_count += 1
 				location.broker = new_broker
 				location.broker.broker = Broker(new_broker,factions,min_fame,[],0,0,0,[])
@@ -5141,11 +5311,69 @@ def gen_neighborhood(type,neighborhood_name,flag):
 
 #        organization = Organization(neighborhood_name,False,[],0,None,[],0,[],[],False,0,False)
 #	organizations.append(organization)
-	cliff_heights = Area(locations,neighborhood_name,organizations,x,y,randos,price,flag)
+	cliff_heights = Area(locations,neighborhood_name,organizations,x,y,randos,price,flag,False)
 
 	return cliff_heights
 
-def gen_camp(type,neighborhood_name,flag):
+def gen_compound(type,neighborhood_name,flag,organization):
+        def get_unused_location(locations):
+                checked = False
+                exists = False
+                x = random.randint(1,32)
+                y = random.randint(1,32)
+                if len(locations) >= 1:
+                        for location in locations:
+                                if location.x != x and location.y != y:
+                                        #exists = False
+                                        checked = True
+                                elif location.x == x and location.y == y:
+                                        x = random.randint(1,32)
+                                        y = random.randint(1,32)
+                                        #exists = False
+                                #for location in locations:
+                                #        if location.x == x and location.y == y:
+                                #                       checked = False
+                                #        elif location.x != x and location.y != y:
+                                #                checked = True
+                else:
+                        x = random.randint(1,32)
+                        y = random.randint(1,32)
+                        return x, y
+
+                if checked == True:
+                        return x, y
+                        #checked = True
+
+        locations = []
+        x, y = get_unused_location(locations)
+        location, organization = gen_gang_hq(x,y,"Skullheads",locations,neighborhood_name)
+        locations.append(location)
+        locations = set(locations)
+        locations = list(locations)
+        organizations = []
+#       if organization == None:
+#               organizations = []
+#       else:
+        organizations.append(organization)
+        x = random.randint(1,32)
+        y = random.randint(1,32)        
+        randos = []
+        #locations = []
+        price = 0
+        num_shack = 6
+        shack_count = 0
+        while shack_count <= num_shack:
+                x, y = get_unused_location(locations)
+                shack = gen_abandoned_building(False,locations,"Ruin",x,y)
+                locations.append(shack)
+                shack_count += 1
+        #x, y = get_unused_location(locations)
+        #general_store = gen_general_store(x,y)
+        #locations.append(general_store)
+        camp = Area(locations,neighborhood_name,organizations,x,y,randos,price,flag,False)
+        return camp
+
+def gen_camp(type,neighborhood_name,flag,organization):
         def get_unused_location(locations):
                 checked = False
                 exists = False
@@ -5175,11 +5403,20 @@ def gen_camp(type,neighborhood_name,flag):
                         #checked = True
 
 	locations = []
+	x, y = get_unused_location(locations)
+	location, organization = gen_gang_hq(x,y,"Cannibals",locations,neighborhood_name)
+	locations.append(location)
+	locations = set(locations)
+	locations = list(locations)
 	organizations = []
+#	if organization == None:
+#		organizations = []
+#	else:
+	organizations.append(organization)
         x = random.randint(1,32)
         y = random.randint(1,32)	
 	randos = []
-	locations = []
+	#locations = []
 	price = 0
 	num_shack = 6
 	shack_count = 0
@@ -5188,7 +5425,10 @@ def gen_camp(type,neighborhood_name,flag):
 		shack = gen_shack(x,y)
 		locations.append(shack)
 		shack_count += 1
-	camp = Area(locations,neighborhood_name,organizations,x,y,randos,price,flag)
+	x, y = get_unused_location(locations)
+	general_store = gen_general_store(x,y)
+	locations.append(general_store)
+	camp = Area(locations,neighborhood_name,organizations,x,y,randos,price,flag,False)
 	return camp
 def gen_world_tile():
         actors = NPC(members,0,[],0)
@@ -5215,12 +5455,17 @@ def gen_new_city():
                 the_scabs = gen_neighborhood('Slum','The Scabs','temple')
                 rose_heights = gen_neighborhood('Slum','Rose Heights','temple')
 		mcqueeney_square = gen_neighborhood('Slum','McQueeney Square','temple')
-
-                camp = gen_camp('Slum','Camp','camp')
-
+		try:
+                	camp = gen_camp('Slum','Camp','camp',[])
+		except:
+			camp = gen_camp('Slum','Camp','camp',[])
+		try:
+			compound = gen_compound("Skullheads Compound","Compound","badlands",[])
+		except:
+                        compound = gen_compound("Skullheads Compound","Compound","badlands",[])
 
 		city_created = True
-	areas = [cliff_heights,bad_town,elephant_rock,the_scabs,rose_heights,mcqueeney_square,camp]
+	areas = [cliff_heights,bad_town,elephant_rock,the_scabs,rose_heights,mcqueeney_square,camp,compound]
 	#make sure locations are unique
 	finished_checking = False
 	has_changed = False
@@ -5235,9 +5480,13 @@ def gen_new_city():
 							if area.region == "temple":
 								area.x = random.randint(8,12)
 								area.y = random.randint(8,12)
+
                                                         elif area.region == "camp":
                                                                 area.x = random.randint(15,24)
                                                                 area.y = random.randint(15,24)
+                                                        elif area.region == "badlands":
+                                                                area.x = random.randint(35,40)
+                                                                area.y = random.randint(35,40)
 
 							else:
 								area.x = random.randint(1,48)
