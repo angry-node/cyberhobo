@@ -2181,6 +2181,30 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 				injury = random.choice(bruises)
 			elif injury_type == 'fracture':
 				injury = random.choice(fractures)
+                        if injury.location == "head" or injury.location == 'face':
+                                if damage_taken >= 10 and damage_taken <= 19:
+                                        found = False
+                                        for injury in target.injuries:
+                                                if injury.name == "mild concussion":
+                                                        found = True
+                                        if found == False:
+                                                target.injuries.append(mild_concussion)
+                                        target.combat_status.concussion = True
+                                        target.combat_status.max_concussion += 120
+                                elif damage_taken >= 20:
+                                        found = False
+                                        for injury in target.injuries:
+                                                if injury.name == "minor concussion":
+                                                        target.injuries.remove(injury)
+                                                        target.injuries.append(severe_concussion)
+                                                        found = True
+                                                elif injury.name == "severe concussion":
+                                                        found = True
+                                        if found == False:
+                                                got_concussion = True
+                                                target.injuries.append(severe_concussion)
+                                        target.combat_status.concussion = True
+                                        target.combat_status.max_concussion += 240
 		elif attacker.weapon.name == "Knife" and damage_taken >= 1:
 			attack_types = ['major cut','minor cut','stab','slash']
 			attack_type = random.choice(attack_types)
@@ -2500,8 +2524,8 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
                 if target.combat_status.blind == True:
                         libtcod.console_print(0,1,line_count,target.fname + " " + target.lname + " is blind.")
                         line_count += 1
-                if got_concussion == True:
-                        libtcod.console_print(0,1,line_count,target.fname + " " + target.lname + " got a concussion.")
+                if target.combat_status.concussion == True:
+                        libtcod.console_print(0,1,line_count,target.fname + " " + target.lname + " has a concussion.")
                         line_count += 1
 
 
@@ -2912,7 +2936,7 @@ def player_battle_turn(member,player,enemy,my_location,world,True,party_actions)
                                 libtcod.console_set_default_foreground(0, libtcod.white)  
                         if member.combat_status.concussion == True:
                                 line_count += 2
-                                libtcod.console_set_default_foreground(0, libtcod.brown) 
+                                libtcod.console_set_default_foreground(0, libtcod.yellow) 
                                 libtcod.console_print(0,1,line_count,'CONCUSSION')
                                 libtcod.console_set_default_foreground(0, libtcod.white)  
 
@@ -2921,7 +2945,7 @@ def player_battle_turn(member,player,enemy,my_location,world,True,party_actions)
         		line_count += 2
 			if member.combat_status.knocked_down == False and member.combat_status.on_fire == False:
 				libtcod.console_print(0,1,line_count,'[a]ttack')
-                                libtcod.console_print(0,30,line_count,'[t]argeted attack')
+                                #libtcod.console_print(0,30,line_count,'[t]argeted attack')
 
 				line_count +=1
 			elif member.combat_status.knocked_down == True:
@@ -5577,10 +5601,13 @@ def show_character(target,world,corpse,my_location,player_party,creation):
                 libtcod.console_print(0,1,20, "DEAD")
                 libtcod.console_set_default_foreground(0, libtcod.white)
 
-#	if len(target.injuries) == 0 and len(target.drugs) == 0:
-#		libtcod.console_print(0,1,27,"No injuries/ailments.")
- #       elif len(target.injuries) >= 1:
-  #              libtcod.console_print(0,1,27,"INJURIES/AILMENTS:")
+	if len(target.injuries) == 0 and len(target.drugs) == 0:
+                #libtcod.console_set_default_foreground(0, libtcod.dark_green)
+		libtcod.console_print(0,1,27,"No injuries.")
+                libtcod.console_set_default_foreground(0, libtcod.white)
+
+        #elif len(target.injuries) >= 1:
+              #  libtcod.console_print(0,1,27,"INJURIES:")
 	injury_count = 1
 
 	#	injury_count += 1
@@ -5599,10 +5626,10 @@ def show_character(target,world,corpse,my_location,player_party,creation):
                         libtcod.console_print(0, 30, injury_count + 22, injury.name + "(" + injury.location + ")")
                         injury_count += 1
                 elif injury_count >= 11 and injury_count <= 15:
-                        libtcod.console_print(0, 60, injury_count + 22, injury.name + "(" + injury.location + ")")
+                        libtcod.console_print(0, 60, injury_count + 17, injury.name + "(" + injury.location + ")")
                         injury_count += 1
                 elif injury_count >= 16 and injury_count <= 20:
-                        libtcod.console_print(0, 90, injury_count + 22, injury.name + "(" + injury.location + ")")
+                        libtcod.console_print(0, 90, injury_count + 12, injury.name + "(" + injury.location + ")")
                         injury_count += 1
 
                 libtcod.console_set_default_foreground(0, libtcod.white)
@@ -5613,14 +5640,14 @@ def show_character(target,world,corpse,my_location,player_party,creation):
                 elif drug.name == 'Cocaine withdrawl'or drug.name== 'Crack withdrawl' or drug.name == 'Speed withdrawl' or drug.name =='Heroin withdrawl'or drug.name == 'Opiate withdrawl':
                         libtcod.console_set_default_foreground(0, libtcod.red)  
 
-                if injury_count <= 7:
+                if injury_count <= 5:
                         libtcod.console_print(0, 1, injury_count + 27, drug.name)
                         injury_count += 1 
-                elif injury_count >= 8 and injury_count <= 14:
+                elif injury_count >= 6 and injury_count <= 10:
                         libtcod.console_print(0, 30, injury_count + 22, drug.name)
                         injury_count += 1 
-                elif injury_count >= 15 and injury_count <= 21:
-                        libtcod.console_print(0, 60, injury_count + 22, drug.name)
+                elif injury_count >= 11 and injury_count <= 15:
+                        libtcod.console_print(0, 60, injury_count + 17, drug.name)
                         injury_count += 1
                 libtcod.console_set_default_foreground(0, libtcod.white)
 

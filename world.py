@@ -415,7 +415,7 @@ class Char:
                         if injury.name == "mild concussion" or injury.name == "severe concussion":
                                 injury.time_had += 60
                                 if injury.time_had >= injury.time_to_heal:
-                                        injuries.remove(injury)
+                                        self.injuries.remove(injury)
                                         self.combat_status.concussion = False
                                         concussion_found = True
                 if concussion_found == False and self.combat_status.concussion == True:
