@@ -900,8 +900,15 @@ def travel(party,world,start,my_area,party_actions):
 						else:
 							libtcod.console_print(0,1,line, '[' + letter + '] ' + location.name)
                                                         libtcod.console_set_default_foreground(0, libtcod.gray) 
-                                                        libtcod.console_print(0,30,line, " (" + location.owned_by.name + ")")
-                                                        libtcod.console_set_default_foreground(0, libtcod.white) 
+							if location.owned_by.name == None:
+                                                        	libtcod.console_print(0,30,line, " (" + location.owned_by.fname + " " + lname + ")")
+                                                        	libtcod.console_set_default_foreground(0, libtcod.white) 
+                                                        elif location.owned_by.name == None:
+                                                                libtcod.console_print(0,30,line, " (" + location.owned_by.name + ")")
+                                                                libtcod.console_set_default_foreground(0, libtcod.white)
+							else:
+                                                                libtcod.console_set_default_foreground(0, libtcod.white) 
+ 
 
 					elif count >= 61:
 						if type(location.owned_by) == str:
@@ -911,12 +918,18 @@ def travel(party,world,start,my_area,party_actions):
                                                         libtcod.console_set_default_foreground(0, libtcod.white) 
 
 
-						else:
-							libtcod.console_print(0,50,line-21, '[' + letter + '] ' + location.name)
+                                                else:
+                                                        libtcod.console_print(0,50,line-21, '[' + letter + '] ' + location.name)
                                                         libtcod.console_set_default_foreground(0, libtcod.gray) 
-                                                        libtcod.console_print(0,75,line-21, " (" + location.owned_by.name + ")")
-                                                        libtcod.console_set_default_foreground(0, libtcod.white) 
+                                                        if location.owned_by.name == None:
+                                                                libtcod.console_print(0,75,line-21, " (" + location.owned_by.fname + " " + lname + ")")
+                                                                libtcod.console_set_default_foreground(0, libtcod.white) 
+                                                        elif location.owned_by.name == None:
+                                                                libtcod.console_print(0,75,line-21, " (" + location.owned_by.name + ")")
+                                                                libtcod.console_set_default_foreground(0, libtcod.white) 
 
+							else:
+ 	                                                       libtcod.console_set_default_foreground(0, libtcod.white) 
 
 			count += 1
 		return options,my_area
@@ -2147,7 +2160,7 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
                         target.combat_status.blind = True
 			target.combat_status.max_blind = random.randint(40,60)
 			found = False
-			for injury in target.injury:
+			for injury in target.injuries.injury:
 				if injury.name == "blind":
 					found = True
 			if found == False:
@@ -2586,7 +2599,7 @@ def attack(attacker,target,party,controller,my_location,player,world,show_fight,
 		        for job in world.missions:
                 		if job.type == "Assassination":
 					if job.mission.target.fname == target.fname and job.mission.target.lname == target.lname:
-						job.mission.target = target
+						mission.target = target
 		                                job.mission.is_complete = True
                         #check if target is in location regulars
 			if target in my_location.regulars:
@@ -2772,10 +2785,10 @@ def player_battle_attack(attacker,player,enemy,controller,my_location,world,show
 			option = [option_count, member]
 			options.append(option)
 			line_count += 1
-			libtcod.console_print(0,1,line_count,"[" + str(option_count) + "]" + member.fname + " " + member.lname)
+			libtcod.console_print(0,1,line_count,"[" + str(option_count) + "] " + member.fname + " " + member.lname + "     " + member.outfit.name + "     " + member.weapon.name + "      " + str(member.health.current_health) + "/" + str(member.health.max_health))
 
 		line_count += 2
-		libtcod.console_print(0,1,line_count,"[b]ack")
+		#libtcod.console_print(0,1,line_count,"[b]ack")
 		libtcod.console_flush()
 		choice_made = False
 		while choice_made == False:
@@ -2923,6 +2936,7 @@ def player_battle_turn(member,player,enemy,my_location,world,True,party_actions)
         		libtcod.console_print(0,24,line_count,member.profession)
         		libtcod.console_print(0,39,line_count,member.outfit.name)
         		libtcod.console_print(0,56,line_count,member.weapon.name)
+			libtcod.console_print(0,66,line_count,str(member.health.current_health) + "/" + str(member.health.max_health))
 			#libtcod.console_print(0,66,line_count,str(member.skills.brawl))
 			if member.combat_status.on_fire == True:
 				line_count += 2
@@ -3857,6 +3871,7 @@ def handle_missions(party,world,party_actions):
 				world.missions.remove(job)
 				#return True
 
+
 def handle_jobs(party,world):
 	for area in world.areas:
 		for location in area.locations:
@@ -3868,7 +3883,8 @@ def handle_jobs(party,world):
 					new_jobs = []
 					while job_count <= num_jobs:
 						print 'creating job'
-						mission_type = 'Assassination'
+						mission_types = ['Assassination','Delivery']
+						mission_type = random.choice(mission_types)
 						if mission_type == 'Assassination':
 							name = mission_type
 							print name
@@ -3919,6 +3935,63 @@ def handle_jobs(party,world):
 							location.broker.broker.jobs.append(new_job)
 							print 'job created'
 							print location.broker.broker.jobs
+							job_count += 1
+                                                elif mission_type == 'Delivery':
+                                                        name = mission_type
+                                                        print name
+                                                        type = mission_type
+                                                        #choose target
+                                                        found_target = False
+                                                        print 'finding target'
+
+
+							items = [cocaine_28g,crack_28g,heroin_28g,speed_28g]
+							item = random.choice(items)
+							item.is_quest = True
+                                                        while found_target == False:
+                                                                offices = []
+                                                                found_office = False
+                                                                for area in world.areas:
+                                                                        for new_location in area.locations:
+                                                                                for faction in area.organizations:
+                                                                                        if new_location.is_hq == True:
+                                                                                                offices.append(new_location)
+                                                                                #found_office = True
+                                                                office = random.choice(offices)
+                                                                if office.rooms != None and len(office.rooms) >= 2:
+                                                                        target_location = random.choice(office.rooms)
+                                                                else:
+                                                                        target_location = office
+
+                                                                #print target_location.name
+                                                                if len(target_location.regulars) >= 2:
+                                                                        target = random.choice(target_location.regulars)
+                                                                        if target != None:
+                                                                                print "target: " + target.fname + " " + target.lname
+                                                                                found_target = True
+                                                                        else:
+                                                                                found_target = False
+                                                                elif len(target_location.regulars) == 1:
+                                                                        for new_target in target_location.regulars:
+                                                                                target = new_target
+                                                                                found_target = True
+                                                                else:
+                                                                        found_target = False
+                                                        #print "target: " + target.fname + " " + target.lname
+                                                        deadline = world.time
+                                                        deadline.day += random.randint(2,5)
+                                                        if len(location.broker.broker.factions) >= 1:
+                                                                employer = random.choice(location.broker.broker.factions)
+                                                        else: 
+                                                                employer = random.choice(tech_corps)
+                                                        print employer.name
+                                                        new_mission = Delivery(item,deadline,target,target_location,False)
+                                                        reward = random.randint(500,2000)
+                                                        new_job = Job('name',type,employer,new_mission,reward,location.broker.broker,location)
+                                                        location.broker.broker.jobs.append(new_job)
+							#party.inventory.append(item)
+                                                        print 'job created'
+                                                        print location.broker.broker.jobs
 							job_count += 1
 				#elif len(location.broker.broker.jobs) >= 1:
 					#print str(len(location.broker.broker.jobs)) + " jobs here"
@@ -5163,9 +5236,13 @@ def show_missions(player,world,party_actions):
                 else:
 			
                         for job in missions_here:
-                                if key.c == ord(job[0]):
+                                if key.c == ord(job[0]) and job[1].type == "Assassination":
                                         finished_showing = show_assassination(job[1],party_actions,False,world,location)
 					return finished_showing
+                                elif key.c == ord(job[0]) and job[1].type == "Delivery":
+                                        finished_showing = show_delivery(job[1],party_actions,False,world,location,player)
+                                        return finished_showing
+
         libtcod.console_flush()
 def show_journal(player,world,party_actions):
         libtcod.console_clear(0)
@@ -8267,6 +8344,49 @@ def recruit(char,target,world,player,location):
                 	location.actors.members.remove(target)
 	        	choice_made = True
 			return choice_made
+def show_delivery(job,party_actions,accept,world,location,player):
+        line_count = 1
+        libtcod.console_clear(0)
+        libtcod.console_print(0,1,line_count, "You will deliver " + job.mission.item.name + " to " + job.mission.target.fname + " " + job.mission.target.lname + ".")
+        line_count += 1
+        libtcod.console_print(0,1,line_count, "LOCATION: " + job.mission.target_location.name + " (" + job.mission.target_location.area + ")")
+        line_count += 1
+        job.mission.deadline.correct(party_actions)
+        libtcod.console_print(0,1,line_count, "DEADLINE: " + str(job.mission.deadline.day) + "/" +str(job.mission.deadline.month) + "/" + str(job.mission.deadline.year)) 
+        line_count += 1
+	print job.broker_location.name
+        libtcod.console_print(0,1,line_count, "RETURN TO: " + job.broker.npc.fname + " " + job.broker.npc.lname)
+ 	line_count += 1
+        libtcod.console_print(0,1,line_count, "           " + job.broker_location.name) 
+        line_count += 1
+        libtcod.console_print(0,1,line_count, "           " + job.broker_location.area) 
+
+
+        if accept == False:
+                line_count += 2
+                if job.mission.is_complete == False:
+                        libtcod.console_print(0,1,line_count, "INCOMPLETE")
+                elif job.mission.is_complete == True:
+                        libtcod.console_print(0,1,line_count, "COMPLETE") 
+
+        line_count += 2
+        if accept == True:
+                libtcod.console_print(0,1,line_count, "[a]ccept")
+                line_count += 1
+        libtcod.console_print(0,1,line_count, "[ESC]")
+        libtcod.console_flush()
+        finished_show_assassination = False
+        while finished_show_assassination == False:
+                key = libtcod.console_check_for_keypress()
+                if key.vk == libtcod.KEY_ESCAPE:
+                        #finished_show_assination = True
+                        return True
+                elif key.c == ord('a') and accept == True:
+                        world.missions.append(job)
+			player.inventory.append(job.mission.item)
+                        location.broker.broker.jobs.remove(job)
+                        return True
+
 
 def show_assassination(job,party_actions,accept,world,location):
 	line_count = 1
@@ -8276,7 +8396,12 @@ def show_assassination(job,party_actions,accept,world,location):
         libtcod.console_print(0,1,line_count, "LOCATION: " + job.mission.target_location.parent_location.name + " (" + job.mission.target_location.area + ")")
 	line_count += 1
 	job.mission.deadline.correct(party_actions)
-        libtcod.console_print(0,1,line_count, "DEADLINE: " + str(job.mission.deadline.day) + "/" +str(job.mission.deadline.month) + "/" + str(job.mission.deadline.year)) 
+        libtcod.console_print(0,1,line_count, "DEADLINE: " + str(job.mission.deadline.day) + "/" +str(job.mission.deadline.month) + "/" + str(job.mission.deadline.year))
+	line_count += 1 
+        libtcod.console_print(0,1,line_count, "You will assassinate " + job.mission.target.fname + " " + job.mission.target.lname + ".")
+        line_count += 1
+        libtcod.console_print(0,1,line_count, "RETURN TO: " + job.broker.npc.fname + " " + job.broker.npc.lname + " (" + job.broker_location.name) + ")" 
+
 	#line_count += 1
 	if accept == False:
 	        line_count += 2
@@ -8317,6 +8442,13 @@ def show_complete_jobs(char,target,player,world,location,party_actions):
 					job_complete =[letter,job]
 					jobs_complete.append(job_complete)
 					job_count += 1
+                        elif job.type == 'Delivery':
+                                if job.mission.is_complete == True:
+                                        letter = num_to_letter(job_count)
+                                        job_complete =[letter,job]
+                                        jobs_complete.append(job_complete)
+                                        job_count += 1
+
 	for job in jobs_complete:
 	        libtcod.console_print(0,1,line_count, "[" + job[0] + "]" + job[1].type + " ($" + str(job[1].reward) + ")")
 		line_count += 1
@@ -8333,14 +8465,14 @@ def show_complete_jobs(char,target,player,world,location,party_actions):
                         for job in jobs_complete:
                                 if key.c == ord(job[0]):
 					player.money += job[1].reward
-					location.broker.player_reputation += random.randint(20,30)
+					job[1].broker.player_reputation += random.randint(20,30)
 					for area in world.areas:
 						for organization in area.organizations:
-							if organization.name == job.employer:
+							if organization.name == job[1].employer:
 								organization.player_reputation += random.randint(20,30)
 								organization.missions_completed += 1
-					player_actions.missions_completed += 1
-					player.fame += random.radint(5,10)
+					party_actions.missions_completed += 1
+					player.fame += random.randint(5,10)
 					if job[1] in world.missions:
 						world.missions.remove(job[1])
 					finished_turn_in = True
@@ -8390,6 +8522,10 @@ def show_broker(char,target,player,world,location,party_actions):
 			if job.type == 'Assassination':
 				if job.mission.is_complete == True:
 					missions_to_turn_in = True
+                        elif job.type == 'Delivery':
+                                if job.mission.is_complete == True:
+                                        missions_to_turn_in = True
+
 	if missions_to_turn_in == True:
 		line_count += 1
 		libtcod.console_print(0,1,line_count, "[ENTER] turn in complete jobs.")
@@ -8409,7 +8545,11 @@ def show_broker(char,target,player,world,location,party_actions):
 		else:
 			for job in missions_here:
 				if key.c == ord(job[0]):
-					finished_broker = show_assassination(job[1],party_actions,True,world,location)
+					if job[1].type == "Assassination":
+						finished_broker = show_assassination(job[1],party_actions,True,world,location)
+					elif job[1].type == "Delivery":
+                                                finished_broker = show_delivery(job[1],party_actions,True,world,location,player)
+
 	return finished_broker
 def conversation(char,target,player,world,location,party_actions):
 	line_count = 1
@@ -8427,6 +8567,27 @@ def conversation(char,target,player,world,location,party_actions):
 	if location.has_broker == True and location.broker != None and target.broker != None:
                 libtcod.console_print(0,1,line_count, "[d] see missions..")
 		line_count += 1
+	delivery = False
+	can_deliver = False
+	target_job = None
+	while delivery == False:
+		for job in world.missions:
+			if job.mission.target.fname == target.fname and job.mission.target.lname == target.lname:
+				print 'mission target' 
+				found_item = False
+				for item in player.inventory:
+					if item.name == job.mission.item.name and item.is_quest == True:
+       	        				libtcod.console_print(0,1,line_count, "[e] deliver item.")
+       	        				line_count += 1
+						#job.is_complete = True
+						#player.inventory.remove(mission.job.item)
+						target_job = job
+						delivery = True
+						can_deliver = True
+			else:
+				print 'not mission target'
+		delivery = True
+			
 
 	line_count += 2
 	libtcod.console_print(0,1,line_count, "[ESC]")
@@ -8535,6 +8696,16 @@ def conversation(char,target,player,world,location,party_actions):
 			libtcod.console_clear(0)
 			finished_speaking = True
 			return finished_speaking
+		elif key.c == ord('e') and can_deliver == True and target_job != None:
+			for job in world.missions:
+				if job == target_job:
+					job.mission.is_complete = True
+					for item in player.inventory:
+						if item.name == job.mission.item.name and item.is_quest == True:
+							player.inventory.remove(item)
+					libtcod.console_clear(0)
+					finished_speaking = True
+					return finished_speaking
 def speak_to_who(player,world,target,location,finished_speaking,party_actions):
 
         #finished_speaking = False
@@ -8900,11 +9071,11 @@ def show_rooms(party,world,my_location,party_actions):
 				check_count =1
 				while check_count <= extra_time + 1:
 				
-					chance = random.randint(1,7) - my_location.alarm_level
+					chance = random.randint(1,10) - my_location.alarm_level - my_location.security_level
 					if chance <= 0:
 						chance = 2
 					chance_encounter = random.randint(1,chance)
-					if chance_encounter <= 1 and player_live_here == False:
+					if chance_encounter <= 1 and player_live_here == False and my_location.security_level != 0:
 						finished_encounter = False
 						while finished_encounter == False:
 							show_patrol(party,world,my_location,party_actions)
