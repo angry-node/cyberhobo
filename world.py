@@ -199,14 +199,15 @@ class Party:
                         if member.armor != None or member.armor != "No armor":
                                 value += member.armor.base_value
 		for item in self.inventory:
-			if item.number == None or item.number == 1:
-				value += item.base_value
-			elif item.number >= 2:
-				value += item.base_value * item.number
+			if item.number:
+				if item.number == 1:
+                                	value += item.base_value
+				elif item.number >= 2:
+					value += item.base_value * item.number
 		return value
 
 class Party_Actions:
-	def __init__(self,days_survived,kills,stealing,robbery,drug_dealing,kidnapping,torture,citizens_killed,faction_members_killed,missions_completed):
+	def __init__(self,days_survived,kills,stealing,robbery,drug_dealing,kidnapping,torture,citizens_killed,faction_members_killed,missions_completed,have_cheated):
 		self.days_survived = days_survived
 		self.kills = kills
 		self.stealing = stealing
@@ -217,6 +218,7 @@ class Party_Actions:
 		self.citizens_killed = citizens_killed
 		self.faction_members_killed = faction_members_killed
 		self.missions_completed = missions_completed
+		self.have_cheated = have_cheated
 #party_actions = Party_Actions(0,0,0,0,0,0,0,0)
 class NPC:
         def __init__(self,members,money,inventory,fame):
@@ -563,6 +565,10 @@ class Char:
                                 total_warmth += self.armor.warmth
 		return total_warmth
 
+		def check_illnesses(self):
+			for illness in self.illnesses:
+				illness.handle()
+
 class Date_of_Birth:
 	def __init__(self,day,month,year):
 		self.day = day
@@ -571,7 +577,7 @@ class Date_of_Birth:
 
 class Health:
 	def __init__(self, base_max, max_health, current_health,base_blood,max_blood,current_blood,bleeding_rate,base_pain,max_pain,
-	current_pain,base_current_pain,base_stamina,current_stamina,max_stamina, body_temp,cold_rating):
+	current_pain,base_current_pain,base_stamina,current_stamina,max_stamina, body_temp,cold_rating,immune_system,vaccinations,illnesses):
 		self.base_max = base_max
 		self.max_health = max_health
 		self.current_health = current_health
@@ -592,6 +598,10 @@ class Health:
 
 		self.body_temp = body_temp
 		self.cold_rating = cold_rating
+
+		self.immune_system = immune_system
+		self.vaccinations= vaccinations
+		self.illnesses = illnesses
 
 class Mind:
 	def __init__(self,happiness,stress,sanity,horny,addictions,trauma,morale):
@@ -629,7 +639,7 @@ class Addiction:
 
 class Organization:
 	def __init__(self,name,is_player,footsoldiers,player_reputation,hq,locations_owned,power,territory,rent_due,rent_paid,month,rent_checked,debts,
-		rent_amount,items_bought,members_killed,theft_from,members_attacked,members_recruited,theft_on_turf,killed_on_turf,members_kidnapped,gifts,missions_completed,missions_failed):
+		rent_amount,items_bought,members_killed,theft_from,members_attacked,members_recruited,theft_on_turf,killed_on_turf,members_kidnapped,gifts,missions_completed,missions_failed,items_sold,cheat_bonus):
 		self.name = name
 		self.is_player = is_player
 		self.footsoldiers = footsoldiers
@@ -661,6 +671,10 @@ class Organization:
 
 		self.missions_completed = missions_completed
 		self.missions_failed = missions_failed
+
+		self.items_sold = items_sold
+
+		self.cheat_bonus = cheat_bonus
 	def check_reputation(self,player,world):
 		items_bought_bonus = 0
 		killed_penalty = 0
@@ -669,6 +683,7 @@ class Organization:
 		members_recruited_penalty = 0
 		theft_on_turf_penalty = 0
 		killed_on_turf_penalty = 0
+		cheat_bonus= self.cheat_bonus
 		#bonuses
 		if self.items_bought >= 10000:
 			items_bought_bonus += self.items_bought / 500
@@ -690,13 +705,13 @@ class Organization:
 		if self.killed_on_turf >= 1:
 			killed_on_turf_penalty = self.killed_on_turf
 
-		self.player_reputation = (items_bought_bonus + killed_penalty + theft_penalty + members_attacked_penalty + members_recruited_penalty + 
-					theft_on_turf_penalty + killed_on_turf_penalty) / 5
+		self.player_reputation = (items_bought_bonus + cheat_bonus - killed_penalty - theft_penalty - members_attacked_penalty - members_recruited_penalty - 
+					theft_on_turf_penalty - killed_on_turf_penalty)
 
 #corporations
 
 class Corporation:
-	def __init__(self,name,industries,locations,debts,items_bought,members_killed,theft_from,members_attacked,members_recruited,theft_on_turf,killed_on_turf,members_kidnapped,gifts,player_reputation,missions_completed,missions_failed):
+	def __init__(self,name,industries,locations,debts,items_bought,members_killed,theft_from,members_attacked,members_recruited,theft_on_turf,killed_on_turf,members_kidnapped,gifts,player_reputation,missions_completed,missions_failed,cheat_bonus):
 		self.name = name
 		self.industries = industries
 		self.locations = locations
@@ -716,7 +731,10 @@ class Corporation:
 		self.player_reputation = player_reputation
 		self.missions_completed = missions_completed
 		self.missions_failed = missions_failed
+		
+		self.cheat_bonus = cheat_bonus
         def check_reputation(self,player,world):
+		cheat_bonus = self.cheat_bonus
                 items_bought_bonus = 0
                 killed_penalty = 0
                 theft_penalty = 0
@@ -746,39 +764,39 @@ class Corporation:
                 if self.killed_on_turf >= 1:
                         killed_on_turf_penalty = self.killed_on_turf
 
-                self.player_reputation = (items_bought_bonus + killed_penalty + theft_penalty + members_attacked_penalty + members_recruited_penalty + 
-                                        theft_on_turf_penalty + killed_on_turf_penalty) / 5
+                self.player_reputation = (items_bought_bonus + cheat_bonus - killed_penalty - theft_penalty - members_attacked_penalty - members_recruited_penalty - 
+                                        theft_on_turf_penalty - killed_on_turf_penalty) 
 #corporations
 
 
 #tech companies
-thetacom = Corporation('Thetacom',['Telecom'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)  
-newgen_global = Corporation('NewGen',['Security','Big Data'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)  
-facebook = Corporation('Facebook',['Social Media'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)  
-twitter = Corporation('Twitter',['Social Media'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)  
-aci_data = Corporation('ACI Data',['Big Data'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)  
-google = Corporation('Google',['Big Data','Security','Health'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)  
+thetacom = Corporation('Thetacom',['Telecom'],[],[],0,0,0,0,0,0,0,0,0,0,0,0,0)  
+newgen_global = Corporation('NewGen',['Security','Big Data'],[],[],0,0,0,0,0,0,0,0,0,0,0,0,0)  
+facebook = Corporation('Facebook',['Social Media'],[],[],0,0,0,0,0,0,0,0,0,0,0,0,0)  
+twitter = Corporation('Twitter',['Social Media'],[],[],0,0,0,0,0,0,0,0,0,0,0,0,0)  
+aci_data = Corporation('ACI Data',['Big Data'],[],[],0,0,0,0,0,0,0,0,0,0,0,0,0)  
+google = Corporation('Google',['Big Data','Security','Health'],[],[],0,0,0,0,0,0,0,0,0,0,0,0,0)  
 
 tech_corps = [thetacom,newgen_global,facebook,twitter,aci_data,google]
 
 #real estate
-united_solidarity = Corporation('United Solidarity',['Health', 'Big Data'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)
-chh = Corporation('CHH',['Security', 'Big Data'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)  
-gcw_global = Corporation('GCW Global',['Security'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)  
+united_solidarity = Corporation('United Solidarity',['Health', 'Big Data'],[],[],0,0,0,0,0,0,0,0,0,0,0,0,0)
+chh = Corporation('CHH',['Security', 'Big Data'],[],[],0,0,0,0,0,0,0,0,0,0,0,0,0)  
+gcw_global = Corporation('GCW Global',['Security'],[],[],0,0,0,0,0,0,0,0,0,0,0,0,0)  
 
 real_estate_corps = [united_solidarity,chh,gcw_global]
 
 #food
-quikmart = Corporation('Quik-e Mart',['Food'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)
-starfucks = Corporation('Starfucks',['Food'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)
-pizza_corp = Corporation('Pizza Corp',['Food'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)
-mcshits = Corporation('McShits',['Food'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)
+quikmart = Corporation('Quik-e Mart',['Food'],[],[],0,0,0,0,0,0,0,0,0,0,0,0,0)
+starfucks = Corporation('Starfucks',['Food'],[],[],0,0,0,0,0,0,0,0,0,0,0,0,0)
+pizza_corp = Corporation('Pizza Corp',['Food'],[],[],0,0,0,0,0,0,0,0,0,0,0,0,0)
+mcshits = Corporation('McShits',['Food'],[],[],0,0,0,0,0,0,0,0,0,0,0,0,0)
 
 food_corps = [quikmart,starfucks,pizza_corp,mcshits]
 
 #weapons
-technoco = Corporation('Technoco',['weapons'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)
-united_tactical = Corporation('United Tactical',['weapons'],[],[],0,0,0,0,0,0,0,0,0,0,0,0)
+technoco = Corporation('Technoco',['weapons'],[],[],0,0,0,0,0,0,0,0,0,0,0,0,0)
+united_tactical = Corporation('United Tactical',['weapons'],[],[],0,0,0,0,0,0,0,0,0,0,0,0,0)
 weapons_corps = [technoco,united_tactical]
 
 
@@ -868,7 +886,7 @@ class Permissions:
 		self.can_sleep = can_sleep
 default_permissions = Permissions(True,True,False,False,False,True,True)
 
-start_health = Health(100,100,100,100,100,100,0,0,100,0,0,100,100,100,50,5)
+start_health = Health(100,100,100,100,100,100,0,0,100,0,0,100,100,100,50,5,70,[],[])
 
 class Stats:
 	def __init__(self, strength, dexterity, intelligence, willpower, charisma, base_strength, base_dexterity, base_intelligence,base_willpower, 
@@ -1241,7 +1259,158 @@ burn_left_leg = Injury("burn","left leg"," 's left leg was burned",[],[],lower_m
 burns = [burn_torso,burn_face,burn_right_arm,burn_left_arm,burn_right_leg,burn_left_leg]
 
 
+#ILLNESS
 
+class Illness:
+        def __init__(self, name,illness_type,color,time_caught_illness,num_days_to_show_symptoms,time_show_symptoms,symptoms,max_have_symptoms,show_symptoms_until,
+			can_kill,chance_kill, hp_penalty, stamina_penalty, strength_penalty,dexterity_penalty,willpower_penalty,intelligence_penalty,
+			charisma_penalty,num_days_contagious,time_contagious,how_contagious,max_contagious,contagious_until,contagious,show_symptoms,severity,possible_symptoms): 
+
+		self.name = name
+		self.illness_type = illness_type
+                self.color = color
+		self.time_caught_illness = time_caught_illness
+
+		self.num_days_to_show_symptoms = num_days_to_show_symptoms
+		self.time_show_symptoms = time_show_symptoms
+		self.symptoms = symptoms
+		self.max_have_symptoms = max_have_symptoms
+		self.show_symptoms_until = show_symptoms_until
+
+		self.can_kill = can_kill
+		self.chance_kill = chance_kill
+
+		self.hp_penalty = hp_penalty
+		self.stamina_penalty = stamina_penalty
+		self.strength_penalty = strength_penalty
+		self.dexterity_penalty = dexterity_penalty
+		self.willpower_penalty = willpower_penalty
+		self.intelligence_penalty = intelligence_penalty
+		self.charisma_penalty = charisma_penalty
+
+		self.num_days_contagious= num_days_contagious
+		self.time_contagious= time_contagious
+		self.how_contagious = how_contagious
+		self.max_contagious = max_contagious
+		self.contagious_until = contagious_until
+
+		self.contagious = contagious
+		self.show_symptoms= show_symptoms
+
+		self.severity = severity
+		self.possible_symptoms = possible_symptoms
+	def initialize(self,world,target,party_actions):
+		print "initializing " + self.name
+		#when do we become contagious
+		new_time = world.time
+		new_time.day += self.num_days_contagious
+		new_time.correct(party_actions)
+		self.time_contagious = new_time
+		new_time.day += self.max_contagious
+		new_time.correct(party_actions)
+		self.contagious_until = new_time
+		#when do we show symptoms
+                new_time = world.time
+                new_time.day += self.num_days_to_show_symptoms
+                new_time.correct(party_actions)
+                self.time__show_symptoms = new_time
+                new_time.day += self.max_have_symptoms
+                new_time.correct(party_actions)
+                self.show_symptoms_until = new_time
+                #give symptoms and damage health
+                if self.name == "Flu":
+                        self.symptoms = []
+                        for symptom in self.possible_symptoms:
+                                roll = random.randint(1,100)
+                                if roll >= symptom.chance:
+                                        self.symptoms.append(symptom)
+                        target.health.max_health -= self.hp_penalty
+                        target.health.current_health -= self.hp_penalty
+                        target.health.max_stamina -= self.stamina_penalty
+                        target.health.current_stamina -= self.stamina_penalty
+
+                        target.stats.strength -= self.strength_penalty
+                        target.stats.dexterity -= self.dexterity_penalty
+                        target.stats.intelligence -= self.intelligence_penalty
+                        target.stats.willpower -= self.willpower_penalty
+                        target.stats.charisma -= self.charisma_penalty
+	def handle(self,world,target):
+		#function to check if a time limit has been reached
+		def check_time(current_time,target,new_time):
+			passed = False
+			if current_time.year >= new_time.year + 1:
+				passed = True
+			if passed == False and current_time.month >= new_time.month + 1:
+				passed = True
+			if passed == False and current_time.day >= new_time.day + 1:
+				passed = True
+			if passed == False and current_time.hour >= new_time.day + 1:
+				passed = True
+			return passed
+		#check if we are contagious yet
+		passed_contagious = False
+		passed_contagious = check_time(world.time,target,self.time_contagious)
+		print "Contagious: " + str(passed_contagious)
+		if passed_contagious == True:
+			#check if we are still contagious
+			still_contagious = check_time(world.time,target,self.max_contagious)
+			if still_contagious == True:
+				passed_contagious = False
+			elif still_contagious == False:
+				passed_contagious = True
+			#if passed_contagious == True:
+			#	for illness in target.illnesses:
+			#		if illness.name == self.name:
+			#			target.illnesses.remove(illness)
+			if passed_contagious == False:
+				self.contagious = True
+		print "Still contagious: " + str(passed_contagious)
+                #check if we are showing symptoms yet
+                passed_symptoms = False
+                passed_symptoms = check_time(world.time,target,self.time_contagious)
+                if passed_symptoms == True:
+                        #check if we are still showing symptoms
+                        still_symptoms = check_time(world.time,target,self.max_symptoms)
+                        if still_symptoms == True:
+                                passed_symptoms = False
+                        elif still_symptoms == False:
+                                passed_symptoms = True
+                        if passed_symptoms == False:
+                                self.symptoms = True
+			elif passed_symptoms == True:
+				self.symptoms = False
+		#check if illness is over
+                if passed_contagious == True and passed_symptoms == True:
+                        for illness in target.illnesses:
+                                if illness.name == self.name:
+                 	               target.illnesses.remove(illness)
+
+
+class Symptom:
+	def __init__(self,name,chance,verb,color):
+		self.name =name
+		self.chance = chance
+		self.verb = verb
+		self.color = color
+
+sneezing = Symptom("Sneezing",40," is sneezing.",libtcod.yellow)
+runny_nose = Symptom("Runny nose",30,"'s nose is funny.",libtcod.yellow)
+mild_headache = Symptom("Mild headache",20," has a mild headache.",libtcod.yellow)
+migraine = Symptom("Migraine",5,"has a migraine.",libtcod.red)
+mild_fever = Symptom("Mild fever",40,"has a mild fever.",libtcod.yellow)
+high_fever = Symptom("High fever",5,"has a high fever.",libtcod.red)
+sore_throat = Symptom("Sore throat",15,"has a sore throat.",libtcod.yellow)
+cough = Symptom("Cough",40,"has a cough.",libtcod.yellow)
+severe_cough = Symptom("Severe cough",50,"has a severe cough.",libtcod.red)
+coughing_up_blood = Symptom("Coughing up blood",40,"is coughing up blood.",libtcod.red)
+nauseous = Symptom("Nauseous",20,"feels nauseous.",libtcod.yellow)
+vomiting = Symptom("Vomiting",40,"is vomiting.",libtcod.green)
+vomiting_blood = Symptom("Vomiting blood",40,"is vomiting blood.",libtcod.dark_red)
+difficulty_breathing = Symptom("Difficulty breathing",40,"is having difficulty breathing.",libtcod.dark_red)
+dizziness = Symptom("Dizziness",40,"feels dizzy.",libtcod.yellow)
+
+flu_symptoms = [sneezing,runny_nose,mild_fever,sore_throat,cough]
+flu = Illness("Flu","virus",libtcod.green,None,3,None,[],4,None,True,15,30,30,3,3,3,3,3,2,None,5,4,None,False,False,3,flu_symptoms)
 
 class Want:
 	def __init__(self,name,type,wear_off,time_had):
@@ -1374,7 +1543,7 @@ class Clothing_Properties:
 default_properties = Clothing_Properties(0,0,0,0,0,0)
 #outfits
 class Outfit:
-	def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof):
+	def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof,number):
 		self.name = name
 		self.outfit_type = outfit_type
 		self.defense = defense
@@ -1390,10 +1559,11 @@ class Outfit:
                 self.body_odor = body_odor
                 self.warmth = warmth
 		self.waterproof = waterproof
+		self.number = number
 
 
 class Headwear:
-        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof):
+        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof,number):
                 self.name = name
                 self.outfit_type = outfit_type
                 self.defense = defense
@@ -1409,10 +1579,11 @@ class Headwear:
                 self.body_odor = body_odor
                 self.warmth = warmth
                 self.waterproof = waterproof
+                self.number = number
 
 
 class Eyewear:
-        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof):
+        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof,number):
                 self.name = name
                 self.outfit_type = outfit_type
                 self.defense = defense
@@ -1428,10 +1599,11 @@ class Eyewear:
                 self.body_odor = body_odor
                 self.warmth = warmth
                 self.waterproof = waterproof
+                self.number = number
 
 
 class Facewear:
-        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof):
+        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof,number):
                 self.name = name
                 self.outfit_type = outfit_type
                 self.defense = defense
@@ -1447,10 +1619,11 @@ class Facewear:
                 self.body_odor = body_odor
                 self.warmth = warmth
                 self.waterproof = waterproof
+                self.number = number
 
 
 class Hands:
-        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof):
+        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof,number):
                 self.name = name
                 self.outfit_type = outfit_type
                 self.defense = defense
@@ -1466,10 +1639,11 @@ class Hands:
                 self.body_odor = body_odor
                 self.warmth = warmth
                 self.waterproof = waterproof
+                self.number = number
 
 
 class Legs:
-        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof):
+        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof,number):
                 self.name = name
                 self.outfit_type = outfit_type
                 self.defense = defense
@@ -1485,10 +1659,11 @@ class Legs:
                 self.body_odor = body_odor
                 self.warmth = warmth
                 self.waterproof = waterproof
+                self.number = number
 
 
 class Feet:
-        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof):
+        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof,number):
                 self.name = name
                 self.outfit_type = outfit_type
                 self.defense = defense
@@ -1499,9 +1674,10 @@ class Feet:
                 self.base_value = base_value
 		self.properties =properties
                 self.waterproof = waterproof
+                self.number = number
 
 class Armor:
-        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof):
+        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof,number):
                 self.name = name
                 self.outfit_type = outfit_type
                 self.defense = defense
@@ -1517,10 +1693,11 @@ class Armor:
                 self.body_odor = body_odor
                 self.warmth = warmth
                 self.waterproof = waterproof
+                self.number = number
 
 
 class Outerwear:
-        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof):
+        def __init__(self, name, outfit_type,defense,max_condition,condition,item_type,can_loot,base_value,damage,blood,wet,dirty,body_odor,warmth,waterproof,number):
                 self.name = name
                 self.outfit_type = outfit_type
                 self.defense = defense
@@ -1536,128 +1713,129 @@ class Outerwear:
                 self.body_odor = body_odor
                 self.warmth = warmth
                 self.waterproof = waterproof
+                self.number = number
 
 
 
 #headwear
-no_headwear = Headwear("None", "None",1,5,5,'headwear',True,0,0,0,0,0,0,0,0)
+no_headwear = Headwear("None", "None",1,5,5,'headwear',True,0,0,0,0,0,0,0,0,0)
 
-headband = Headwear("Headband", "Headband",1,5,5,'headwear',True,15,0,0,0,0,0,0,1)
-baseball_cap = Headwear("Baseball cap", "Baseball cap",1,5,5,'headwear',True,45,0,0,0,0,0,0,2)
-dad_hat = Headwear("Dad hat", "Dad hat",1,5,5,'headwear',True,35,0,0,0,0,0,1,2)
-toque = Headwear("Toque", "Toque",1,5,5,'headwear',True,20,0,0,0,0,0,4,2)
-beret = Headwear("Beret", "Beret",1,5,5,'headwear',True,20,0,0,0,0,0,1,1)
-red_beret = Headwear("Red beret", "Red beret",1,5,5,'headwear',True,20,0,0,0,0,0,1,1)
-fedora = Headwear("Fedora", "Fedora",1,5,5,'headwear',True,60,0,0,0,0,0,1,2)
+headband = Headwear("Headband", "Headband",1,5,5,'headwear',True,15,0,0,0,0,0,0,1,0)
+baseball_cap = Headwear("Baseball cap", "Baseball cap",1,5,5,'headwear',True,45,0,0,0,0,0,0,2,0)
+dad_hat = Headwear("Dad hat", "Dad hat",1,5,5,'headwear',True,35,0,0,0,0,0,1,2,0)
+toque = Headwear("Toque", "Toque",1,5,5,'headwear',True,20,0,0,0,0,0,4,2,0)
+beret = Headwear("Beret", "Beret",1,5,5,'headwear',True,20,0,0,0,0,0,1,1,0)
+red_beret = Headwear("Red beret", "Red beret",1,5,5,'headwear',True,20,0,0,0,0,0,1,1,0)
+fedora = Headwear("Fedora", "Fedora",1,5,5,'headwear',True,60,0,0,0,0,0,1,2,0)
 
-army_hat = Headwear("Army hat", "Army hat",1,5,5,'headwear',True,20,0,0,0,0,0,1,2)
+army_hat = Headwear("Army hat", "Army hat",1,5,5,'headwear',True,20,0,0,0,0,0,1,2,0)
 
-bicycle_helmet = Headwear("Bicycle helmet", "Bicycle helmet",4,5,5,'headwear',True,50,0,0,0,0,0,0,2)
-army_helmet = Headwear("Army helmet", "Army helmet",6,5,5,'headwear',True,100,0,0,0,0,0,3,5)
-cowboy_hat = Headwear("Cowboy hat", "Cowboy hat",1,5,5,'headwear',True,100,0,0,0,0,0,0,2)
+bicycle_helmet = Headwear("Bicycle helmet", "Bicycle helmet",4,5,5,'headwear',True,50,0,0,0,0,0,0,2,0)
+army_helmet = Headwear("Army helmet", "Army helmet",6,5,5,'headwear',True,100,0,0,0,0,0,3,5,0)
+cowboy_hat = Headwear("Cowboy hat", "Cowboy hat",1,5,5,'headwear',True,100,0,0,0,0,0,0,2,0)
 
-cat_ears = Headwear("Cat ears", "Cat ears",1,5,5,'headwear',True,100,0,0,0,0,0,0,0)
+cat_ears = Headwear("Cat ears", "Cat ears",1,5,5,'headwear',True,100,0,0,0,0,0,0,0,0)
 
 
 headwear_types = [headband,baseball_cap,dad_hat,toque,cowboy_hat]
 
 #eyewear
-no_eyewear = Eyewear("None", "None",0,5,5,'eyewear',True,0,0,0,0,0,0,0,0)
+no_eyewear = Eyewear("None", "None",0,5,5,'eyewear',True,0,0,0,0,0,0,0,0,0)
 
-sunglasses = Eyewear("Sunglasses", "Sunglasses",0,5,5,'eyewear',True,30,0,0,0,0,0,0,0)
+sunglasses = Eyewear("Sunglasses", "Sunglasses",0,5,5,'eyewear',True,30,0,0,0,0,0,0,0,0)
 
 #facewear
-no_facewear = Facewear("None", "None",1,5,5,'facewear',True,0,0,0,0,0,0,0,0)
-black_facemask = Facewear("Black facemask", "Black facemask",1,5,5,'facewear',True,15,0,0,0,0,0,0,2)
-red_facemask = Facewear("Red facemask", "Red facemask",1,5,5,'facewear',True,15,0,0,0,0,0,0,2)
+no_facewear = Facewear("None", "None",1,5,5,'facewear',True,0,0,0,0,0,0,0,0,0)
+black_facemask = Facewear("Black facemask", "Black facemask",1,5,5,'facewear',True,15,0,0,0,0,0,0,2,1)
+red_facemask = Facewear("Red facemask", "Red facemask",1,5,5,'facewear',True,15,0,0,0,0,0,0,2,1)
 
 
-balaclava = Facewear("Balaclava", "Balaclava",1,5,5,'facewear',True,15,0,0,0,0,0,3,3)
-clown_mask = Facewear("Clown mask", "Clown mask",2,5,5,'facewear',True,80,0,0,0,0,0,0,1)
-anonymous_mask = Facewear("Anonymous mask", "Anonymous mask",2,5,5,'facewear',True,80,0,0,0,0,0,0,1)
+balaclava = Facewear("Balaclava", "Balaclava",1,5,5,'facewear',True,15,0,0,0,0,0,3,3,1)
+clown_mask = Facewear("Clown mask", "Clown mask",2,5,5,'facewear',True,80,0,0,0,0,0,0,1,1)
+anonymous_mask = Facewear("Anonymous mask", "Anonymous mask",2,5,5,'facewear',True,80,0,0,0,0,0,0,1,1)
 
-skull_mask = Facewear("Skull mask", "Skull mask",1,5,5,'facewear',True,15,0,0,0,0,0,3,3)
+skull_mask = Facewear("Skull mask", "Skull mask",1,5,5,'facewear',True,15,0,0,0,0,0,3,3,1)
 
 
 #hands
-no_handwear = Hands("None", "None",1,5,5,'handwear',True,0,0,0,0,0,0,0,0)
-fingerless_gloves = Hands("Fingerless gloves", "Black glove",1,5,5,'handwear',True,10,0,0,0,0,0,1,2)
-black_gloves = Hands("Black gloves", "Black glove",1,5,5,'handwear',True,10,0,0,0,0,0,2,2)
-leather_gloves = Hands("Leather gloves", "Leather glove",2,5,5,'handwear',True,50,0,0,0,0,0,2,4)
+no_handwear = Hands("None", "None",1,5,5,'handwear',True,0,0,0,0,0,0,0,0,0)
+fingerless_gloves = Hands("Fingerless gloves", "Black glove",1,5,5,'handwear',True,10,0,0,0,0,0,1,2,1)
+black_gloves = Hands("Black gloves", "Black glove",1,5,5,'handwear',True,10,0,0,0,0,0,2,2,1)
+leather_gloves = Hands("Leather gloves", "Leather glove",2,5,5,'handwear',True,50,0,0,0,0,0,2,4,1)
 
 #legs
-no_legwear = Legs("None", "None",1,5,5,'legwear',True,0,0,0,0,0,0,0,0)
+no_legwear = Legs("None", "None",1,5,5,'legwear',True,0,0,0,0,0,0,0,0,0)
 
-shorts = Legs("Shorts", "Shorts",1,1,5,'legwear',True,20,0,0,0,0,0,0,1)
-jeans = Legs("Jeans", "Jeans",2,2,5,'legwear',True,30,0,0,0,0,0,2,1)
-ripped_jeans = Legs("Ripped jeans", "Ripped jeans",2,2,5,'legwear',True,45,0,0,0,0,0,1,1)
-khakis = Legs("Khakis", "Khakis",2,5,5,'legwear',True,45,0,0,0,0,0,2,1)
-camo_pants = Legs("Camo pants", "Camo pants",2,2,5,'legwear',True,15,0,0,0,0,0,2,2)
-black_pants = Legs("Black pants", "Black pants",2,2,5,'legwear',True,15,0,0,0,0,0,2,2)
+shorts = Legs("Shorts", "Shorts",1,1,5,'legwear',True,20,0,0,0,0,0,0,1,1)
+jeans = Legs("Jeans", "Jeans",2,2,5,'legwear',True,30,0,0,0,0,0,2,1,1)
+ripped_jeans = Legs("Ripped jeans", "Ripped jeans",2,2,5,'legwear',True,45,0,0,0,0,0,1,1,1)
+khakis = Legs("Khakis", "Khakis",2,5,5,'legwear',True,45,0,0,0,0,0,2,1,1)
+camo_pants = Legs("Camo pants", "Camo pants",2,2,5,'legwear',True,15,0,0,0,0,0,2,2,1)
+black_pants = Legs("Black pants", "Black pants",2,2,5,'legwear',True,15,0,0,0,0,0,2,2,1)
 
-track_pants = Legs("Track pants", "Track pants",2,2,5,'legwear',True,15,0,0,0,0,0,1,2)
-suit_pants = Legs("Suit pants", "Suit pants",2,2,5,'legwear',True,90,0,0,0,0,0,2,2)
-work_pants = Legs("Work pants", "Work pants",2,2,5,'legwear',True,40,0,0,0,0,0,1,2)
-sweat_pants = Legs("Sweat pants", "Sweat pants",2,2,5,'legwear',True,40,0,0,0,0,0,2,2)
+track_pants = Legs("Track pants", "Track pants",2,2,5,'legwear',True,15,0,0,0,0,0,1,2,1)
+suit_pants = Legs("Suit pants", "Suit pants",2,2,5,'legwear',True,90,0,0,0,0,0,2,2,1)
+work_pants = Legs("Work pants", "Work pants",2,2,5,'legwear',True,40,0,0,0,0,0,1,2,1)
+sweat_pants = Legs("Sweat pants", "Sweat pants",2,2,5,'legwear',True,40,0,0,0,0,0,2,2,1)
 
-long_skirt = Legs("Long skirt", "Long skirt",1,1,5,'legwear',True,45,0,0,0,0,0,1,1)
-short_skirt = Legs("Short skirt", "Short skirt",1,1,5,'legwear',True,40,0,0,0,0,0,1,1)
-leggings = Legs("Leggings", "Leggings",1,5,5,'legwear',True,25,0,0,0,0,0,1,1)
+long_skirt = Legs("Long skirt", "Long skirt",1,1,5,'legwear',True,45,0,0,0,0,0,1,1,1)
+short_skirt = Legs("Short skirt", "Short skirt",1,1,5,'legwear',True,40,0,0,0,0,0,1,1,1)
+leggings = Legs("Leggings", "Leggings",1,5,5,'legwear',True,25,0,0,0,0,0,1,1,1)
 
 mens_legwear = [shorts,jeans,khakis,track_pants,work_pants,ripped_jeans,camo_pants,sweat_pants]
 womens_legwear = [shorts,jeans,khakis,track_pants,sweat_pants, work_pants,long_skirt,short_skirt,leggings]
 
 #feet
-no_footwear = Legs("None", "None",1,5,5,'footwear',True,0,0,0,0,0,0,0,0)
+no_footwear = Legs("None", "None",1,5,5,'footwear',True,0,0,0,0,0,0,0,0,0)
 
-running_shoes = Legs("Running shoes", "Running shoes",2,1,5,'footwear',True,100,0,0,0,0,0,1,2)
-sandals = Legs("Sandals", "Sandals",1,1,5,'footwear',True,40,0,0,0,0,0,0,2)
-high_heels = Legs("High heels", "High heels",1,5,5,'footwear',True,50,0,0,0,0,0,0,1)
-dress_shoes = Legs("Dress shoes", "Dress shoes",1,5,5,'footwear',True,130,0,0,0,0,0,1,2)
-light_boots = Legs("Light boots", "Light boots",3,5,5,'footwear',True,150,0,0,0,0,0,2,3)
-combat_boots = Legs("Combat boots", "Combat boots",4,5,5,'footwear',True,200,0,0,0,0,0,3,4)
-cowboy_boots = Legs("Cowboy boots", "Cowboy boots",4,5,5,'footwear',True,200,0,0,0,0,0,1,4)
+running_shoes = Legs("Running shoes", "Running shoes",2,1,5,'footwear',True,100,0,0,0,0,0,1,2,1)
+sandals = Legs("Sandals", "Sandals",1,1,5,'footwear',True,40,0,0,0,0,0,0,2,1)
+high_heels = Legs("High heels", "High heels",1,5,5,'footwear',True,50,0,0,0,0,0,0,1,1)
+dress_shoes = Legs("Dress shoes", "Dress shoes",1,5,5,'footwear',True,130,0,0,0,0,0,1,2,1)
+light_boots = Legs("Light boots", "Light boots",3,5,5,'footwear',True,150,0,0,0,0,0,2,3,1)
+combat_boots = Legs("Combat boots", "Combat boots",4,5,5,'footwear',True,200,0,0,0,0,0,3,4,1)
+cowboy_boots = Legs("Cowboy boots", "Cowboy boots",4,5,5,'footwear',True,200,0,0,0,0,0,1,4,1)
 
 mens_footwear = [running_shoes,sandals,light_boots,combat_boots,cowboy_boots]
 womens_footwear = [running_shoes,sandals,high_heels,light_boots,combat_boots,cowboy_boots]
 
 #clothes
-naked = Outfit("None", "Clothes",1,5,5,'outfit',True,0,0,0,0,0,0,0,0)
-tshirt = Outfit("T-Shirt", "Clothes",2,5,5,'outfit',True,25,0,0,0,0,0,1,1)
-tanktop = Outfit("Tanktop", "Clothes",2,5,5,'outfit',True,25,0,0,0,0,0,1,1)
+naked = Outfit("None", "Clothes",1,5,5,'outfit',True,0,0,0,0,0,0,0,0,0)
+tshirt = Outfit("T-Shirt", "Clothes",2,5,5,'outfit',True,25,0,0,0,0,0,1,1,1)
+tanktop = Outfit("Tanktop", "Clothes",2,5,5,'outfit',True,25,0,0,0,0,0,1,1,1)
 
-dress_shirt = Outfit("Dress shirt", "Clothes",2,5,5,'outfit',True,60,0,0,0,0,0,2,2)
-work_shirt = Outfit("Work shirt", "Clothes",2,5,5,'outfit',True,35,0,0,0,0,0,3,3)
-hawaiian_shirt = Outfit("Hawaiian shirt", "Clothes",2,5,5,'outfit',True,35,0,0,0,0,0,2,2)
+dress_shirt = Outfit("Dress shirt", "Clothes",2,5,5,'outfit',True,60,0,0,0,0,0,2,2,1)
+work_shirt = Outfit("Work shirt", "Clothes",2,5,5,'outfit',True,35,0,0,0,0,0,3,3,1)
+hawaiian_shirt = Outfit("Hawaiian shirt", "Clothes",2,5,5,'outfit',True,35,0,0,0,0,0,2,2,1)
 
-plaid_shirt = Outfit("Plaid shirt", "Clothes",2,5,5,'outfit',True,40,0,0,0,0,0,2,2)
-tie_dye_shirt = Outfit("Tie dye shirt", "Clothes",2,5,5,'outfit',True,30,0,0,0,0,0,1,1)
-dress = Outfit("Dress", "Clothes",2,5,5,'outfit',True,80,0,0,0,0,0,1,2)
-nice_dress = Outfit("Nice dress", "Clothes",1,5,5,'outfit',True,500,0,0,0,0,0,1,1)
+plaid_shirt = Outfit("Plaid shirt", "Clothes",2,5,5,'outfit',True,40,0,0,0,0,0,2,2,1)
+tie_dye_shirt = Outfit("Tie dye shirt", "Clothes",2,5,5,'outfit',True,30,0,0,0,0,0,1,1,1)
+dress = Outfit("Dress", "Clothes",2,5,5,'outfit',True,80,0,0,0,0,0,1,2,1)
+nice_dress = Outfit("Nice dress", "Clothes",1,5,5,'outfit',True,500,0,0,0,0,0,1,1,1)
 
 #outerwear
-no_outerwear = Outerwear("None", "Clothes",1,5,5,'outerwear',True,0,0,0,0,0,0,0,0)
-hoodie = Outerwear("Hoodie", "clothes",3,5,5,'outerwear',True,45,0,0,0,0,0,2,2)
-sweater = Outerwear("Sweater", "Clothes",2,5,5,'outerwear',True,70,0,0,0,0,0,2,2)
-fancy_sweater = Outerwear("Fancy sweater", "Clothes",2,5,5,'outerwear',True,100,0,0,0,0,0,2,2)
-jean_jacket = Outfit("Jean jacket", "Clothes",2,5,5,'outerwear',True,50,0,0,0,0,0,2,2)
-bomber_jacket = Outfit("Bomber jacket", "Clothes",2,5,5,'outerwear',True,65,0,0,0,0,0,3,3)
-windbreaker = Outfit("Windbreaker", "Clothes",1,5,5,'outerwear',True,30,0,0,0,0,0,2,4)
-vest = Outfit("Vest", "Clothes",1,5,5,'outerwear',True,30,0,0,0,0,0,1,1)
+no_outerwear = Outerwear("None", "Clothes",1,5,5,'outerwear',True,0,0,0,0,0,0,0,0,0)
+hoodie = Outerwear("Hoodie", "clothes",3,5,5,'outerwear',True,45,0,0,0,0,0,2,2,1)
+sweater = Outerwear("Sweater", "Clothes",2,5,5,'outerwear',True,70,0,0,0,0,0,2,2,1)
+fancy_sweater = Outerwear("Fancy sweater", "Clothes",2,5,5,'outerwear',True,100,0,0,0,0,0,2,2,1)
+jean_jacket = Outfit("Jean jacket", "Clothes",2,5,5,'outerwear',True,50,0,0,0,0,0,2,2,1)
+bomber_jacket = Outfit("Bomber jacket", "Clothes",2,5,5,'outerwear',True,65,0,0,0,0,0,3,3,1)
+windbreaker = Outfit("Windbreaker", "Clothes",1,5,5,'outerwear',True,30,0,0,0,0,0,2,4,1)
+vest = Outfit("Vest", "Clothes",1,5,5,'outerwear',True,30,0,0,0,0,0,1,1,1)
 
-sports_jacket = Outerwear("Sports jacket", "Clothes",2,5,5,'outerwear',True,80,0,0,0,0,0,3,3)
-trenchcoat= Outerwear("Trench coat", "Clothes",3,4,5,'outerwear',True,100,0,0,0,0,0,4,4)
-cheap_suit= Outerwear("Cheap suit", "Clothes",2,4,5,'outerwear',True,130,0,0,0,0,0,2,2)
-leather_jacket = Outerwear("Leather jacket", "Clothes",5,5,5,'outerwear',True,150,0,0,0,0,0,3,4)
-army_uniform = Outerwear("Army jacket", "Clothes",4,5,5,'outerwear',True,100,0,0,0,0,0,3,3)
-nice_suit = Outerwear("Nice suit", "Clothes",2,5,5,'outerwear',True,500,0,0,0,0,0,2,1)
+sports_jacket = Outerwear("Sports jacket", "Clothes",2,5,5,'outerwear',True,80,0,0,0,0,0,3,3,1)
+trenchcoat= Outerwear("Trench coat", "Clothes",3,4,5,'outerwear',True,100,0,0,0,0,0,4,4,1)
+cheap_suit= Outerwear("Cheap suit", "Clothes",2,4,5,'outerwear',True,130,0,0,0,0,0,2,2,1)
+leather_jacket = Outerwear("Leather jacket", "Clothes",5,5,5,'outerwear',True,150,0,0,0,0,0,3,4,1)
+army_uniform = Outerwear("Army jacket", "Clothes",4,5,5,'outerwear',True,100,0,0,0,0,0,3,3,1)
+nice_suit = Outerwear("Nice suit", "Clothes",2,5,5,'outerwear',True,500,0,0,0,0,0,2,1,1)
 
 
 
 #armor
-no_armor = Armor("None", "Clothes",1,5,5,'armor',True,0,0,0,0,0,0,0,0)
+no_armor = Armor("None", "Clothes",1,5,5,'armor',True,0,0,0,0,0,0,0,0,0)
 
-body_armor = Armor("Body armor", "Clothes",8,5,5,'armor',True,750,0,0,0,0,0,2,0)
+body_armor = Armor("Body armor", "Clothes",8,5,5,'armor',True,750,0,0,0,0,0,2,0,1)
 
 #backpack
 class Backpack:
@@ -2439,7 +2617,7 @@ class Time:
 start_time = Time(2069,8,1,12,0)
 
 class City:
-	def __init__(self,areas,name,time,player_organization,corporations,missions,weather):
+	def __init__(self,areas,name,time,player_organization,corporations,missions,weather,rumours):
 		self.areas = areas
 		self.name = name
 		self.time = time
@@ -2447,6 +2625,7 @@ class City:
 		self.corporations = corporations
 		self.missions = missions
 		self.weather = weather
+		self.rumours = rumours
 
 class Area:
 	def __init__(self,locations,name,organizations,x,y,randos,price,region,is_hidden):
@@ -2843,7 +3022,8 @@ def create_npc(profession,affiliation,home,gender):
 			charisma = random.randint(5,15)
 		charisma, base_charisma = charisma,charisma
 		max_health = strength * 10	
-		health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100,50,5)
+		immune_system = random.randint(35,85)
+		health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100,50,5,immune_system,[],[])
 		health.current_stamina = random.randint(50,95)
 		npc_stats = Stats(strength, dexterity, intelligence, willpower, charisma, base_strength, base_dexterity, base_intelligence,base_willpower,base_charisma)
 		#injuries
@@ -2975,8 +3155,10 @@ def create_npc(profession,affiliation,home,gender):
                 intelligence, base_intelligence = intelligence,intelligence
                 charisma = random.randint(5,15)
                 charisma, base_charisma = charisma,charisma
-                max_health = strength * 10      
-                health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100,50,5)
+                max_health = strength * 10
+                immune_system = random.randint(35,85)
+      
+                health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100,50,5,immune_system,[],[])
                 health.current_stamina = random.randint(50,95)
                 npc_stats = Stats(strength, dexterity, intelligence, willpower, charisma, base_strength, base_dexterity, base_intelligence,base_willpower,base_charisma)
                 #injuries
@@ -3146,7 +3328,9 @@ def create_npc(profession,affiliation,home,gender):
 		intelligence, base_intelligence = 10,10
 		charisma, base_charisma = 9,9
 		max_health = strength * 10	
-		health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100,50,5)
+                immune_system = random.randint(35,85)
+
+		health = Health(max_health,max_health,max_health,100,100,100,0,100,100,0,0,100,100,100,50,5,immune_system,[],[])
 		health.current_stamina = random.randint(50,95)
 		npc_stats = Stats(strength, dexterity, intelligence, willpower, charisma, base_strength, base_dexterity, base_intelligence,base_willpower,base_charisma)
 		#injuries
@@ -4403,7 +4587,7 @@ def gen_gang_hq(x,y,name,locations,neighborhood_name):
 		footsoldier = [regular, 'No orders']
 		footsoldiers.append(footsoldier)
 	print 'footsoldiers added'
-	organization = Organization(name,False,footsoldiers,0,building,locations_owned,power,[],[],False,0,False,[],0,0,0,0,0,0,0,0,0,0,0,0)
+	organization = Organization(name,False,footsoldiers,0,building,locations_owned,power,[],[],False,0,False,[],0,0,0,0,0,0,0,0,0,0,0,0,items_sold,0)
 #self,name,is_player,footsoldiers,player_reputation,hq,locations_owned,power,territory,rent_due,rent_paid
         return building, organization
 
@@ -4581,6 +4765,212 @@ def gen_data_mine(x,y,corp,neighborhood_name):
                         actor.home = room
 	return building
 
+
+def gen_trap_house(x,y,neighborhood_name,type,faction):
+        actors = NPC([],0,[],0)
+        floors =[]
+        rooms = []
+        #print 'apt building'
+        num_floors = 2
+        max = 5
+        max_rooms = max
+        floor1 = []
+        floor2 = []
+        room_count = 1
+        finished = False
+        owner = None
+        #items = []
+	owner = faction.name
+        floor_count = 1
+        while finished == False:
+                if floor_count == 1:
+                        #room_count = 1
+                        has_bathroom = False
+                        has_bedroom = False
+                        has_dining_room = False
+                        has_living_room = False
+                        actors = NPC([],0,[],0)
+                        bathroom = Location('Bathroom','Templeville',neighborhood_name,"Bathroom",x,y,actors,[toilet2,sink,shower],False,[],True,[],False,False,
+                                        [],0,0,False,[],False,[],False,False,'No one',[],[],None,True,[],floor_count,False,0,0,no_dress_code,False,None,True,[],[])
+                        chance_owner = random.randint(1,2)
+			print 'bathroom'
+
+			#spre bedroom
+                        spare_bedroom = Location('Spare bedroom','Templeville',neighborhood_name,"Bedroom",x,y,actors,[bed,dresser,chair,heater],False,[],True,[],False,False,
+                                        [],0,0,False,[],False,[],False,False,owner,[],[],None,True,[],1,False,0,0,no_dress_code,False,None,True,[],[])
+
+			print 'spare bedroom'
+			#main bedroom
+                        actors = NPC([],0,[],0)
+
+                        bedroom = Location('Bedroom','Templeville',neighborhood_name,"Bedroom",x,y,actors,[bed,dresser,tv,bookshelf,desk,chair,heater],False,[],True,[],False,False,
+                                        [],0,0,False,[],False,[],False,False,owner,[],[],None,True,[],2,False,0,0,no_dress_code,False,None,True,[],[])
+        		num_regulars = random.randint(2,4)
+			regulars = []
+        		count = 1
+        		while count <= num_regulars:
+                		roll = random.randint(1,2)
+                		if roll == 1:
+                		        professions = ["Hustler","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul",'Hobo','Squatter','Rocker',"Mercenary",'Occultist','Scavenger','Survivalist']
+                		elif roll == 2:
+                		        professions = workers
+				try:
+                			profession = random.choice(professions)
+                			regular = create_npc(profession,'none','None',None)
+					print regular.fname + " " + regular.lname
+                			regulars.append(regular)
+					count += 1
+				except:
+					count += 1
+
+			count = 1
+			num_faction = random.randint(1,3)
+			while count <= num_faction:
+				regular = random.choice(faction.footsoldiers)
+				regular = regular[0]
+				regulars.append(regular)
+				count += 1
+			actors.members = regulars
+			bedroom.actors = actors
+			regulars = []
+                		#if random.randint(1,3) == 3:
+                		#        inventory = [heroin,morphine]
+                		#else:
+                		#        inventory = []
+                		#fame = 20
+                		#money = 5
+                		#count += 1
+			#bedroom.actors.members = regulars
+			#bedroom.is_bar = True
+			print 'bedroom'
+			#living room
+                        
+			actors = NPC([],0,[],0)
+
+                        living_room = Location('Living room','Templeville',neighborhood_name,"Living room",x,y,actors,[tv,couch,desk,rug,coffee_table,chair,chair,heater],False,[],True,[],False,False,
+                                        [],0,0,False,[],False,[],False,False,owner,[],[],None,True,[],floor_count,False,0,0,no_dress_code,False,None,True,[],[])
+                        living_room.is_bar = True
+                        num_regulars = random.randint(5,6)
+                        regulars = []
+                        count = 1
+                        while count <= num_regulars:
+                                roll = random.randint(1,2)
+                                if roll == 1:
+                                        professions = ["Hustler","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul"]
+                                elif roll == 2:
+                                        professions = workers
+                                try:
+                                        profession = random.choice(professions)
+                                        regular = create_npc(profession,'none','None',None)
+                                        print regular.fname + " " + regular.lname
+                                        regulars.append(regular)
+                                        count += 1
+                                except:
+                                        count += 1
+
+                        count = 1
+                        num_faction = random.randint(0,2)
+                        while count <= num_faction:
+                                regular = random.choice(faction.footsoldiers)
+                                regular = regular[0]
+                                regulars.append(regular)
+                                count += 1
+                        actors.members = regulars
+                        living_room.actors = actors
+			regulars = []
+                        actors = NPC([],0,[],0)
+
+			print 'living room'
+                        kitchen = Location('Kitchen','Templeville',neighborhood_name,"Kitchen",x,y,actors,[sink,stove,fridge],False,[],True,[],False,False,
+                                        [],0,0,False,[],False,[],False,False,owner,[],[],None,True,[],2,False,0,0,no_dress_code,False,None,True,[],[])
+			print 'kitchen'
+                        dining_room = Location('Dining room','Templeville',neighborhood_name,"Dining room",x,y,actors,[dining_table,chair,chair,chair,chair],False,[],True,[],False,False,
+                                        [],0,0,False,[],False,[],False,False,owner,[],[],None,True,[],2,False,0,0,no_dress_code,False,None,True,[],[])
+                        actors = NPC([],0,[],0)
+
+                        num_regulars = random.randint(2,4)
+                        regulars = []
+                        count = 1
+                        while count <= num_regulars:
+                                roll = random.randint(0,2)
+                                if roll == 1:
+                                        professions = ["Hustler","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul",'Hobo','Squatter','Rocker',"Mercenary",'Occultist','Scavenger','Survivalist']
+                                elif roll == 2:
+                                        professions = workers
+                                try:
+                                        profession = random.choice(professions)
+                                        regular = create_npc(profession,'none','None',None)
+                                        print regular.fname + " " + regular.lname
+                                        regulars.append(regular)
+                                        count += 1
+                                except:
+                                        count += 1
+
+                        actors.members = regulars
+                        dining_room.actors = actors
+                        actors = NPC([],0,[],0)
+
+			regulars = []
+			print 'dining room'
+                        basement = Location('Basement','Templeville',neighborhood_name,"Dining room",x,y,actors,[chair],False,[],True,[],False,False,
+                                        [],0,0,False,[],False,[],False,False,owner,[],[],None,True,[],-1,False,0,0,no_dress_code,False,None,True,[],[])
+			basement.is_bar = True
+                        num_regulars = random.randint(2,4)
+                        regulars = []
+                        count = 1
+                        while count <= num_regulars:
+                                roll = random.randint(2,5)
+                                if roll == 1:
+                                        professions = ["Hustler","Crimepunk","Drunkard","Wastoid","Junkfreak","Meatball","Crackhead","Sex Worker","Lost Soul",'Hobo','Squatter','Rocker',"Mercenary",'Occultist','Scavenger','Survivalist']
+                                elif roll == 2:
+                                        professions = workers
+                                try:
+                                        profession = random.choice(professions)
+                                        regular = create_npc(profession,'none','None',None)
+                                        print regular.fname + " " + regular.lname
+                                        regulars.append(regular)
+                                        count += 1
+                                except:
+                                        count += 1
+
+                        count = 1
+                        num_faction = random.randint(0,2)
+                        while count <= num_faction:
+                                regular = random.choice(faction.footsoldiers)
+                                regular = regular[0]
+                                regulars.append(regular)
+                                count += 1
+                        actors.members = regulars
+                        basement.actors = actors
+			regulars = []
+			print 'basement'
+                        rooms.append(living_room)
+                        rooms.append(bathroom)
+                        rooms.append(spare_bedroom)
+                        rooms.append(bedroom)
+                        rooms.append(dining_room)
+                        rooms.append(kitchen)
+                        rooms.append(basement)
+
+                        floor_count += 1
+                finished = True
+
+        building = Location('Trap house','Templeville',neighborhood_name,'Trap house',x,y,actors,[],False,[],True,[],False,True,
+        [],0,0,False,[],False,rooms,False,False,owner,[],floors,None,False,[],1,True,0,0,no_dress_code,False,None,False,[],[])
+        building.security_level = 0
+        building.is_bar = False
+        building.is_store = False
+        for room in building.rooms:
+                #print room.name
+                room.security_level = 0
+                room.is_bar = False
+                room.is_store = False
+                room.parent_location = building
+                for actor in actors.members:
+                        #print actor.fname
+                        actor.home = room
+        return building
+
 def gen_house(x,y,neighborhood_name,type):
         actors = NPC([],0,[],0)
         floors =[]
@@ -4626,7 +5016,7 @@ def gen_house(x,y,neighborhood_name,type):
                                 member = create_npc(profession,'none','None',None)
 				if owner == None:
 					owner = member.fname + " " + member.lname
-                                members.append(member)
+                                actors.members.append(member)
 
 				if member.gender == "Male":
 	                                roll = random.randint(1,6)
@@ -4638,7 +5028,7 @@ def gen_house(x,y,neighborhood_name,type):
                         	                professions = workers
                         	        profession = random.choice(professions)
 	                                member = create_npc(profession,'none','None',"Female")
-					members.append(member)
+					actors.members.append(member)
                                 elif member.gender == "Female":
                                         roll = random.randint(1,6)
                                         if roll == 1:
@@ -4649,7 +5039,7 @@ def gen_house(x,y,neighborhood_name,type):
                                                 professions = workers
                                         profession = random.choice(professions)
                                         member = create_npc(profession,'none','None',"Male")
-                                        members.append(member)
+                                        actors. members.append(member)
 
 
 				actors.members = members
@@ -5020,7 +5410,7 @@ def gen_neighborhood(type,neighborhood_name,flag):
 		max_y = 32
 		max_x = 32
 	organizations = []
-        organization = Organization(neighborhood_name,False,[],0,None,[],0,[],[],False,0,False,[],0,0,0,0,0,0,0,0,0,0,0,0)
+        organization = Organization(neighborhood_name,False,[],0,None,[],0,[],[],False,0,False,[],0,0,0,0,0,0,0,0,0,0,0,0,[],0)
         organizations.append(organization)
 	num_locations = 0
 	num_abandoned_apt = 0
@@ -5455,6 +5845,27 @@ def gen_neighborhood(type,neighborhood_name,flag):
 						print 'try again'
 						gang_good = False
 				#gang_valid = False
+	#trap houses
+	for organization in organizations:
+		sell_drugs = False
+		if len(organization.items_sold) >= 1:
+			for item in organization.items_sold:
+				if item.name == "Crack" or item.name == "Speed" or item.name == "Heroin" or item.name == "Weed":
+					sell_drugs = True
+		if sell_drugs == True:
+			num_trap_house = organization.power / 4
+			count = 1
+			while count <= num_trap_house:
+				try:
+	                        	x,y = get_unused_location() 
+					trap_house = gen_trap_house(x,y,neighborhood_name,'trap house',organization)
+					locations.append(trap_house)
+					num_locations += 1
+					count += 1
+				
+				except:
+					print 'error'
+					#count += 1
         #houses
 
 	if neighborhood_name == "Elephant Rock" or neighborhood_name == "Cliff Heights" or neighborhood_name == "McQueeney Square" or neighborhood_name == "Temple Acres":
@@ -5753,7 +6164,7 @@ def gen_world_tile():
 
 def gen_new_city():
 	
-	player_organization = Organization("Player Organization",False,[],0,None,[],0,[],[],False,0,False,[],0,0,0,0,0,0,0,0,0,0,0,0)
+	player_organization = Organization("Player Organization",False,[],0,None,[],0,[],[],False,0,False,[],0,0,0,0,0,0,0,0,0,0,0,0,[],0)
 	player_organization.locations_owned = []
 	player_organization.rent_amount = 0
 #self,name,is_player,footsoldiers,player_reputation,hq,locations_owned,power,territory,rent_due,rent_paid
@@ -5820,7 +6231,7 @@ def gen_new_city():
 	name = "Templeville"
 	time = start_time
 	weather = get_weather(time)
-	city = City(areas,name,time,player_organization,corps,[],weather)
+	city = City(areas,name,time,player_organization,corps,[],weather,[])
 	return city
 
 
